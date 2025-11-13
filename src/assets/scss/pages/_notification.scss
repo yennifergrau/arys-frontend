@@ -1,0 +1,65 @@
+// Notification ==
+.notification-list{
+	ul{
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		li{
+			position: relative;
+		}
+	}
+	.list-items{
+		display: flex;
+		align-items: center;
+		padding: 10px;
+		background-color: var(--bg-white);
+		border-radius: var(--border-radius-md);
+		.media{
+			img{
+				border-radius: var(--border-radius);
+			}
+		}
+		.date{
+			font-size: 11px;
+			color: var(--title);
+			opacity: 0.7;
+		}
+		.list-content{
+			.title{
+				font-size: 14px;
+				margin-bottom: 0;
+				font-weight: 400;
+			}
+		}	
+		.ic-icon-box{
+			width: 50px;
+			height: 50px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			border-radius: var(--border-radius);
+			background-color: var(--light);
+			position: relative;
+			&:after{
+				display: none;
+				content: "";
+				position: absolute;
+				top: -4px;
+				right: -4px;
+				width: 16px;
+				height: 16px;
+				z-index: 1;
+				border-radius: 10px;
+				background-color: $warning;
+				border: 2px solid var(--bg-white);
+			}
+			svg{
+				width: 35px;
+				height: 35px;
+				path{
+					fill: var(--secondary);
+				}
+			}
+		}
+	}
+}

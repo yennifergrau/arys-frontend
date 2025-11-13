@@ -1,0 +1,72 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    <!-- Header -->
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a
+            (click)="navigateBack()"
+            class="back-btn ic-icon icon-sm"
+            tabindex="-1"
+          >
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+
+        <div class="mid-content"><h5 class="title">Detalle de plan</h5></div>
+      </div>
+    </header>
+    <!-- Header -->
+
+    <!-- Main Content Start -->
+    <main class="page-content p-b80">
+      <div class="container p-2">
+        <div class="ic-product-preview">
+          <div class="ic-media">
+            <img src="../../../../assets/imagenes/icon/logo.png" alt="" />
+          </div>
+
+          <div class="detail-content">
+            @for(x of planDetails; track $index){
+            <h5 class="title">{{x.title}}</h5>
+            <div class="ic-prize">
+              <span class="name">Precio</span>
+              <span class="prize text-dark">$ {{x.price}}</span>
+            </div>
+            }@empty {
+            <p class="title">Cargando...</p>
+            }
+          </div>
+        </div>
+        <div class="ic-product-detail">
+          <div class="card style-2 mb-0">
+            <div class="card-header">
+              <h6 class="card-title">Mas Información:</h6>
+            </div>
+            <div class="card-body">
+              <ul class="specification-list">
+                @for(x of planDetails[0].data;track $index){
+                <li>
+                  <span class="name">{{x.sub_title}}</span>
+                  <span class="property">{{x.information}}</span>
+                </li>
+                }@empty {
+                <p class="title">Cargando...</p>
+                }
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <div class="footer-fixed-btn">
+      <div class="inner-area rounded-xl">
+        <a
+          (click)="nextRouter()"
+          class="btn btn-primary btn-thin rounded-xl gap-3 w-100 btn-shadow text-uppercase"
+          >Comprar</a
+        >
+      </div>
+    </div>
+  </div>
+</div>

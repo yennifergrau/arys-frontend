@@ -1,0 +1,16 @@
+{
+    "dataPayment":{
+        "ip": "10.1.1.1",
+        "channel": "APP",      
+        "client": {
+          "doctype": "v",
+          "docid": 9124000
+        },
+        "cardnumber": "1463090000000001",
+        "amount": 1.20,
+        "payphone": "04142662826",
+        "paidon": "2025-03-31T18:55:07.064Z",
+        "bankcode": "0102",
+        "concept": "pago prueba"
+    }
+}

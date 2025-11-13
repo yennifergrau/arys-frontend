@@ -1,0 +1,279 @@
+.sidebar{
+    width: 300px;
+	height: 100%;
+    background-color: var(--body-bg);
+    position: fixed;
+    left: -300px;
+    top: 0;
+    z-index: 999999;
+	background-position: center;
+	background-size: cover;
+    @include transitionFast;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	.inner-sidebar{
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		overflow-y: scroll;
+		scrollbar-width: none;		
+	}
+    &.show{
+        left: 0;
+		box-shadow: 10px 0 20px 0px rgba(0, 0, 0, 0.20);
+    }
+    &.right{
+        left: auto;
+        right: -300px;
+        
+        &.show{
+            left: auto;
+            right: 0;            
+        }
+    }
+	.nav-label {
+		margin: 20px 0 0;
+		padding: 20px 0 8px;
+		text-transform: uppercase;
+		font-size: 14px;
+		letter-spacing: 0.05rem;
+		border-top: 1px solid var(--border-color);
+		color: var(--title);
+		font-weight: 600;
+	}
+	
+	
+	.author-box{
+		display: flex;
+		align-items: center;
+		padding: 20px;
+		border-bottom: 2px dashed var(--border-color);
+		.ic-media{
+			border-radius: var(--border-radius);
+			width: 60px;
+			height: 60px;
+			overflow: hidden;
+			margin-right: 15px;
+		}
+		.name{
+			margin-bottom: 0;
+			font-size: 16px;
+			font-weight: 500;
+		}
+		.mail{
+			font-size: 12px;
+			font-weight: 300;
+		}
+	}
+	.ic-icon{
+		i{
+			line-height: 1;
+			font-size: 18px;
+			color: var(--primary);	
+		}
+		svg{
+			fill: var(--primary);	
+		}
+	}
+	.navbar-nav{
+		padding: 15px 20px;
+		margin-bottom: 30px;
+		
+		& > .nav-label:first-child{
+			border-top: 0;
+			margin: 0;
+			padding-top: 0;
+		}
+		li{
+			padding: 5px 0;
+			.ic-icon{
+				margin-right: 15px;
+				i{
+					color: var(--title);
+					font-size: 18px;
+				}
+			}
+			& > a{
+				position: relative;
+				color: inherit;
+				display: flex;
+				padding: 0;
+				font-size: 14px;
+				align-items: center;
+				font-weight: 400;
+				color: #000;
+				&:after{
+					content: "\e844";
+					font-family: 'feather' !important;
+					position: absolute;
+					top: 50%;
+					right: 0;
+					transform: translateY(-50%);
+					font-weight: 500;
+					color: #000;
+					font-size: 20px;
+				}
+				.custom-switch{
+                    margin-left: auto;
+                    align-items: center;
+                    display: flex;
+                }
+				.badge{
+					margin-left: auto;
+					font-size: 10px;
+					min-width: 20px;
+					min-height: 20px;
+					padding: 0;
+					height: 20px;
+					line-height: 18px;
+				}
+			}
+		}
+	}
+
+	.sidebar-bottom{
+		margin-top: auto;	
+		.app-setting{
+			padding: 15px;
+			li{
+				padding-bottom: 10px;
+				&:last-child{					
+					padding-bottom: 0;
+				}
+				a{
+					display: flex;
+					align-items: center;
+				}
+				span{
+					font-weight: 500;
+					color: var(--title);
+				}
+			}
+			.color-active{
+				font-size: 12px;
+				color: var(--primary);
+				display: flex;	
+				align-items: center;
+				gap: 8px;	
+				span{
+					color: #666666;
+				}	
+				.current-color{
+					width: 16px;
+					height: 16px;
+					background: var(--primary);
+					border-radius: 4px;
+				}
+			}
+		}
+		.app-info{
+			padding: 15px;
+			border-top: 1px solid var(--border-color);
+			.name{
+				margin-bottom: 0;
+				font-size: 12px;
+				font-weight: 400;
+				b{
+					font-weight: 600;
+					color: var(--text-color);
+				}
+			}
+			.ver-info{
+				font-size: 12px;
+				color: var(--title);
+			}
+		}
+	}
+	.bg-layer{
+		background-color: #313842;
+		width: 100px;
+		height: 100px;
+		position: absolute;
+		top: -50px;
+		right: -50px;
+		transform: scale(0);
+		border-radius: 50%;
+		@include transitionMedium;
+		z-index: -1;
+		
+		&.active{
+			transform: scale(20);
+		}
+	}
+}
+
+.ic-mode{
+	position: absolute;
+	top: 0;
+	right: 0;
+    .theme-btn{
+		background-color: var(--secondary);
+		width: 50px;
+		height: 50px;
+		position: relative;
+		padding: 8px;
+		border-radius: 0 0 0 50px;
+		z-index: 1;
+		@include transitionSlow;
+		.icon{
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			@include transitionSlow;
+			svg{
+				width: 24px;
+				height: 24px;
+				path{
+					fill: var(--text-color);
+				}
+			}
+		}
+		.moon{
+			opacity: 0;
+			visibility: hidden;
+			transform: rotate(-360deg) scale(0);
+		}
+		.sun{
+			opacity: 1;
+			visibility: visible;
+			transform: rotate(-360deg) scale(1);
+		}
+		&.active{
+			background-color: var(--text-color);
+			.icon{
+				svg{
+					path{
+						fill: var(--secondary);
+					}
+				}
+			}
+			.moon{
+				opacity: 1;
+				visibility: visible;
+				transform: rotate(360deg) scale(1.3);
+			}
+			.sun{
+				opacity: 0;
+				visibility: hidden;
+				transform: rotate(360deg) scale(0);
+			}
+		}
+    }
+}
+
+.dark-overlay{
+	position: fixed;
+	height: 100%;
+	width: 100%;
+	left: 0;
+	top: 0;
+	@include transitionMedium;
+	z-index: 99999;
+	visibility: hidden;
+	&.active{
+		visibility: visible;
+		background: rgba(19, 25, 33, 0.70);
+		backdrop-filter: blur(4px);
+	}
+}

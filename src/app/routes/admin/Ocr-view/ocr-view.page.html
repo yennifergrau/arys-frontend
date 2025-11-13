@@ -1,0 +1,157 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    <!-- Header -->
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a
+            (click)="navigateBack()"
+            class="back-btn ic-icon icon-sm"
+            tabindex="-1"
+          >
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content"><h5 class="title">OCR documento</h5></div>
+      </div>
+    </header>
+    <main class="page-content space-top p-b70">
+      <div class="container px-2">
+        <div class="default-tab style-3">
+          <div class="tab-content">
+            <div class="tab-pane fade active show" id="dzTab1" role="tabpanel">
+              <div class="row g-2">
+                <div class="col-12 ic-card-remove">
+                  <div class="ic-card style-2">
+                    <div class="ic-content">
+                      <div class="inner-content">
+                        <div class="left-content">
+                          <h6 class="title"><a>Licencia de conducir</a></h6>
+                        </div>
+                      </div>
+                      @if(!isLicenseScanned){
+                      <div class="btn-group style-2">
+                        <a
+                          (click)="scanDocument('licencia')"
+                          class="btn px-3 btn-thin rounded btn-primary text-secondary border-2 w-100"
+                          ><i class="font-15 fa-solid fa-barcode"></i
+                          >Escanear</a
+                        >
+                        <a
+                          (click)="scanAdjuntar('licencia')"
+                          class="btn px-3 btn-thin rounded btn-secondary w-100"
+                          ><i
+                            class="fa-sharp text-primary fa-solid fa-arrow-up font-15"
+                          ></i
+                          >Adjuntar</a
+                        >
+                      </div>
+                      }@else {
+                      <div
+                        class="flex items-center justify-center gap-3 p-4 bg-green-100 border-l-4 border-green-500 text-green-700 rounded-lg shadow-md"
+                      >
+                        <i class="fa-solid fa-check-circle text-2xl"></i>
+                        <span class="text-lg font-semibold">
+                          Licencia procesada con éxito</span
+                        >
+                      </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 ic-card-remove">
+                  <div class="ic-card style-2">
+                    <div class="ic-content">
+                      <div class="inner-content">
+                        <div class="left-content">
+                          <h6 class="title"><a>Carnet de circulación</a></h6>
+                        </div>
+                      </div>
+                      @if(!isRegistrationScanned){
+                      <div class="btn-group style-2">
+                        <a
+                          (click)="scanDocument('carnet')"
+                          class="btn px-3 btn-thin rounded btn-primary text-secondary border-2 w-100"
+                          ><i class="font-15 fa-solid fa-barcode"></i
+                          >Escanear</a
+                        >
+                        <a
+                          (click)="scanAdjuntar('carnet')"
+                          class="btn px-3 btn-thin rounded btn-secondary w-100"
+                          ><i
+                            class="fa-sharp text-primary fa-solid fa-arrow-up font-15"
+                          ></i
+                          >Adjuntar</a
+                        >
+                      </div>
+                      }@else {
+                      <div
+                        class="flex items-center justify-center gap-3 p-4 bg-green-100 border-l-4 border-green-500 text-green-700 rounded-lg shadow-md"
+                      >
+                        <i class="fa-solid fa-check-circle text-2xl"></i>
+                        <span class="text-lg font-semibold">
+                          Carnet procesado con éxito</span
+                        >
+                      </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 ic-card-remove">
+                  <div class="ic-card style-2">
+                    <div class="ic-content">
+                      <div class="inner-content">
+                        <div class="left-content">
+                          <h6 class="title"><a>Cédula de identidad</a></h6>
+                        </div>
+                      </div>
+                      @if(!isInsuranceScanned){
+                      <div class="btn-group style-2">
+                        <a
+                          (click)="scanDocument('cedula')"
+                          class="btn px-3 btn-thin rounded btn-primary text-secondary border-2 w-100"
+                          ><i class="font-15 fa-solid fa-barcode"></i
+                          >Escanear</a
+                        >
+                        <a
+                          (click)="scanAdjuntar('cedula')"
+                          class="btn px-3 btn-thin rounded btn-secondary w-100"
+                          ><i
+                            class="fa-sharp text-primary fa-solid fa-arrow-up font-15"
+                          ></i
+                          >Adjuntar</a
+                        >
+                      </div>
+                      }@else{
+                      <div
+                        class="flex items-center justify-center gap-3 p-4 bg-green-100 border-l-4 border-green-500 text-green-700 rounded-lg shadow-md"
+                      >
+                        <i class="fa-solid fa-check-circle text-2xl"></i>
+                        <span class="text-lg font-semibold">
+                          Cedula procesada con éxito</span
+                        >
+                      </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div class="footer-fixed-btn">
+      <div class="inner-area rounded-xl">
+        <button
+          [disabled]="isSubmitDisabled"
+          class="btn btn-primary btn-thin rounded-xl gap-3 w-100 btn-shadow text-uppercase"
+          (click)="sendDocument()"
+        >
+          Enviar documento
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

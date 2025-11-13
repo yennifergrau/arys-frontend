@@ -1,0 +1,203 @@
+.centere {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin: 12px;
+}
+
+.border-rounded {
+  border: 1px solid #acacac !important;
+  padding: 10px;
+}
+
+.text-information {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin: 30px;
+}
+
+.info-text {
+  color: #acacac;
+  font-size: 14px;
+}
+
+.invalid-input {
+  border: 2px solid red !important;
+  background-color: #f8d7da;
+}
+
+
+.border-rounded-2 {
+  border: 1px solid #dddada !important;
+  padding: 10px;
+  border-radius: 15px;
+}
+.text-none-info,
+.s {
+  margin-top: 5%;
+  margin-left: 6px;
+  font-size: 12px;
+}
+
+.ic-status {
+  float: right;
+}
+
+.card-body {
+  width: 100%;
+  max-width: 500px;
+  margin: auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+.partial-input {
+  width: 140px;
+  padding: 4px;
+  border: none;
+  border-bottom: 2px solid #070707;
+  background: transparent;
+  text-align: center;
+  font-size: 14px;
+  outline: none;
+  transition: 0.3s;
+
+  &::placeholder {
+    color: #999;
+    font-size: 12px;
+  }
+
+  &:focus {
+    border-bottom: 2px solid #060707;
+  }
+}
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+
+  .radio-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    transition: all 0.3s ease-in-out;
+
+    * {
+      cursor: pointer;
+    }
+
+    &:hover {
+      background-color: #f0f8ff;
+      border-color: #dbb718;
+    }
+
+    .radio-label {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      font-weight: 500;
+      color: #333;
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .checkmark {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #dbb718;
+      border-radius: 50%;
+      display: inline-block;
+      position: relative;
+      transition: 0.3s;
+    }
+
+    input[type="radio"] {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      position: relative;
+      cursor: pointer;
+
+      &:checked + .checkmark {
+        background-color: #dbb718;
+        border: 4px solid white;
+        box-shadow: 0px 0px 0px 2px #dbb718;
+      }
+    }
+
+    .ic-status {
+      font-size: 14px;
+      color: #555;
+      white-space: nowrap;
+    }
+  }
+}
+
+.box-payment {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px;
+  background: #fff;
+
+  .payment-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+
+    .group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      border-bottom: 2px solid #b6b6b6;
+      padding: 8px 0;
+
+      select {
+        width: 100px;
+        min-width: 30px;
+        padding: 6px;
+        border: none;
+        color: white;
+        background: #dfdddd;
+        color: #000;
+        font-size: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        outline: none;
+      }
+
+      input {
+        flex: 1;
+        padding: 6px;
+        border: none;
+        font-size: 12px;
+        color: #333;
+        background: transparent;
+        outline: none;
+      }
+
+      label {
+        font-size: 12px;
+        color: #333;
+        min-width: 50px;
+      }
+    }
+  }
+}
+
+.btn-pay {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin: 12px;
+}

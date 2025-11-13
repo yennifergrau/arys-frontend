@@ -1,0 +1,291 @@
+.theme-dark{
+	--dark				: #fff;
+	--bg-white			: rgba(255, 255, 255, 0.10);
+	--title				: #fff;
+	--body-bg			: #313842;
+	--body-bg2			: #313842;
+	--body-color		: rgba(255, 255, 255, 1);
+	--border-color		: rgba(255, 255, 255, 0.2);
+	--border-color-2	: rgba(255, 255, 255, 0.1);
+	--bg-dark-light		: rgb(44, 63, 109, 0.80);
+	--card-bg			: rgba(255, 255, 255, 0.10);
+	--light				: rgba(255, 255, 255, 0.10);
+	--bg-light			: rgba(255, 255, 255, 0.10);
+	--text-accent		: #eee;
+	--theme-text-color	: #000;
+	--text-light	    : rgba(255, 255, 255, 0.5);
+	--text-muted	    : rgba(255, 255, 255, 0.5);
+
+	// Primary ==
+	--rgba-primary-1: rgba(255, 255, 255, 0.1);
+    --rgba-primary-2: rgba(255, 255, 255, 0.2);
+    --rgba-primary-3: rgba(255, 255, 255, 0.3);
+    --rgba-primary-4: rgba(255, 255, 255, 0.4);
+    --rgba-primary-5: rgba(255, 255, 255, 0.5);
+    --rgba-primary-6: rgba(255, 255, 255, 0.6);
+    --rgba-primary-7: rgba(255, 255, 255, 0.7);
+    --rgba-primary-8: rgba(255, 255, 255, 0.8);
+    --rgba-primary-9: rgba(255, 255, 255, 0.9);	
+
+}
+
+/* Theme Dark */
+.theme-dark{
+
+	.text-secondary{
+		--secondary: #fff;
+	}
+
+	.sidebar::after{
+		background-color: rgba(28, 33, 46, 0.80);
+	}
+	.bg-light{
+		background-color: #000; 
+	}
+
+	.ic-filter-offcanvas,
+	.header.style-1{
+		--bg-white: #464C55;
+	}
+	.logo-area,
+	.header-logo{
+		.logo-dark{
+			display: none!important;
+		}
+		.logo-white{
+			display: block!important;
+		}
+	}
+
+	// HOME ==
+	.ic-main-section .ic-color-option{
+		background-color: #131921;
+		border: 0;
+		.ic-color-filter{
+			&::before,
+			&::after{
+				border-color: #565F6A;
+			}
+			.form-check{
+				&:first-child{
+					span{
+						&::after{
+							border-color: #131921;
+						}
+					}
+				}
+			}
+		}
+		&::after{
+			background-color: #565F6A;
+		}
+	}
+	.search-box{
+		.input-group{
+			.form-control,
+			.input-group-text{
+				background-color: #fff!important;
+			}
+		}
+	}
+
+	.product-info .info-box {
+		--secondary: #fff;
+		background-color: #131921;
+		border-color: transparent;
+	}
+
+
+
+	.pwa-offcanvas{
+		p{
+			color: rgba(255, 255, 255, 0.50);
+		}
+		.logo{
+			&.dark{
+				display: none;
+			}
+			&.light{
+				display: block;
+			}
+		}
+	}
+	
+	// Dz Card ==
+	.ic-card.style-1{
+		background: linear-gradient(180deg, #313842 0%, #1D2229 100%);
+	}
+
+	.item-bookmark {
+		i{
+			color: rgba(255, 255, 255, 0.2);
+		}
+		&.active{
+			i{
+				color: #FF6C87;
+			}
+		}
+	}
+
+	.radio{
+		.radio-label .checkmark .check:after{
+			border-color: #464c55;
+		}
+		&.style-2 .radio-label .checkmark .check:after{
+			background-color: #fff;
+		}
+	}
+	
+	// Product Detail ==
+	.ic-stepper{
+		&.style-2{
+			--primary :#000000;
+		}
+		&.style-3{
+			.bootstrap-touchspin{
+				background: #0c101c;
+			}
+		}
+	}
+
+	.ic-list > ul > li .item-content .ic-icon{
+		i{
+			color: rgba(255, 255, 255, 0.6);
+		}
+		svg{
+			path{
+				fill: rgba(255, 255, 255, 0.6);
+			}
+		}
+	} 
+
+	// Dz Icon ==
+	.ic-icon{
+		&.icon-primary{
+			--title: #000;
+		}
+	}
+
+	.ic-offer-coupon{
+		background-color: var(--bg-light);
+	}
+
+	.accordion.ic-accordion .checkmark{
+		--bg-white: transparent;
+	}
+
+	.add-bank{
+		--bg-white: #313842;
+	}
+
+	.form-label,
+	.ic-wizard .steps .step-content,
+	.text-notify,
+	.post-profile .left-content .meta-list li a,
+	.notification .notification-content small,
+	.notification .notification-content .small,
+	.dropdown-menu .dropdown-item,
+	.text-primary,
+    .text-dark{
+		color: #fff !important;
+	}
+	.ic-avatar.list-status .avatar-list .media img,
+	.ic-avatar.list-stacked .avatar-list .media img{	
+		box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.20);
+	}
+	
+	.ic-timeline.style-2 .timeline-item .active-box{
+		background-color: rgba(242, 243, 248, 0.15);
+	}
+
+	.ic-timeline.style-2 .timeline-date,
+	.text-light{
+		color: rgba(255, 255, 255, 0.50) !important;
+	}
+	.message-list li .media-content p{
+		color: rgba(255, 255, 255, 0.7);
+	}
+    .message-list li .media:after{
+		border-color: #2c3f6d;
+	}
+	.message-content .chat-content .message-item .bubble{
+		color: #fff;
+		background: #3b3b3b;
+	}
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6{
+		a{
+			color: #fff;                
+		}
+	}
+	.text-black{
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+    .border-bottom {
+        border-color: var(--border-color) !important;
+    }
+
+	.profile-area .content-box ul li a{
+		--secondary: #fff;
+	}
+
+	.default-tab .nav-tabs .nav-item .nav-link.active,
+	.profile-area .profile-content ul li a,
+	.contact-section ul li p,
+    .btn-close,
+	.detail{
+        color: #fff;
+    }
+    .input-group{
+		&.input-mini{
+			.input-group-text{
+				background-color: transparent!important;
+			}
+		}
+    }
+	
+    .sidebar{
+        .navbar-nav{
+            li a{
+                color: #fff;
+                &:after{
+                    opacity: 0.5;
+                    color: #fff;
+                } 
+				.ic-icon{
+					i{
+						color: #000;
+					}
+				}
+            }    
+        }
+    }
+
+    .form-control{
+		color: #fff !important;
+		&::placeholder{
+			color: rgba(255, 255, 255, 0.7);
+		}
+    }
+
+	textarea.form-control{
+		border-color: var(--border-color)!important;
+	}
+
+	.default-tab.style-2 .ic-tabs::after{
+		background: linear-gradient(0deg, rgba(26, 32, 44, 0.80), rgba(26, 32, 44, 0%));
+	}
+
+	.ic-timeline.style-2 .timeline-item{
+		&::before{
+			background-color: rgba(255, 255, 255, 0.20);
+		}
+		&::after{
+			border-color: rgba(255, 255, 255, 0.20);
+		}
+	}
+}

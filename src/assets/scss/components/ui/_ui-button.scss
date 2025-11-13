@@ -1,0 +1,875 @@
+.btn{    
+    font-size: 15px;
+    font-weight: 400;
+    text-transform: capitalize;
+	padding: 12px 20px;
+    line-height: 22px;
+    display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-decoration: none !important;
+	border-width: 1px;
+	border-radius: var(--border-radius-sm);
+    @include transitionMedium;
+	
+	&.btn-shadow{
+		box-shadow: 0 0 0 9px #212830;
+	}
+	&.btn-thin{
+		font-weight: 400!important;
+		font-size: 14px;
+	}
+    &.btn-success,
+    &.btn-warning,
+    &.btn-danger,
+    &.btn-info{
+		color: var(--theme-text-color);
+	}
+	&.btn-gradient{
+		background: var(--btn-gradient);
+		color: $white;
+		border: 0;
+	}
+    &.btn-lg{
+        font-size: 18px;
+		padding: 18px 42px;
+		line-height: 17px;
+		&.btn-thin{
+			font-size: 15px;
+			font-weight: 400!important;
+		}
+    }
+    &.btn-sm{
+		padding: 12px 15px;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 1;
+		border-radius: var(--border-radius-sm);
+		&.btn-thin{
+			font-weight: 400!important;
+		}
+    }
+	&.btn-xs{
+		font-size: 14px;
+		padding: 8px 15px;
+		line-height: 16px;
+		border-radius: 6px;
+    }
+    &.btn-sharp{
+        border-radius: 0;
+    }
+    &:hover,
+    &:focus,
+    &:active{
+        outline: 0!important;
+        box-shadow: none;
+    }
+    &.btn-tp{
+		background-color: rgba(255, 255, 255, 0.20);
+        color: rgba(255, 255, 255, 1);
+		&:hover,
+		&:focus,
+		&:active{
+			background-color: rgba(255, 255, 255, 1);
+			color: var(--title);
+			border-color: transparent;
+		}
+    }
+	&.btn-white{
+		background-color: var(--bg-white);
+		color: var(--title);
+		&:hover,
+		&:focus,
+		&:active{
+			background-color: var(--bg-white);
+			color: var(--title);
+			border-color: transparent;
+		}
+	}
+}
+
+button{
+    cursor: pointer;
+    &:focus{
+        outline: 0;
+        box-shadow: none;
+    }
+}
+
+.icon-btn{
+	padding: 8px 12px;
+}
+
+.btn-primary{
+	background-color:var(--primary);
+	border-color:var(--primary);
+	&:active,
+	&:focus,
+	&:hover{
+        border-color:var(--primary);
+		background-color:var(--primary);
+        box-shadow: none;
+	}
+	&:disabled,
+	&.disabled{
+		background-color: var(--primary);
+	}
+}
+
+.btn-secondary{
+	background-color: var(--secondary);
+	&:active,
+	&:focus,
+	&:hover{
+        border-color:var(--secondary);
+		background-color:var(--secondary);
+        box-shadow: none;
+	}
+}
+
+.btn-outline-primary{
+	color:var(--primary);	
+	border-color:var(--primary);
+	&:hover{
+		border-color:var(--primary-hover);	
+		background-color:var(--primary-hover);	
+	}
+    &:focus{
+        box-shadow: none;
+    }
+}
+.sharp {
+	min-width: 2.5rem;
+    padding: 0.4375rem;
+    height: 2.5rem;
+    min-height: 2.5rem;
+}
+.sharp.btn-xs{
+    padding: 0.1875rem;
+    width: 1.625rem;
+    height: 1.625rem;
+    min-width: 1.625rem;
+    min-height: 1.625rem;
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+.light{
+    border-color: transparent;
+	&.btn-success {
+		background-color: $success-light;
+		border-color: $success-light;
+		color:$success;
+		g [fill]{
+			fill:$success;
+        }
+		&:hover{
+			background-color: $success;
+			border-color: $success;
+			color: #fff;
+			g [fill]{
+				fill:$white;
+			}
+		}
+	}
+	&.btn-info {
+		background-color: $info-light;
+		border-color: $info-light;
+		color:$info;
+		g [fill]{
+			fill:$info;
+		}
+		&:hover{
+			background-color: $info;
+			border-color: $info;
+			color: #fff;
+			g [fill]{
+				fill:$white;
+			}
+		}
+	}
+	&.btn-primary {
+		background-color: var(--rgba-primary-5);
+		color:var(--primary);
+		g [fill]{
+			fill:var(--primary);
+		}
+		&:hover{
+			background-color: var(--primary);
+			color: var(--theme-text-color) !important;
+			g [fill]{
+				fill:$white;
+			}
+		}
+	}
+	&.btn-secondary {
+		background-color: $secondary-light;
+		color:$secondary;
+		g [fill]{
+			fill:$secondary;
+		}
+		&:hover{
+			background-color: $secondary;
+			color: #fff;
+			g [fill]{
+				fill:$white;
+			}
+		}
+	}
+	&.btn-warning {
+		background-color: $warning-light;
+		color:$warning;
+		g [fill]{
+			fill:$warning;
+		}
+		&:hover{
+			background-color: $warning;
+			color: #fff;
+			g [fill]{
+				fill:$white;
+			}
+		}
+	}
+	&.btn-danger {
+		background-color: $danger-light;
+		color:$danger;
+		g [fill]{
+			fill:$danger;
+		}
+		&:hover{
+			background-color: $danger;
+			color: #fff;
+			g [fill]{
+				fill:$white;
+			}
+		}
+	}
+	&.btn-dark {
+		background-color: $dark-light;
+		border-color: $dark-light;
+		color:$dark;
+		g [fill]{
+			fill:$dark;
+		}
+		@at-root [data-theme-version="dark"] & {
+			background-color: $dark-opacity;
+			color:$white;
+		}
+		&:hover{
+			background-color: $dark;
+			color: #fff;
+			g [fill]{
+				fill:$white;
+			}
+		}
+	}
+}
+
+.btn-light {
+    background  : $light;
+    border-color: $light;
+    color       : #000;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($light, 5%);
+        color       : $dark;
+        border-color: darken($light, 5%);
+    }
+}
+
+.btn-outline-primary{
+	&:hover{
+		color:var(--theme-text-color);
+	}
+}
+.btn-outline-warning{
+	&:hover{
+		color:$white;
+	}
+}
+
+.btn-dark {
+    background  : $dark;
+    border-color: $dark;
+    color       : $white;
+    
+    
+    &:active,
+    &:hover {
+        background  : lighten($dark, 10%);
+        color       : $white;
+        border-color: darken($dark, 10%);
+    }
+    &:focus{
+		background  : darken($dark, 45%);
+	}
+}
+
+.btn-group{
+    &.btn-rounded{
+        .btn:first-child{
+            border-top-left-radius: 1.875rem;
+            border-bottom-left-radius: 1.875rem;
+        }
+
+        .btn:last-child{
+            border-top-right-radius: 1.875rem;
+            border-bottom-right-radius: 1.875rem;
+        }
+    }
+	&.style-2{
+		gap: 10px;
+		.btn{
+			&.btn-thin{
+				font-size: 13px;
+				gap: 5px;
+			}
+		}
+	}
+}
+.btn-rounded{
+    border-radius: 50px;
+}
+
+.btn-phone {
+  background: #ff4500;
+  border-color: #ff4500;
+  color: #fff;
+}
+
+.btn-email {
+  background: #1ab7ea;
+  border-color: #1ab7ea;
+  color: #fff;
+}
+
+.btn-icon-end {
+	border-left: 0.0625rem solid rgba(255,255,255,0.2);
+    display: inline-flex;
+	padding: 8px 10px;
+    margin-left: 5px;
+}
+
+.btn-icon-text{
+    overflow: hidden;
+    position: relative;
+    border: 0;
+    font-size: 12px;
+    justify-content: left;
+    padding-left: 50px;
+    
+    i{
+        background-color: rgba(0, 0, 0, 0.1);
+        width: 42px;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        &.rounded-xl{
+            border-radius: 2.75rem;    
+        }
+    }
+}
+.socia-btn-icon{
+	padding: 0;
+	width: 45px;
+	min-width: 45px;
+	height: 45px;
+	&.icon-lg{
+	    width: 55px;
+		min-width: 55px;
+		height: 55px;
+		font-size: 24px;
+	}
+	&.icon-sm{
+	    width: 40px;
+		min-width: 40px;
+		height: 40px;
+		font-size: 16px;
+	}
+}
+
+.btn-icon{
+	border-radius: 50px;
+	position: relative;
+	overflow: hidden;
+	&.style-2{
+		i{
+			width: 48px!important;
+			height: 48px!important;
+			background-color: var(--secondary)!important;
+			color: var(--theme-text-color)!important;
+			line-height: 1;
+		}
+		&.icon-start{
+			i{
+				left: 0!important;
+			}
+		}
+	}
+	i{
+		width: 40px;
+		height: 40px;
+		position: absolute;
+		background-color: rgba(255, 255, 255, 0.20);
+		color: var(--theme-text-color);
+		font-size: 20px;
+		top: 50%;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transform: translateY(-50%);
+	}
+	&.btn-lg{
+		&.icon-start{
+			padding-left: 40px;
+			i{
+				left: 2px;
+			}	
+		}
+		&.icon-end{
+			padding-right: 40px;
+			i{
+				right: 2px;
+			}
+		}
+		i{
+			width: 48px;
+			height: 48px;
+			background-color: var(--bg-white);
+			color: var(--secondary)!important;
+			font-size: 24px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+	}
+	img{
+		width: 40px;
+		background: #fff;
+		padding: 10px;
+		border-radius: 20px;
+		position: absolute;
+		left: 4px;
+	}
+	&.icon-start{
+		padding-left: 60px!important;
+
+		i{
+			left: 3px;
+		}
+	}
+	&.icon-end{
+		padding-right: 60px;
+		
+		i{
+			right: 4px;
+		}
+	}
+	&.btn-tp{
+		i{
+			background-color: var(--bg-white);
+			color: #000;
+		}
+	}
+	
+}
+.btn-icon-outline{
+	border-radius: 50px;
+	position: relative;
+	overflow: hidden;
+	i{
+		width: 40px;
+		height: 40px;
+		position: absolute;
+		top: 50%;
+		line-height: 40px;
+		text-align: center;
+		transform: translateY(-50%);
+	}
+	&.icon-start{
+		padding-left: 50px;
+
+		i{
+			left: 6px;
+			border-right: 1px solid var(--border-color);
+		}
+		img{
+			width: 40px;
+			padding: 10px;
+			position: absolute;
+			left: 6px;
+			border-right: 1px solid var(--border-color);
+		}
+	}
+	&.icon-end{
+		padding-right: 50px;
+		
+		i{
+			right: 6px;
+			border-right: 1px solid var(--border-color);
+		}
+		img{
+			width: 40px;
+			padding: 10px;
+			border-radius: 20px;
+			position: absolute;
+			left: 6px;
+		}
+	}
+}
+
+.btn-check:checked + .btn-outline-primary,
+.btn-check:active + .btn-outline-primary,
+.btn-outline-primary:active,
+.btn-outline-primary.active,
+.btn-outline-primary.dropdown-toggle.show{
+	color: #fff;
+}
+
+@each $color-name, $color-value in $colors{
+	.btn-#{$color-name}{
+		background-color: $color-value;
+		color       : $white;
+		
+		&:hover,
+		&:focus,
+		&:active{
+			background-color: darken($color-value, 25%);
+			border-color: darken($color-value, 25%);
+			color       : $white;
+		}
+		
+		&.light{			
+			background-color: lighten($color-value, 40%);
+			border-color: lighten($color-value, 40%);
+			color: $color-value;
+			
+			&:focus,
+			&:active,
+			&:hover{
+				background-color: $color-value;
+				border-color: $color-value;
+				color: #fff;
+			}
+		}
+	}
+	.link-#{$color-name}{
+		color: $color-value;
+		
+		&.link-underline{
+			text-decoration-color: $color-value !important;
+		}
+	}
+	.btn-outline-#{$color-name}{
+		border-color: $color-value;
+		color: $color-value;
+		
+		&:hover,
+		&:focus,
+		&:active{
+			color: #fff;
+			background-color: $color-value;
+		}
+	}
+}
+
+///////////////////
+// Social Buttons
+///////////////////
+.btn-facebook {
+    background  : $facebook;
+    border-color: $facebook;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($facebook, 10%);
+        color       : $white;
+        border-color: darken($facebook, 10%);
+    }
+}
+
+.btn-twitter {
+    background  : $twitter;
+    border-color: $twitter;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($twitter, 10%);
+        color       : $white;
+        border-color: darken($twitter, 10%);
+    }
+}
+
+.btn-youtube {
+    background  : $youtube;
+    border-color: $youtube;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($youtube, 10%);
+        color       : $white;
+        border-color: darken($youtube, 10%);
+    }
+}
+
+.btn-instagram {
+    background  : $instagram;
+    border-color: $instagram;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($instagram, 10%);
+        color       : $white;
+        border-color: darken($instagram, 10%);
+    }
+}
+
+.btn-pinterest {
+    background  : $pinterest;
+    border-color: $pinterest;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($pinterest, 10%);
+        color       : $white;
+        border-color: darken($pinterest, 10%);
+    }
+}
+
+.btn-linkedin {
+    background  : $linkedin;
+    border-color: $linkedin;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($linkedin, 10%);
+        color       : $white;
+        border-color: darken($linkedin, 10%);
+    }
+}
+
+.btn-google-plus {
+    background  : $google-plus;
+    border-color: $google-plus;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($google-plus, 10%);
+        color       : $white;
+        border-color: darken($google-plus, 10%);
+    }
+}
+
+.btn-google {
+    background  : $google;
+    border-color: $google;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($google, 10%);
+        color       : $white;
+        border-color: darken($google, 10%);
+    }
+}
+
+.btn-snapchat {
+    background  : $snapchat;
+    border-color: $snapchat;
+    color       : $black;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($snapchat, 10%);
+        color       : $black;
+        border-color: darken($snapchat, 10%);
+    }
+}
+
+.btn-whatsapp {
+    background  : $whatsapp;
+    border-color: $whatsapp;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($whatsapp, 10%);
+        color       : $white;
+        border-color: darken($whatsapp, 10%);
+    }
+}
+
+.btn-tumblr {
+    background  : $tumblr;
+    border-color: $tumblr;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($tumblr, 10%);
+        color       : $white;
+        border-color: darken($tumblr, 10%);
+    }
+}
+
+.btn-reddit {
+    background  : $reddit;
+    border-color: $reddit;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($reddit, 10%);
+        color       : $white;
+        border-color: darken($reddit, 10%);
+    }
+}
+
+.btn-spotify {
+    background  : $spotify;
+    border-color: $spotify;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($spotify, 10%);
+        color       : $white;
+        border-color: darken($spotify, 10%);
+    }
+}
+
+.btn-yahoo {
+    background  : $yahoo;
+    border-color: $yahoo;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($yahoo, 10%);
+        color       : $white;
+        border-color: darken($yahoo, 10%);
+    }
+}
+
+.btn-dribbble {
+    background  : $dribbble;
+    border-color: $dribbble;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($dribbble, 10%);
+        color       : $white;
+        border-color: darken($dribbble, 10%);
+    }
+}
+
+.btn-skype {
+    background  : $skype;
+    border-color: $skype;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($skype, 10%);
+        color       : $white;
+        border-color: darken($skype, 10%);
+    }
+}
+
+.btn-quora {
+    background  : $quora;
+    border-color: $quora;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($quora, 10%);
+        color       : $white;
+        border-color: darken($quora, 10%);
+    }
+}
+
+.btn-vimeo {
+    background  : $vimeo;
+    border-color: $vimeo;
+    color       : $white;
+
+    &:active,
+    &:focus,
+    &:hover {
+        background  : darken($vimeo, 10%);
+        color       : $white;
+        border-color: darken($vimeo, 10%);
+    }
+}
+
+// OTHER BTN ==
+.btn-grey{
+	--secondary-light: #898C90;
+	background-color: var(--secondary-light);
+	color: #fff;
+	&.btn-outline-grey{
+		border-color: var(--secondary-light);
+		color: #fff;
+	}
+	&:active,
+	&:focus,
+	&:hover{
+		background-color: var(--light);
+		color: var(--title);
+	}
+}
+
+
+// Animate Button ===
+.signIn-btn{
+	overflow: unset;
+	i{	
+		@include transitionMedium;
+	}
+	&:focus,
+	&:active{
+		padding-left: 30px!important;
+		padding-right: 60px!important;
+		i{
+			@include transitionMedium;
+			left: 176px!important;
+		}
+	}
+}

@@ -1,0 +1,137 @@
+//FOOTER ====
+.footer{
+    height: auto;
+    align-items: center;
+    display: flex;
+    z-index: 1;
+    flex-direction: column;
+    
+	&.fixed{
+        width: 100%;
+        left: 0;
+        bottom: 0;
+        z-index: 9999;
+        position: fixed;
+		
+        .btn{
+            .cart{
+                transform: scale(1.5);
+            }
+        }
+    }
+    &.transparent{
+        background-color: #e5eff5;        
+    }
+	&.shadow{
+		box-shadow: 0px 0px 30px 0px rgba(69, 41, 1, 0.10)!important;
+	}
+}
+
+
+//Menu style ======
+.menubar-area{
+	padding: 0;
+	background-color: var(--secondary);
+	border-radius: 50px;
+    &.footer-fixed{
+		position: fixed !important;
+		bottom: 10px;
+		left: 50%;
+		z-index: 10;
+		max-width: 600px;
+		transform: translateX(-50%);
+		width: calc(100% - 20px);
+	}
+	.toolbar-inner {
+        padding-left: 10px;
+        padding-right: 10px;
+		padding-top: 10px;
+		padding-bottom: 10px;
+        display: flex;
+        margin-right: auto;
+        margin-left: auto;
+        align-items: center;
+		justify-content: space-between;
+		min-height: 65px;
+        .nav-link,
+		.menu-toggler{
+			position: relative;
+			color: var(--title);
+			text-align: center;
+			font-size: 18px;
+			width: 48px;
+			min-width: 48px;
+			height: 48px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			border-radius: 50%;
+			&::after{
+				content: "";
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				width: 65px;
+				height: 65px;
+				background-color: #212830;
+				border-radius: 50%;
+				z-index: -1;
+				display: none;
+				transform: translate(-50%, -50%);
+			}
+			svg{
+				width: 20px;
+				height: 20px;
+				path{
+					fill: #fff;
+					fill-opacity: 0.25;
+				}
+			}
+			&.active,
+			&.item-active{
+				background-color: var(--primary);
+				&::after{
+					display: block;
+				}
+				i{
+					color: var(--secondary);
+				}
+				svg{
+					path{
+						fill: var(--secondary);
+						fill-opacity: 1;
+					}
+				}
+			}
+            .title{
+                display: block;
+                margin-top: 5px;
+                font-weight: 500;
+                font-size: 12px;
+            }
+        }
+    }
+}
+
+
+// Footer Fixed Button ==
+.footer-fixed-btn{
+	position: fixed;
+    background-color: transparent;
+    bottom: 0;
+    left: 50%;
+    width: 100%;
+    max-width: 600px;	
+    z-index: 9;
+	padding: 10px;
+    transform: translateX(-50%);
+	.inner-area{
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 25px;
+		padding: 10px;
+		background-color: var(--secondary);
+		box-shadow: 0 10px 20px 0 rgba(19, 25,  33, 0.20);
+	}
+} 

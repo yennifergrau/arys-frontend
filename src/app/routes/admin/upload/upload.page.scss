@@ -1,0 +1,83 @@
+.instruction-steps li::before {
+    content: "✔";
+    font-size: 13px;
+    color: #eec231;
+    margin-right: 8px;
+}
+.instruction-steps {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 4px;
+  }
+  
+  .instruction-steps li {
+      display: flex;
+      margin-bottom: 4px;
+      font-size: 12px;
+      color: #6c757d;
+  }
+
+  .ic-media{
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+.button-group-image{
+    margin-top: 30px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+}
+
+.text-color-light{
+    color: var(--light);
+}
+
+.text-color-font{
+    color: var(--pink);
+}
+
+.btn-link-active{
+    font-size: 12px;
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+.text-area-font{
+    font-size: 7px;
+}
+
+#file-upload {
+    display: none;
+  }
+  
+  #file-label {
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 10px;
+    border: none;
+    font-size: 14px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .Image-container {
+    max-width: 100%; 
+    max-height: 500px;
+    height: auto; 
+    display: block; 
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 10px; /* Bordes redondeados */
+  }
+  
+  
+  #file-label.processing {
+    cursor: not-allowed;
+  }
+  
+
+  .image-found{
+    width: 150px;
+  }

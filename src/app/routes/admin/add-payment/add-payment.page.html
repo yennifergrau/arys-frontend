@@ -1,0 +1,212 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    <!-- Header -->
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a
+            [routerLink]="['/admin/customer/payment/purchased']"
+            class="back-btn ic-icon icon-sm"
+          >
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content"><h5 class="title">Pago del crédito</h5></div>
+      </div>
+    </header>
+    <!-- Header -->
+    @if(showLoading){
+    <app-spinner />
+    }
+    <!-- Main Content Start -->
+    <main class="page-content space-top">
+      <div class="container p-2">
+        <div class="ic-list m-b20">
+          <div class="main-profile">
+            <!-- <div class="media centere">
+              <div class="media-40 user-image">
+                <img
+                  src="../../../../assets/imagenes/autos/toyota.jpg"
+                  alt="profile-image"
+                />
+              </div>
+              <h4 class="name mb-0">Servic</h4>
+            </div> -->
+          </div>
+
+          <div class="chat-list">
+            <ul id="myList">
+              <li class="border-rounded">
+                <a class="list-items active">
+                  <div class="list-content">
+                    <h5 class="title">Pague antes de:</h5>
+                  </div>
+                  <div class="ic-status">{{pay_before | date : 'dd/MM/yyyy'}}</div>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="text-information">
+            <p class="info-text">
+              Realize el Pago Móvil desde el banco de su preferencia
+            </p>
+          </div>
+
+          <div class="ic-box style-2 rounded-md mt-auto border-rounded-2">
+            <div class="title-head">
+              <h6 class="title" align="center">Datos del pago móvil</h6>
+            </div>
+            <div class="view-cart">
+              <ul>
+                <li>
+                  <span class="name">BANCO</span>
+                  <span class="about">{{datapayment?.bankname}}</span>
+                </li>
+                <li>
+                  <span class="name">RIF</span>
+                  <span class="about">{{datapayment?.clientid}}</span>
+                </li>
+                <li>
+                  <span class="name">TLF.</span>
+                  <span class="about">{{datapayment?.phonenumber}}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="text-none-info">
+            <h6 class="mb-3 s">Indique monto a pagar</h6>
+          </div>
+
+          <div class="ic-box style-2 rounded-md mt-auto border-rounded-2">
+            <div class="radio-group">
+              <div class="radio-option">
+                <label class="radio-label">
+                  <input
+                    type="radio"
+                    name="radio2"
+                    value="1"
+                    checked
+                    (change)="onRadioChange($event)"
+                  />
+                  <span class="checkmark"></span>
+                  Pago Total
+                </label>
+                <div class="ic-status">{{amount_use}}</div>
+              </div>
+
+              <div class="radio-option">
+                <label class="radio-label">
+                  <input
+                    type="radio"
+                    name="radio2"
+                    value="2"
+                    (change)="onRadioChange($event)"
+                  />
+                  <span class="checkmark"></span>
+                  Pago Mínimo
+                </label>
+                <div class="ic-status">0.00</div>
+              </div>
+
+              <div class="radio-option">
+                <label class="radio-label">
+                  <input
+                    type="radio"
+                    name="radio2"
+                    value="3"
+                    (change)="onRadioChange($event)"
+                  />
+                  <span class="checkmark"></span>
+                  Pago Parcial
+                </label>
+                <div class="ic-status">
+                  <input
+                    type="text"
+                    class="partial-input"
+                    placeholder="Monto"
+                    type="tel"
+                    inputmode="numeric"
+                    mask="separator.2"
+                    thousandSeparator="."
+                    decimalMarker=","
+                    suffix=" Bs"
+                    [(ngModel)]="customAmount"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-none-info">
+            <h6 class="mb-3 s">Datos de origen del pago móvil</h6>
+          </div>
+
+          <form [formGroup]="paymentForm" action="submit" (submit)="onSubmit()">
+            <div class="box-payment">
+              <div class="payment-group">
+                <div class="group">
+                  <select formControlName="phone_provider">
+                    <option value="0412" selected>0412</option>
+                    <option value="0414">0414</option>
+                    <option value="0424">0424</option>
+                    <option value="0424">0416</option>
+                    <option value="0424">0426</option>
+                  </select>
+                  <input
+                  [ngClass]="{'invalid-input': phoneControl.invalid && (phoneControl.dirty || phoneControl.touched)}"
+                    mask="000-0000"
+                    type="text"
+                    placeholder="Número"
+                    formControlName="phone"
+                  />
+                </div>
+                <div class="group">
+                  <select formControlName="bank" (change)="updateBankName()">
+                    <option value="" selected>Banco</option>
+                    @for(x of data_bank;track $index){
+                    <option [value]="x.accountPrefix">{{x.name}}</option>
+                    }
+                  </select>
+                  <input
+                  [ngClass]="{'invalid-input': bankControl.invalid && (bankControl.dirty || bankControl.touched)}"
+                    [value]="selectedBankName"
+                    type="text"
+                    readonly
+                    placeholder="Nombre del banco"
+                  />
+                </div>
+                <div class="group">
+                  <label>Fecha</label>
+                  <input type="date" formControlName="date" />
+                </div>
+              </div>
+            </div>
+
+            <div class="btn-pay">
+              <div class="btn-group style-2">
+                <a
+                  [routerLink]="['/admin/customer/payment/purchased']"
+                  class="btn px-3 btn-thin rounded btn-primary text-secondary border-2 w-100"
+                  ><i class="font-15 fa-solid fa-close"></i>Cancelar</a
+                >
+                <button
+                  type="submit"
+                  class="btn px-3 btn-thin rounded btn-secondary w-100"
+                >
+                  <i
+                    class="fa-sharp text-primary fa-solid fa-credit-card font-15"
+                  ></i
+                  >Pagar
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer1"></div>

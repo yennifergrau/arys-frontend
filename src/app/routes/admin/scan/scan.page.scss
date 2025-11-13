@@ -1,0 +1,74 @@
+.instruction-steps li::before {
+    content: "✔";
+    font-size: 13px;
+    color: #fad819;
+    margin-right: 8px;
+}
+.instruction-steps {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 10px;
+  }
+  
+  .instruction-steps li {
+      display: flex;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #6c757d;
+  }
+
+.button-group-image{
+    margin-bottom: 20px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+}
+
+.text-color-light{
+    color: var(--light);
+}
+
+.text-color-font{
+    color: var(--pink);
+}
+
+.btn-link-active{
+    font-size: 12px;
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+.text-area-font{
+    font-size: 7px;
+}
+
+.camera {
+    width: 100%;
+    height: 250px;
+    background-color: #B7B7B7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .camera:after {
+    color: white;
+    font-size: 18px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    z-index: 1001;
+  }
+  

@@ -1,0 +1,9 @@
+{
+    "dataBank":{
+        "ip":"10.1.1.1",
+        "bank":"94932663-923d-48a3-b13a-6b0bea8f3608",
+        "channel":"eea602fb-749e-460a-9805-9f993fc0036a",
+        "terminal":"0",
+        "op":"P2C"
+    }
+}
