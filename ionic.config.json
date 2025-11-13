@@ -1,7 +1,0 @@
-{
-  "name": "Arys",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "angular-standalone"
-}
