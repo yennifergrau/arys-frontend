@@ -1,0 +1,323 @@
+//Deaful List
+.list-group{
+	.list-group-item{
+		background-color: var(--bg-white);
+		border-color: var(--border-color);
+		color: var(--title);
+		&.active{
+			--title: #fff!important;
+			background-color: var(--primary);
+			color: var(--theme-text-color);
+		}
+		&-primary{
+			background-color: var(--primary-light);
+		}
+		&-secondary{
+			background-color: var(--secondary-light);
+		}
+		&-success{
+			background-color: $success-light;
+		}
+		&-danger{
+			background-color: $danger-light;	
+		}
+		&-warning{
+			background-color: $warning-light;
+		}
+		&-info{
+			background-color: $info-light;
+		}
+		&-light{
+			background-color: $light;
+		}
+		&-dark{
+			background-color: $dark-light;
+		}
+	}
+}
+
+
+.ic-list{
+    & > ul > li{
+        border-bottom: 1px solid var(--border-color-2);
+        padding: 12px 0;
+        .ic-media{
+            margin-right: 15px;
+            min-width: 15px;
+        }
+        .list-icon {
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            i{
+                font-size: 20px;
+                line-height: 1;
+				color: var(--text-color);
+            }
+			svg {
+                path{
+                    fill: var(--text-color);
+                }
+				width: 24px;
+				height: 24px;
+			}
+			&.icon-sm{
+                i{
+                    font-size: 18px;
+                }
+				svg {
+					width: 18px;
+					height: 18px;
+					transform: scale(1.1);
+				}
+			}
+		}
+        .item-content{
+            display: flex;
+            align-items: center;
+            position: relative;
+            .ic-icon{
+                i{
+                    color: rgba(0, 0, 0, 0.4);
+                }
+            }
+            .title{
+                color: var(--title);
+                font-weight: 500;
+                text-transform: capitalize;
+                margin-bottom: 0;
+            }
+        }
+        .item-link{
+            &::after{
+                content: "\e844";
+                font-family: 'feather' !important;
+                right: 0;
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                font-weight: 500;
+                font-size: 20px;
+            }
+        }
+    }
+	.ic-list-group{
+		.list-group-items{
+			padding: 10px;
+			margin-bottom: 10px;
+			position: relative;
+			border: 0;
+			background-color: var(--bg-white);
+			border-radius: var(--border-radius-md);
+			.item-link{
+				display: flex;
+				align-items: center;
+				&::after{
+					content: "\e829";
+					font-family: 'feather' !important;
+					right: 12px;
+					position: absolute;
+					top: 50%;
+					transform: translateY(-50%);
+					font-weight: 500;
+					font-size: 24px;
+				}
+			}
+			.ic-icon{
+				margin-right: 10px;
+				border-radius: var(--border-radius);
+			}
+			.list-content{
+				.title{
+					margin-bottom: 2px;
+					text-transform: capitalize;
+					font-size: 14px;
+					font-weight: 400;
+				}
+				.active-status{
+					margin-bottom: 0;
+					font-size: 11px;
+					color: var(--text-muted);
+					font-weight: 300;
+				}
+			}
+		}
+	}
+    &.list-space{
+        & > ul > li{
+            padding-left: 20px;
+            padding-right: 20px;
+            a{
+                &.item-link{
+                    &:after{
+                        right: 20px;
+                    }
+                }
+            }
+        }
+    }
+	&.style-1{
+		ul{
+			li{
+				border-bottom: 0;
+				a{
+					color: var(--body-color);
+				}
+				padding: 10px 0;
+				&:last-child{
+					padding-bottom: 5px;
+				}
+			}
+			.item-content {
+				.list-icon{
+					margin-right: 10px;
+				}
+				.ic-icon{
+					margin-right: 15px;
+					width: auto;
+					height: auto;
+					svg{
+						width: 20px;
+						height: 20px;
+						svg{
+							path{
+								fill: var(--body-color);
+							}
+						}
+					}
+					i{
+						font-size: 20px;
+						color: var(--body-color);
+					}
+				}
+				.ic-inner{
+					.title{
+						font-weight: 400;
+						color: var(--title);
+                        font-size: 12px;
+                        line-height: 1;
+						font-family: var(--font-family-base);
+					}
+				}
+			}
+		}
+	}
+	&.style-2{
+		ul{
+			li{
+				padding: 15px;
+				margin: 0 -15px;
+				a{
+					color: var(--rgba-primary-8);
+				}
+			}
+			.item-content {
+				.ic-icon{
+					margin-right: 15px;
+					width: auto;
+					height: auto;
+					svg{
+						width: 20px;
+						height: 20px;
+						svg{
+							path{
+								fill: var(--rgba-primary-3);
+							}
+						}
+					}
+					i{
+						font-size: 20px;
+						color: var(--rgba-primary-3);
+					}
+				}
+				.ic-inner{
+					.title{
+						font-weight: 400;
+						color: var(--title);
+                        font-size: 16px;
+                        line-height: 1;
+					}
+				}
+			}
+		}
+	}
+	&.style-3{
+		ul{
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			li{
+				border-bottom: 0px;
+				padding: 10px;
+				background-color: var(--bg-white);
+				border-radius: 10px;
+				a{
+					color: var(--body-color);
+				}
+			}
+			.item-content {
+				.ic-icon{
+					margin-right: 12px;
+				}
+				.ic-inner{
+					.title{
+						font-weight: 400;
+						color: var(--title);
+                        font-size: 14px;
+                        line-height: 1;
+					}
+				}
+			}
+			.item-link{
+				&::after{
+					opacity: 0.5;
+				}
+			}
+		}
+	}
+}
+
+// Search List ==
+.recent-search-list{
+	background-color: var(--bg-white);
+	margin-bottom: 10px;
+	border-radius: var(--border-radius-md);
+	ul{
+		li{
+			width: 100%;
+			border-bottom: 2px dashed var(--border-color-2);
+			padding: 15px;
+			&:last-child{
+				border-bottom: 0;
+			}
+			&.search-content{
+				display: flex;
+				align-items: center;
+				color: var(--title);
+				font-size: 15px;
+				font-weight: 400;
+				.left-content{
+					display: flex;
+					align-items: center;
+					flex: 1;
+					gap: 15px;
+					span{
+						font-size: 12px;
+					}
+					i{
+						font-size: 20px;
+						color: var(--primary);					
+					}
+				} 
+				.right-content{
+					color: var(--secondary);
+					font-size: 20px;
+					i{
+						color: var(--title);					
+					}
+				} 
+			}
+		}
+	}
+}

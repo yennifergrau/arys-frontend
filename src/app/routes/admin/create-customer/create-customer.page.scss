@@ -1,0 +1,31 @@
+.vehicleOwnership {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .invalid-input {
+    border: 2px solid red !important;
+    background-color: #f8d7da;
+  }
+  
+  .full-height .page-content .container {
+    height: 100vh;
+  }
+  select#prefijo {
+    height: 100%;
+    background: white;
+    border: none !important;
+  }
+  
+  .input-group-text:has(select:focus) + input {
+    border-color: #ffb000 !important;
+  }
+  
+  .dropdown .dropdown-menu {
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 99;
+  }
+  

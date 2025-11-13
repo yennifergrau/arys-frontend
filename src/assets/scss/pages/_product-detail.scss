@@ -1,0 +1,246 @@
+// Filter Area ===
+.ic-product-filter{
+    max-width: 600px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+	border-radius: 50px;
+	background-color: var(--secondary);
+	li{
+		flex: 1;
+		a{
+			font-size: 14px;
+			text-transform: uppercase;
+			font-weight: 400;
+			display: flex;
+			align-items: center;
+			justify-content: center;	
+			color: #fff;
+			border-radius: 50px;
+			padding: 15px;
+			border: 8px solid transparent;
+			&.active{
+				background-color: var(--primary);
+				color: #000;
+				border-color: #212830;
+			}
+		}
+	}
+}
+
+.ic-filter-offcanvas{
+	margin: 0 10px 85px;
+	border-radius: var(--border-radius-md)!important;
+	background-color: var(--bg-white);
+	.offcanvas-header{
+		padding: 15px;
+		border-bottom: 2px dashed var(--border-color-2);
+		.offcanvas-title{
+			font-size: 14px;
+			font-weight: 400;
+			text-transform: uppercase;
+		}
+	}
+}
+
+.filter-inner-content{
+	margin-bottom: 30px;
+	.title-bar{
+		margin-bottom: 10px;
+	}
+}
+
+
+//Product Detail ==
+.ic-product-preview{
+	position: relative;
+    overflow: hidden;
+    background-color: var(--bg-white);
+    padding: 15px;
+	border-radius: var(--border-radius-md);
+	margin-bottom: 10px;
+	.product-meta{
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 35px;
+		.ic-status,
+		.ic-off{
+			font-size: 12px;
+			font-weight: 500;
+			margin-bottom: 2px;
+			color: #EB5757;
+		}
+		.ic-status{
+			color: var(--text-color);
+		}
+		.ic-review{
+			color: var(--text-muted);
+			font-size: 12px;
+			font-weight: 400;
+		}
+		.star-rating{
+			display: flex;
+			align-items: center;
+			justify-content: end;
+			gap: 2px;
+			margin-bottom: 2px;
+			li{
+				svg{
+					width: 16px;
+					height: 16px;
+				}
+			}
+		}
+	}
+	.ic-media{
+		max-width: 310px;
+		margin: 0 auto 35px;
+	}
+	.detail-content{
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		border-top: 2px dashed var(--border-color-2);
+		margin: 0 -15px -15px;
+		padding: 20px;
+		.title{
+			margin-bottom: 0;
+			text-transform: uppercase;
+			font-weight: 700;
+			font-size: 18px;	
+			max-width: 130px;
+		}
+	}
+}
+
+
+.ic-product-detail{
+	.color-filter{
+		.ic-color-picker{
+			display: flex;
+			align-items: center;
+			gap: 15px;
+			.form-check{
+				padding-left: 0;
+				padding-right: 0;
+				span{
+					width: 30px;
+					height: 30px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					background-color: var(--primary);
+					position: relative;
+					border-radius: 50%;
+					z-index: 1;
+					i{
+						font-size: 16px;
+						color: #fff;
+						display: none;
+					}
+					&:after{
+						content: "";
+						position: absolute;
+						top: 50%;
+						left: 50%;
+						width: 35px;
+						height: 35px;
+						background-color: transparent;
+						border: 1px solid var(--primary);
+						border-radius: 50%;
+						transform: translate(-50%, -50%) scale(0);
+						z-index: -1;
+					}
+				}
+				.form-check-input{
+					opacity: 0;
+					position: absolute;
+					z-index: 2;
+					margin-left: 0;
+					margin-top: 0;
+					cursor: pointer;
+				}
+				.form-check-input:checked + span {
+					i{
+						display: block;
+					}
+					&:after{
+						transform: translate(-50%, -50%) scale(1);
+					}
+				}
+				&:last-child{
+					span{
+						margin-right: 0;
+					}
+				}
+			}
+		}
+	}
+	.description{
+		p{
+			font-size: 14px;
+			font-weight: 300;
+			color: var(--text-muted);
+			line-height: 23px;
+		}
+	}
+	.ic-select-btn{
+		gap: 8px;
+		display: flex;
+		align-items: center;
+	}
+	.ic-name{
+		font-size: 14px;
+		font-weight: 400;
+	}
+	.ic-color-filter{
+		margin-bottom: 15px;
+	}
+
+	.specification-list {
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
+		li{
+			display: flex;
+			align-items: center;
+			span{
+				flex: 1;
+				font-size: 12px;
+				font-weight: 400;
+			}
+			.name{
+				color: var(--text-muted);
+			}
+		}
+	}
+}
+
+.total-cart{
+	display: flex;
+	align-items: center;
+	.price{
+		margin-bottom: 0;
+	}
+	.item-bookmark{
+		position: unset;
+		width: 55px;
+		height: 55px;
+		background-color: #E8E8E8;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--border-radius-sm);
+		i{
+			color: #000;
+		}
+		&.active{
+			background-color: #ff2a4f;
+			i{
+				animation: unset;
+				color: #E8E8E8;
+			}	
+		}
+	}
+}

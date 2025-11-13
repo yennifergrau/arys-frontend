@@ -1,0 +1,97 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a
+            [routerLink]="[`/admin/ocr-preview/data/scan`]"
+            class="back-btn ic-icon icon-sm"
+          >
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content">
+          <div class="mid-content">
+            <h5 class="title">Escanear documento</h5>
+          </div>
+        </div>
+      </div>
+    </header>
+    @if(showLoading){
+    <app-spinner />
+    }
+    <main class="page-content space-top p-b80">
+      <div class="container p-2">
+        <div class="ic-product-detail">
+          <div class="card style-2 mb-0">
+            <div class="card-header">
+              <h6 class="card-title">Recomendación:</h6>
+            </div>
+            <div class="card-body">
+              <ul class="specification-list instruction-steps">
+                <li>
+                  <span class="name"
+                    >Coloca el documento sobre una superficie plana y bien
+                    iluminada.</span
+                  >
+                </li>
+                <li>
+                  <span class="name"
+                    >Evita el uso de flash, ya que puede generar reflejos que
+                    dificultan la lectura.</span
+                  >
+                </li>
+                <li>
+                  <span class="name"
+                    >Asegúrate de que el documento esté completamente visible en
+                    la cámara.</span
+                  >
+                </li>
+                <li>
+                  <span class="name"
+                    >Mantén la cámara estable y a una distancia adecuada para
+                    que el texto sea nítido.</span
+                  >
+                </li>
+                <li>
+                  <span class="name"
+                    >Presiona "Capturar" cuando estés listo para obtener la
+                    imagen.</span
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="ic-product-preview">
+          <div class="product-meta"></div>
+          <div class="ic-media">
+            <div class="camera">
+              <video id="video" autoplay playsinline></video>
+            </div>
+          </div>
+        </div>
+
+        <div class="button-group-image">
+          <div class="btn-group style-2">
+            <a
+              [routerLink]="[`/admin/ocr-preview/data/scan`]"
+              class="btn px-3 btn-thin rounded btn-primary border-2 w-100 text-color-light"
+            >
+              <i class="font-15 fa-solid fa-xmark"></i> Cancelar
+            </a>
+            <button
+              (click)="capturePhoto()"
+              class="btn px-3 btn-thin rounded btn-secondary w-100"
+            >
+              <i class="fa-solid fa-barcode font-15 text-primary"></i> Capturar
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script async src="https://docs.opencv.org/3.4.0/opencv.js"></script>
+<div class="toast-container" id="toastContainer"></div>

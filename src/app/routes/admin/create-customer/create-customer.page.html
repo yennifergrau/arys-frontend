@@ -1,0 +1,120 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    @if(showLoading){
+    <app-spinner />
+    }
+    <!-- Header -->
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a
+            [routerLink]="['/admin/subscription-payment-verify']"
+            class="back-btn ic-icon icon-sm"
+          >
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content"><h5 class="title">Activación de Crédito</h5></div>
+      </div>
+    </header>
+    <!-- Header -->
+
+    <!-- Main Content Start -->
+    <main class="page-content space-top p-b70">
+      <div class="container px-2 pb-2">
+           <form class="ic-form-group"
+          autocomplete="off"
+          [formGroup]="emissionForm"
+        >
+          <div class="card style-2">
+            <div class="card-header">
+              <h6 class="card-title">Datos del Cliente</h6>
+            </div>
+            <div class="card-body">
+              <div [formGroupName]="'clientId'" class="m-b20 input-group input-lg input-group-icon input-rounded">
+                <div class="input-group-text">
+                  <select id="prefijo" name="prefijo" formControlName="doctype">
+                    <option value="V">V</option>
+                    <option value="E">E</option>
+                    <option value="J">J</option>
+                  </select>
+                </div>
+                <input
+                  type="numeric"
+                  inputmode="numeric"
+                  class="form-control"
+                  placeholder="Documento de identidad"
+                  mask="separator.2"
+                  formControlName="docid"
+                  thousandSeparator="."
+                />
+              </div>
+              
+            <div class="m-b15 input-group input-lg input-rounded">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Nombre"
+                formControlName="name"
+                readonly
+              />
+            </div>
+            <div class="m-b15 input-group input-lg input-rounded">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Apellido"   
+                formControlName="last_name"
+                readonly
+              />
+            </div>
+            <div class="m-b15 input-group input-lg input-rounded">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Email"
+                formControlName="email"
+                readonly
+              />
+            </div>
+            <div class="m-b15 input-group input-lg input-rounded">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Teléfono"
+                readonly
+                formControlName="phone_number"
+                prefix="+58 "
+              />
+            </div>
+            <div class="m-b15 input-group input-lg input-rounded">
+              <input
+              [ngClass]="{'invalid-input': accountControl.invalid && (accountControl.dirty || accountControl.touched)}"
+              type="text"
+              inputmode="numeric"
+              class="form-control"
+              placeholder="Número de cuenta bancaria"
+              formControlName="account_number"
+              mask="0000-0000-00000000"
+              [dropSpecialCharacters]="true"
+            />
+            
+            </div>
+            </div>
+          </div>
+    
+          <div class="footer-btn mb-4">
+            <button
+              class="btn btn-lg btn-thin btn-secondary text-primary w-100 rounded-xl"
+              (click)="onSubmit()"
+            >
+              Activar
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>

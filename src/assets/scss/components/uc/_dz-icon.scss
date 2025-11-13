@@ -1,0 +1,191 @@
+.fi{
+	display: inline-flex;
+}
+.back-btn{
+	i{
+		font-size: 24px!important;
+	}
+}
+.ic-icon{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--border-radius-sm);
+	width: 45px;
+	min-width: 45px;
+	height: 45px;
+	i{
+		font-size: 20px;
+	}
+	svg{
+        width: 24px;
+        height: 24px;
+		path{
+			stroke: var(--title);
+		}
+    }
+	&.icon-primary{
+		background-color: var(--primary);
+		color: var(--title);
+		i{
+			color: var(--title);
+		}
+		svg{
+			path{
+				fill: var(--title);
+			}
+		}
+	}
+	&.icon-lg{
+		width: 50px;
+		min-width: 50px;
+		height: 50px;
+		i{
+			font-size: 24px;
+		}
+	}
+	&.icon-sm{
+		width: 35px;
+		min-width: 35px;
+		height: 35px;
+		svg{
+			width: 20px;
+			height: 20px;
+		}
+		i{
+			font-size: 18px;
+		}
+	}
+	&.icon-xs{
+		width: 30px;
+		min-width: 30px;
+		height: 30px;
+		i{
+			font-size: 16px;
+		}
+	}
+	&.icon-fill{
+		background-color: #F6F6F6;
+		color: var(--primary);
+		i{
+			color: var(--title)!important;
+		}	
+	}
+	&.style-2{
+		width: 40px;
+		min-width: 40px;
+		height: 40px;
+		i{
+			display: inline-flex;
+			font-size: 24px;
+		}
+	}
+	&.style-3{
+		position: absolute;
+		top: 8px;
+		left: 8px;
+		z-index: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 38px;
+		height: 38px;
+		font-size: 16px;
+		background-color: var(--rgba-primary-2);
+		color: var(--theme-text-color);
+		border-radius: 50%;
+	}
+	&.notification-badge{
+		.badge{
+			top: 0;
+			right: 0;
+			left: auto;
+		}
+	}
+}
+
+.ic-icon-box{
+	width: 60px;
+	min-width: 60px;;
+	height: 60px;
+	border: 1px solid var(--border-color);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	&.fill-white{
+		background-color: #fff;
+		color: #000;
+		i{
+			color: #000;
+		}
+		svg{
+			path{
+				fill: #000;
+			}
+		}
+	}
+	svg{
+		path{
+			fill: var(--title);
+		}
+	}
+}
+
+.notification-badge{
+	position: relative;
+	display: flex;
+	.badge{
+		position: absolute;
+		top: -4px;
+		left: 10px;
+		padding: 2px;
+		border-radius: 20px;
+		font-weight: 400;
+		font-size: 10px;
+		background-color: #FF3131;
+	}
+	svg{
+		path{
+			fill: var(--title);
+		}	
+	}
+}
+
+// BTN ICON (btn-close) ===
+.btn-close{
+	background: none;
+	&.style-2{
+		font-size: 12px;
+		line-height: normal;
+		i{
+			transform: scale(1.2);
+		}
+	}
+}
+
+// ICON BTN ==
+.ic-btn-icon{
+	gap: 0px;
+    text-align: left;
+    padding: 10px;
+	max-width: 175px;
+	background-color: var(--bg-white);
+	text-transform: uppercase;
+	span{
+		padding: 0 15px;
+	}
+	i{
+		width: 58px;
+		min-width: 58px;
+		height: 58px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		font-size: 16px;
+		background-color: var(--primary);
+		color: var(--title);
+		font-size: 30px;
+	}
+}

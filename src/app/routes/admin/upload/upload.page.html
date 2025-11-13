@@ -1,0 +1,111 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a
+            [routerLink]="[`/admin/ocr-preview/data/scan`]"
+            class="back-btn ic-icon icon-sm"
+          >
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content">
+          <div class="mid-content"><h5 class="title">Cargar documento</h5></div>
+        </div>
+      </div>
+    </header>
+    @if(showLoading){
+    <app-spinner />
+    }
+    <main class="page-content space-top p-b80">
+      <div class="container p-2">
+        <div class="ic-product-preview">
+          <div class="product-meta"></div>
+          <div class="ic-media">
+            <img
+              *ngIf="!imageUrl"
+              src="../../../../../assets/imagenes/nube.png"
+              alt="Logo-found"
+              class="image-found"
+            />
+
+            <img
+              [src]="imageUrl"
+              *ngIf="imageUrl"
+              [ngClass]="{ 'disabled-image': isDisabled }"
+              alt="Imagen seleccionada"
+              class="Image-container"
+            />
+
+            <iframe
+              *ngIf="pdfUrl && isPdf"
+              [src]="pdfUrl"
+              width="100%"
+              height="500px"
+              class="pdf-container"
+            ></iframe>
+          </div>
+        </div>
+
+        <div class="ic-product-detail">
+          <div class="card style-2 mb-0">
+            <div class="card-header">
+              <h6 class="card-title">Recomendación:</h6>
+            </div>
+            <div class="card-body">
+              <ul class="specification-list instruction-steps">
+                <li>
+                  <span class="name"
+                    >Haz clic en "Adjuntar" para seleccionar tu documento.</span
+                  >
+                </li>
+                <li>
+                  <span class="name"
+                    >Revisa que la vista previa sea clara y legible.</span
+                  >
+                </li>
+                <li>
+                  <span class="name"
+                    >Si el documento es correcto, presiona "Enviar
+                    Documento".</span
+                  >
+                </li>
+              </ul>
+              <div class="button-group-image">
+                <div class="btn-group style-2">
+                  <a
+                    [routerLink]="[`/admin/ocr-preview/data/scan`]"
+                    class="btn px-3 btn-thin rounded btn-primary border-2 w-100 text-color-light"
+                  >
+                    <i class="font-15 fa-solid fa-xmark"></i> Cancelar
+                  </a>
+                  <input
+                    [disabled]="messageInformation"
+                    type="file"
+                    accept="image/*,application/pdf"
+                    (change)="handleFileInput($event)"
+                    id="file-upload"
+                  />
+                  <label
+                    [ngClass]="{
+                    'processing': messageInformation,
+                    'error': messageInformationError
+                  }"
+                    class="btn px-3 btn-thin rounded btn-secondary w-100"
+                    id="file-label"
+                    for="file-upload"
+                  >
+                    <i class="fa-solid fa-arrow-up font-15 text-primary"></i>
+                    Adjuntar
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>

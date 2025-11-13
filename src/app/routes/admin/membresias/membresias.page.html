@@ -1,0 +1,84 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    <!-- Header -->
+
+    @if(showLoading){
+      <app-spinner />
+    }
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a
+            [routerLink]="['/admin/dashboard/sarys']"
+            class="back-btn ic-icon icon-sm"
+          >
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content">
+          <h5 class="title">Membresias del usuario</h5>
+        </div>
+      </div>
+    </header>
+    <!-- Header -->
+
+    <!-- Main Content Start -->
+    <main class="page-content space-top">
+      <div class="container p-2">
+        <div class="text-none-info">
+          <!-- <h6 class="mb-3">Membresias Activas</h6> -->
+        </div>
+@for(x of data_membership ; track $index){
+        <div class="ic-box style-2 rounded-md mt-auto border-rounded mrg">
+          <div class="view-cart">
+            <ul>
+              <li>
+                <span class="title font-20">{{x.name}}</span>
+              </li>
+              <li>
+                <span class="name">Titular</span>
+                <span class="about font-12">{{(x.user_name + ' ' + x.user_lastname).toUpperCase()}}</span>
+              </li>
+              <li>
+                <span class="name">RIF titular</span>
+                <span class="about">{{x.payment_prefix +' '+ x.person_rif}}</span>
+              </li>
+              <li>
+                <span class="name">Estado</span>
+                <span class="about">Activa</span>
+              </li>
+              <li>
+                <span class="name">Vehiculo</span>
+                <span class="about">{{x.vehicle_brand + ' ' +x.vehicle_model}}</span>
+              </li>
+              <li>
+                <span class="name">Placa</span>
+                <span class="about">{{x.vehicle_plate}}</span>
+              </li>
+              <li>
+                <span class="name">Certificado</span>
+                <span class="about">{{x.certificate}}</span>
+              </li>
+              <li>
+                <span class="name">Monto</span>
+                <span class="about">Bs {{ formatBs(x.payment_amount) }} </span>
+              </li>
+            </ul>
+            <a class="btn px-3 btn-thin rounded btn-secondary w-100"
+              ><i class="fa-sharp text-primary fa-solid fa-eye font-15"></i
+              >Ver/Descargar</a
+            >
+          </div>
+        </div>
+      }@empty {
+        <p class="error">No tienes Membresías Activas</p>
+      }
+        <!-- <div class="text-none-info">
+          <h6 class="mb-3">Membresias Inactivas</h6>
+        </div> -->
+      </div>
+      <br /><br /><br /><br />
+    </main>
+    <app-tab />
+  </div>
+</div>

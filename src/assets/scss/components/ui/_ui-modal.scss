@@ -1,0 +1,112 @@
+.modal-header{
+	padding: 1rem 1.875rem;
+	border-color: var(--border-color);
+    .btn-close{
+		padding: 0;
+		margin: 0;
+		font-size: 18px;
+		opacity: 0.3;
+		line-height: 1;
+    }
+	.close{
+		padding: 0.875rem 1.815rem;
+		margin: 0;
+		position: absolute;
+		right: 0;
+		float: none;
+		top: 0;
+		font-size: 1.875rem;
+		font-weight: 100;
+	}
+	@include respond('phone') {
+		padding: 1rem 1rem 1rem;
+	}
+}
+.modal-body{
+	padding: 1.875rem;
+	
+	@include respond('phone') {
+		padding: 1rem;
+    }
+}
+.modal-footer{
+	padding: 10px 10px;
+    border-top: var(--bg-white);
+	
+	@include respond('phone') {
+		padding: 1rem;
+    }
+}
+.modal-content{
+	border-radius:$radius;
+	border: 1px solid var(--border-color);
+    background: var(--bg-white);
+}
+.ic-modal-btn{
+	width: 90px;
+	min-width: 90px;
+	height: 35px;
+	line-height: 30px;
+	text-align: center;
+	font-size: 12px;
+	font-weight: 600;
+	color: $body-color;
+	background: var(--bg-white);
+	border-radius: var(--border-radius-sm);
+	border: 2px dashed var(--border-color);
+}
+
+
+// Notification Modal ==
+// Notification Offcanvas
+.notification-modal{
+	.modal-content{
+		border-radius: 20px;
+		border: 0;
+	}
+	.modal-header{
+		border: 0;
+		width:100%;
+		.btn-close{
+			opacity: 1;
+		}
+	}
+	.modal-body{
+		text-align: center;
+		padding: 6px 30px;
+		.ic-icon{
+			margin: 0 auto 20px;
+			width: 100px;
+			min-width: 100px;
+			height: 100px;
+			background-color: var(--primary);
+			border-radius: 50%;
+			i{
+				font-size: 40px;
+			}
+			svg{
+				width: 40px;
+				height: 40px;
+				path{
+					stroke: unset;
+				}
+			}
+		}
+		p{
+			font-size: 12px;
+			margin: 0;
+			font-weight: 300;
+			color: var(--text-muted);
+			line-height: 18px;
+		}
+	}
+	.modal-footer{
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		padding: 15px 30px 30px;
+		> * {
+			margin: 0;
+		}
+	}
+}

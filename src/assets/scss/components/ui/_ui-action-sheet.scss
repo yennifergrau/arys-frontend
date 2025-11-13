@@ -1,0 +1,114 @@
+// Action Sheets
+.offcanvas{
+    background-color: var(--body-bg);
+    &.offcanvas-bottom{
+        border-radius: 20px 20px 0 0;
+        height: unset;
+        border-top: 0;
+    }
+    &.offcanvas-top{
+        border-radius: 0 0 10px 10px;
+        height: unset;
+        border-bottom: 0;
+        bottom: auto;
+    }
+	&.offcanvas-end{
+		width: 100%;
+		border-left: 0;	
+	}
+    .offcanvas-header{
+        padding: 20px 15px;
+        border-bottom: 1px solid var(--border-color);
+        .offcanvas-title{
+            line-height: 1.2;
+			font-weight: 500;
+        }
+    }
+	.offcanvas-body{
+		max-height: 100vh;
+		color: var(--body-color);
+		&.fixed{
+			border-radius: 0;
+			margin-bottom: 200px;
+		}
+		.btn-close{
+			width: auto;
+			height: auto;
+			line-height: initial;
+		}
+	}
+}
+.offcanvas-backdrop{
+	background-color: var(--secondary);
+	&.show{
+		opacity: 0.7 !important;
+	}
+}
+
+.btn-close{
+	&:focus{
+		box-shadow: unset;
+	}
+}
+
+
+//Action Modal
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, 50px);
+}
+.modal.fade.show .modal-dialog {
+    transform: none;
+}
+.modal.fade.show.modal-static .modal-dialog {
+    transform: scale(1.02);
+}
+
+.top-right{
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+.btn-close{
+	background: none;
+	opacity: 1;
+	text-align: center;
+	line-height: 25px;
+	font-size: 18px;
+}
+
+
+// PWA Offcanvas
+.pwa-offcanvas{
+	text-align: center;
+	
+	.title{
+		margin-bottom: 10px;
+	}
+	.logo{
+		width: 120px;
+		margin: 0 auto 25px;
+		display: block;
+		&.light{
+			display: none;
+		}
+	}
+	.pwa-text{
+		margin-bottom: 25px;
+		font-size: 12px;
+		color: var(--text-muted);
+		line-height: 20px;
+		font-weight: 300;
+	}
+	&.show{
+		visibility: visible;
+	}
+}
+.pwa-backdrop{
+	visibility: hidden;
+	&.show{
+		visibility: visible;
+		transition: opacity 0.15s linear;
+	}
+}

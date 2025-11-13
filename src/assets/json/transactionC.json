@@ -1,0 +1,11 @@
+{
+    "dataCustomer":{
+        "ip":"10.1.1.1",
+        "bankid":1,
+        "clientid":{
+            "doctype":"v",
+            "docid":9124000
+        },
+        "cardnumber":"1463090000000001"
+    }
+}

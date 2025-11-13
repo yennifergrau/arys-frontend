@@ -1,0 +1,73 @@
+.border-rounded-2{
+    border: 1px solid #dddada !important;
+    padding: 10px;
+    border-radius: 15px;
+  }
+
+  .border-rounded{
+    border: 1px solid #acacac !important;
+    padding: 10px;
+  }
+  .image-container-report {
+    display: flex; // Permite centrar con flexbox
+    justify-content: center; // Centra horizontalmente
+    align-items: center; // Centra verticalmente
+    text-align: center; // Asegura alineación del contenido
+    margin: 12px auto; // Centra el contenedor en su padre
+    width: 100%; // Asegura que ocupe todo el ancho disponible
+}
+
+.image-container-report img {
+    max-width: 100px; // Ajusta el tamaño de la imagen
+    height: auto; // Mantiene la proporción
+}
+
+.informacion-details {
+    display: flex;
+    flex-direction: column;  // Coloca los elementos en columna
+    align-items: center;     // Centra horizontalmente
+    justify-content: center; // Centra verticalmente
+    text-align: center;      // Alinea el texto en el centro
+    margin: 16px;
+    padding: 8px;
+}
+
+.title {
+    font-size: 14px;         // Tamaño del texto del título
+    font-weight: bold;       // Hacer el título más visible
+}
+
+.sub_title {
+    color: #acacac;
+    font-size: 12px;         // Tamaño de texto más pequeño para la fecha
+}
+
+.s{
+    margin-right: 10px;
+}
+
+.payment-info{
+    text-align: center;
+    font-size: 20px;
+    color: #9e9d9d;
+    margin: 5px;
+  }
+ 
+  .color-purchase{
+    color: #dddada;
+  }
+
+  .position{
+    height: 200px !important;
+  }
+
+  .position-fixed{
+    margin-top: 20px;
+  }
+
+  .text-none-info{
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    margin: 12px;
+}

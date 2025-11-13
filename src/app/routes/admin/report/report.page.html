@@ -1,0 +1,76 @@
+
+<div class="overflow-auto">
+  <div class="page-wrapper">
+  
+    <!-- Header -->
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a [routerLink]="['/admin/add/payment/credit']" class="back-btn ic-icon icon-sm">
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content"><h5 class="title">Recibo de pago</h5></div>
+      </div>
+    </header>
+    <!-- Header -->
+    
+    <!-- Main Content Start -->
+    <main class="page-content space-top">
+      <div class="container p-2">
+        <div class="ic-box style-6 rounded-md mt-auto border-rounded">
+          <div class="image-container-report">
+            <img src="../../../../assets/imagenes/check-yellow.png" alt="">
+          </div>
+          <div class="informacion-details">
+            <span class="title" align="center">Fecha</span>
+            <p class="sub_title">{{fechaActual() | date: 'dd/MM/yyyy'}}</p>
+            <span class="title" align="center">Monto</span>
+            <p class="sub_title">{{amount}} BS</p>
+            <span class="title" align="center">Referencia</span>
+            <p class="sub_title">002415604619</p>
+          </div>
+          <a [routerLink]="['/admin/payment/recibe/purchased']" class="btn px-3 btn-thin rounded btn-secondary w-100"><i class="fa-sharp text-primary fa-solid fa-share-alt font-20 s"></i>
+           Compartir Recibo</a>	
+        </div>
+        <div class=" position mt-4">
+          <div class=" position payment-card bg-2">
+            <div class="card-content">
+              <div class="card-info">
+                <h5 class="card-title">
+                  Datos origen del pago móvil
+                </h5>
+              </div>
+              <div class="view-cart mb-6">
+                <ul>
+                  <li>
+                    <span class="name color-purchase">Banco</span>
+                    <span class="about color-purchase">{{bank}}</span>
+                  </li>
+                  <li>
+                    <span class="name color-purchase">Teléfono</span>
+                    <span class="about color-purchase">{{phone}}</span>
+                  </li>
+                  <li>
+                    <span class="name color-purchase">Monto</span>
+                    <span class="about color-purchase">{{amount}} </span>
+                  </li>
+                  <li>
+                    <span class="name color-purchase">Fecha pago</span>
+                    <span class="about color-purchase">{{fechaActual() | date: 'dd/MM/yyyy'}}</span>
+                  </li>
+                </ul>
+              </div>	
+            </div>
+          </div>
+        </div>
+        <div class="text-none-info ">
+          <a [routerLink]="['/admin/dashboard/sarys']" class="btn px-3 btn-thin rounded btn-primary text-secondary border-2 w-150"><i class="font-15 fa-solid fa-check-circle s"></i>Finalizar</a>	
+        </div>
+      </div>
+      <br><br><br><br><br>
+    </main>
+    <app-tab />
+  </div>  
+  </div>
+  
