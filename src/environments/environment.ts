@@ -1,13 +1,13 @@
 export const environment = {
   production: false,
 
-  authentication: 'http://localhost:15988',
+  authentication: 'https://demo-auth-arys.polizaqui.com',
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',
   ocrFileService: 'https://adjuntar-documento-qa.polizaqui.com',
   paymentSypago: 'https://pago-arys-qa.polizaqui.com',
 
   sarys: {
-    url: 'http://localhost:15633',
+    url: 'https://demo-services-arys.polizaqui.com',
     usuario: {
       estatus: 'sarys/post/fechetd/status',
     },
@@ -34,12 +34,11 @@ export const environment = {
       sendDocument : 'sarys/post/fechetd/send/document',
       registerSubscriptions : 'sarys/post/fechetd/register/subscription',
       addContractPerson : 'sarys/post/fechetd/add/contract/person'
-
     },
   },
 
   arys:{
-    url:'http://localhost:15633',
+    url:'https://demo-services-arys.polizaqui.com',
     OtherApis:{
       add_person: 'data/fecht/user/property',
       add_vehicle:'data/fecht/vehicle/user',
@@ -51,7 +50,7 @@ export const environment = {
   },
 
   meritop:{
-    url:'http://localhost:15633',
+    url:'https://demo-services-arys.polizaqui.com',
     access:{
       tokenAccess:'sarys/get/meritop/token/access',
     },
