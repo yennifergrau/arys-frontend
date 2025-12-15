@@ -7,28 +7,20 @@ import emailjs from 'emailjs-com';
 export class NotificationService {
   constructor() {}
 
-  public sendEmailPassword(data: any) {
+  public sendEmailPassword(data: any): Promise<any> {
     const templateParams = {
-      user_name: data.userName,
-      logo_url: data.logoUrl,
-      to_email: data.toEmail,
-      reset_password_link: data.reset,
+      to_email: data.to_email,
+      reset_password_link: data.reset_link,
+      user_name:data.user_name,
+      logo_url:data.logo_url
     };
-    emailjs
-      .send(
-        'service_cghilso',
-        'template_xsbri3r',
-        templateParams,
-        'nGInkWSw4blaz1t2j'
-      )
-      .then(
-        (response) => {
-          console.log('¡Correo enviado exitosamente!', response);
-        },
-        (err) => {
-          console.log('fallo al enviar el correo', err);
-        }
-      );
+
+    return emailjs.send(
+    'service_cghilso',
+    'template_xsbri3r',
+    templateParams,
+    'k_5UFakYBXg08PFDH'
+  );
   }
 
   public welcomeArysService(data: any) {

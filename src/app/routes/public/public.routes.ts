@@ -23,7 +23,7 @@ export const PUBLIC_ROUTES: Routes = [
     component:ForgotPasswordPage
   },
   {
-    path:'restore-password/user/:email',
+    path:'restore/:email',
     component:RestorePasswordPage
   }
 ];

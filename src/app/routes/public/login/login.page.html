@@ -83,11 +83,19 @@
                 <input
                   [ngClass]="{'invalid-input': passwordControl.invalid && (passwordControl.dirty || passwordControl.touched)}"
                   type="password"
+                  [type]="showPassword ? 'text' : 'password'" 
                   autocomplete="current-password"
                   formControlName="password"
                   class="form-control"
                   placeholder="Contraseña"
                 />
+                <i 
+                  class="fa position-absolute top-50 end-0 translate-middle-y me-3" 
+                  [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'" 
+                  aria-hidden="true"
+                  style="cursor: pointer;"
+                  (click)="cambiarShowPassword()"
+                ></i>
               </div>
               <a
                 [routerLink]="['/forgot-password']"
@@ -125,4 +133,4 @@
   </div>
 </div>
 
-<div class="toast-container" id="toastContainer"></div>
+<div class="toast-container" id="toastContainerRegister"></div>

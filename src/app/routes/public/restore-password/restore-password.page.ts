@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { HttpClientModule } from '@angular/common/http';
+import { formatValidator, matchFieldsValidator } from 'src/utils/match.validator';
 
 
 @Component({
@@ -27,6 +28,9 @@ export class RestorePasswordPage implements OnInit {
   public showLoading : boolean = false;
   emailUser !: string | any
   formGroup !: FormGroup
+  private REGEX_PASSWORD = /^.{6,}$/
+  public showPassword: boolean = false;
+  public showPasswordConfir: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -39,7 +43,16 @@ export class RestorePasswordPage implements OnInit {
   private generateForm () {
     this.formGroup = this.fb.group({
       email:[''],
-      password:['',Validators.required]
+      password: ['', [
+                Validators.required, 
+                formatValidator(this.REGEX_PASSWORD, 'formatoInvalido')
+            ]],
+      passwordConfir:['', [
+                Validators.required, 
+                formatValidator(this.REGEX_PASSWORD, 'formatoInvalido')
+            ]],
+    }, {
+      validators: matchFieldsValidator('password', 'passwordConfir')
     })
   }
 
@@ -47,40 +60,83 @@ export class RestorePasswordPage implements OnInit {
     return this.formGroup.get('password')!;
   }
 
+  get passwordConfirControl () : AbstractControl<string>{
+    return this.formGroup.get('passwordConfir')!;
+  }
+
+   public cambiarShowPassword(){
+    this.showPassword = !this.showPassword
+
+  }
+
+   public cambiarShowPasswordConfir(){
+    this.showPasswordConfir = !this.showPasswordConfir
+
+  }
   ngOnInit() {
     this.emailUser = this.route.snapshot.paramMap.get('email')
     this.formGroup.get('email')?.patchValue(this.emailUser)
   }
 
-  public async onSubmit() {
-    this.showLoading = true
-    try{
-      if(this.formGroup.valid){
-        const data = this.formGroup.value
-        this._authService.restore_password(data).subscribe({
-          next:(result) => {
-            this.mostrarToast('Contraseña actualizada','toast-success')
-            setTimeout(() => {
-              this.navCtrl.navigate(['/login']);
-            }, 4000);
-          },error:(error) => {
-            this.showLoading = false;
-            this.mostrarToast('Correo no existe','toast-error');
-            console.error('Error al restablecer contraseña: ', error);
-          }
-        })
-      }else{
-        this.showLoading = false;
-        this.formGroup.markAllAsTouched()
-        this.mostrarToast('Debes completar los campos','toast-error');
-      }
-    }catch(e){
-      console.error(e);
-    }
+  private obtenerMensajeDeValidacion(): string | null {
+  const mensajesError: string[] = [];
+  const p1 = this.passwordControl;
+  const p2 = this.passwordConfirControl;
+
+  // A. Verificación de obligatoriedad (Required)
+  if (p1.hasError('required') || p2.hasError('required')) {
+    return 'Todos los campos son obligatorios.'; 
   }
 
+  // B. Verificación de formato (Min 6 caracteres)
+  if (p1.hasError('formatoInvalido') || p2.hasError('formatoInvalido')) {
+    return 'La contraseña debe tener al menos 6 caracteres.';
+  }
+
+  // C. Verificación de coincidencia (MustMatch)
+  // Generalmente el error 'mustMatch' se pone en el control de confirmación o en el grupo
+  if (this.formGroup.hasError('mustMatch') || p1.hasError('mustMatch') || p2.hasError('mustMatch')) {
+    return 'Las contraseñas no coinciden.';
+  }
+
+  // Si el formulario es inválido por otra razón no especificada
+  if (this.formGroup.invalid) {
+    return 'Debes corregir los errores en el formulario.';
+  }
+
+  return null; // Todo ok
+}
+
+  public async onSubmit() {
+  this.formGroup.markAllAsTouched();
+  
+  // 1. Validar y obtener mensaje
+  const errorMsg = this.obtenerMensajeDeValidacion();
+
+  if (errorMsg) {
+    this.mostrarToast(errorMsg, 'toast-error');
+    return; // Detenemos la ejecución
+  }
+
+  // 2. Si es válido, proceder con el servicio
+  this.showLoading = true;
+  const data = this.formGroup.value;
+
+  this._authService.restore_password(data).subscribe({
+    next: (result) => {
+      this.mostrarToast('Contraseña actualizada', 'toast-success');
+      setTimeout(() => this.navCtrl.navigate(['/login']), 4000);
+    },
+    error: (error) => {
+      this.showLoading = false;
+      this.mostrarToast('Ocurrió un error al restablecer la contraseña', 'toast-error');
+      console.error('Error:', error);
+    }
+  });
+}
+
   private mostrarToast(mensaje: string, estilo: string) {
-    const toastContainer = document.getElementById('toastContainer');
+    const toastContainer = document.getElementById('toastContainer-restablecer');
     if (!toastContainer) return;
   
     toastContainer.innerHTML = '';

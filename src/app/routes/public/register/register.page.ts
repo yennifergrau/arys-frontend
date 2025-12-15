@@ -18,6 +18,7 @@ import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { timer } from 'rxjs';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { NotificationService } from 'src/app/shared/services/notification.service';
+import { matchFieldsValidator, formatValidator } from 'src/utils/match.validator';
 
 type DataControl = register;
 
@@ -45,6 +46,12 @@ export class RegisterPage {
   public correoCoincide: boolean = false;
   public isSecondCheckboxChecked = false;
   public isTerminosAccepted: boolean = false;
+  public showTerminosError: boolean = false;
+  public showPassword: boolean = false;
+  private REGEX_STRING = /^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]{1,20}$/
+  private REGEX_EMAIL = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  private REGEX_NUMBER = /^(212|412|414|424|416|426)[0-9]{7}$/;
+  private REGEX_PASSWORD = /^.{6,}$/
 
   constructor(
     private fb: FormBuilder,
@@ -60,25 +67,41 @@ export class RegisterPage {
     const correoVerificado = inputElement.value;
     const correoTomador = this.formAuth.get('email')?.value;
     this.correoNoCoincide = correoTomador !== correoVerificado;
-    this.correoCoincide = correoTomador === correoVerificado;
+    this.correoCoincide = (correoTomador === correoVerificado) && this.emailControl.valid;  
   }
 
   public onTerminosChange() {
     this.isTerminosAccepted = !this.isTerminosAccepted;
+     if(this.isTerminosAccepted){
+      this.showTerminosError = false;
+    }
   }
 
   private generateForm(): void {
     this.formAuth = this.fb.group({
-      name: new FormControl('', Validators.required),
-      sub_ape: new FormControl('', Validators.required),
+      name: new FormControl('', [Validators.required,
+        formatValidator(this.REGEX_STRING, 'formatoNombreInvalido')
+      ]),
+      sub_ape: new FormControl('', [Validators.required,
+        formatValidator(this.REGEX_STRING, 'formatoApellidoInvalido')
+      ]),
       rif: new FormControl('', [Validators.required]),
       prefix: new FormControl('V', Validators.required),
-      email: new FormControl('', [Validators.required, Validators.email]),
-      phone: new FormControl('', [
-        Validators.required
+      email: new FormControl('', [Validators.required, 
+        formatValidator(this.REGEX_EMAIL, 'formatoEmailInvalido')
       ]),
-      password: new FormControl('', [Validators.required]),
+      confirEmail: new FormControl('', [Validators.required, 
+        formatValidator(this.REGEX_EMAIL, 'formatoEmailInvalido')
+      ]),
+      phone: new FormControl('', [Validators.required,
+        formatValidator(this.REGEX_NUMBER, 'formatoTelefonoInvalido')
+      ]),
+      password: new FormControl('', [Validators.required,
+        formatValidator(this.REGEX_PASSWORD, 'formatoPasswordInvalido')
+      ]),
       credit: ('false')
+    }, {
+      validators: matchFieldsValidator('email', 'confirEmail') 
     });
   }
 
@@ -92,6 +115,10 @@ export class RegisterPage {
 
   get emailControl(): AbstractControl<string, string> {
     return this.formAuth.get('email')!;
+  }
+
+  get confirEmailControl(): AbstractControl<string, string> {
+    return this.formAuth.get('confirEmail')!;
   }
 
   get phoneControl(): AbstractControl<string, string> {
@@ -140,10 +167,72 @@ export class RegisterPage {
     }, 5000);
   }
 
+  public cambiarShowPassword(){
+    this.showPassword = !this.showPassword
+
+  }
+
+private procesarErroresDeFormulario() {
+  const erroresActivos: string[] = [];
+  
+  // Lista de controles a revisar
+  const controles = ['name', 'sub_ape', 'email', 'confirEmail', 'phone', 'password'];
+
+  controles.forEach(key => {
+    const control = this.formAuth.get(key);
+    
+    // Si el control individual tiene errores (como formatoEmailInvalido)
+    if (control?.invalid && control.touched) {
+      const errorKeys = Object.keys(control.errors || {});
+      errorKeys.forEach(errorKey => {
+        // Agregamos un identificador único por cada error de cada campo
+        erroresActivos.push(`${key}-${errorKey}`);
+      });
+    }
+  });
+
+  // Revisar error de coincidencia (que está en el grupo, no en el control)
+  if (this.formAuth.hasError('mustMatch')) {
+    erroresActivos.push('coincidencia-fallida');
+  }
+
+  // Agregamos el error de términos si falta
+  if (this.showTerminosError) {
+    erroresActivos.push('Debes aceptar los términos y condiciones.');
+  }
+
+  // Lógica de visualización
+  if (erroresActivos.length === 1) {
+    // Solo hay UN error en toda la pantalla (ej: solo falta un campo)
+    const mensaje = this.obtenerMensajeUnico();
+    this.mostrarToast(mensaje, 'toast-error');
+  } else {
+    // Hay múltiples errores (ej: joel y joel = 2 errores de formato)
+    this.mostrarToast('Revisar la información suministrada, existen campos con formato inválido o vacíos.', 'toast-error');
+  }
+}
+
+
+private obtenerMensajeUnico(): string {
+  // Retorna el mensaje específico dependiendo de qué error quedó solo
+  if (this.formAuth.hasError('mustMatch')) return 'Los correos electrónicos no coinciden.';
+  if (!this.isTerminosAccepted) return 'Debes aceptar los términos y condiciones.';
+  return 'Por favor, verifique el campo marcado en rojo.';
+}
+
+
   public async Submit() {
+    this.formAuth.markAllAsTouched();
+    this.showTerminosError = !this.isTerminosAccepted;
+
+    // 1. Verificar si el formulario es inválido o términos no aceptados
+    if (this.formAuth.invalid || this.showTerminosError) {
+      this.procesarErroresDeFormulario();
+      return;
+    }
+
     this.showLoading = true;
     try {
-      if (this.formAuth.valid) {
         const data: DataControl = this.formAuth.value;
         data.phone = '0' + data.phone!.slice(0, 3) + '-' + data.phone!.slice(3);
         this._authService.register(data).subscribe({
@@ -167,11 +256,6 @@ export class RegisterPage {
             }
           },
         });
-      } else {
-        this.showLoading = false;
-        this.formAuth.markAllAsTouched();
-       await this.mostrarToast('Completa los campos obligatorios', 'toast-error');
-      }
     } catch (e) {
       this.showLoading = false;
       console.error('Error al enviar la informacion', e);

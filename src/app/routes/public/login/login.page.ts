@@ -34,6 +34,7 @@ export class LoginPage implements OnInit {
   public Formauth!: FormGroup;
   private _authService = inject(AuthService);
   public showSpinner: boolean = false;
+  public showPassword: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -67,7 +68,7 @@ export class LoginPage implements OnInit {
   }
 
   private mostrarToast(mensaje: string, estilo: string) {
-    const toastContainer = document.getElementById('toastContainer');
+    const toastContainer = document.getElementById('toastContainerRegister');
     if (!toastContainer) return;
 
     toastContainer.innerHTML = '';
@@ -98,6 +99,11 @@ export class LoginPage implements OnInit {
     setTimeout(() => {
       this.renderer.removeChild(toastContainer, toast);
     }, 5000);
+  }
+
+    public cambiarShowPassword(){
+    this.showPassword = !this.showPassword
+
   }
 
   public async Submit() {

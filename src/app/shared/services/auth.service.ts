@@ -64,6 +64,15 @@ export class AuthService {
     )
   }
 
+  public update_password(data:any) : Observable<any>{
+    return this.http.post<any>(`${this.baseUrl}/sarys/update/fechectd/update_password`,data).pipe(
+      catchError((err) => {
+        this.error.set(err.error?.message || 'email failed');
+        return throwError(() => err);
+      })
+    )
+  }
+
   private storeTokens(response: { code: number, token: string, message: string }): void {
     if (response.token) {
       const decodedToken = this.decodeToken(response.token);

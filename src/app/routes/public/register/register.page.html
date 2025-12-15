@@ -161,8 +161,10 @@
                   </div>
                 </div>
                 <input
-                  [ngClass]="{'input-error': correoNoCoincide, 'input-success': correoCoincide}"
-                  [ngClass]="{'invalid-input': emailControl.invalid && (emailControl.dirty || emailControl.touched)}"
+                  [ngClass]="{
+                    'invalid-input': (emailControl.invalid && emailControl.touched) || correoNoCoincide,
+                    'input-success': emailControl.valid && correoCoincide
+                  }"
                   oncopy="return false"
                   oncut="return false"
                   onpaste="return false"
@@ -197,8 +199,12 @@
                   </div>
                 </div>
                 <input
-                  [ngClass]="{'input-error': correoNoCoincide, 'input-success': correoCoincide}"
+                  [ngClass]="{
+                    'invalid-input': (confirEmailControl.invalid && confirEmailControl.touched) || correoNoCoincide,
+                    'input-success': confirEmailControl.valid && correoCoincide
+                  }"
                   (input)="verificarCoincidencia($event)"
+                  formControlName="confirEmail"
                   type="email"
                   class="form-control"
                   placeholder="Verificar Correo"
@@ -268,15 +274,24 @@
                   [ngClass]="{'invalid-input': passwordControl.invalid && (passwordControl.dirty || passwordControl.touched)}"
                   autocomplete="current-password"
                   type="password"
+                  [type]="showPassword ? 'text' : 'password'"
                   formControlName="password"
                   class="form-control"
                   placeholder="Password"
                 />
+                <i 
+                  class="fa position-absolute top-50 end-0 translate-middle-y me-3" 
+                  [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'" 
+                  aria-hidden="true"
+                  style="cursor: pointer;"
+                  (click)="cambiarShowPassword()"
+                ></i>
               </div>
               <div class="form-check m-b20 w-100">
                 <input
                   class="form-check-input"
                   (change)="onTerminosChange()"
+                  [ngClass]="{'checkbox-error': showTerminosError}"
                   type="checkbox"
                   value=""
                   id="Checked-1"

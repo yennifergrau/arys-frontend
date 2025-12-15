@@ -15,6 +15,7 @@ import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { timer } from 'rxjs';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { HttpClientModule } from '@angular/common/http';
+import { formatValidator } from 'src/utils/match.validator';
 
 @Component({
   selector: 'app-forgot-password',
@@ -38,6 +39,8 @@ export class ForgotPasswordPage {
   public showSuccess: boolean = false;
   public _authService = inject(AuthService)
   public email : any[] = []
+  private REGEX_EMAIL = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  public emailNoExiste: boolean = false;
 
   constructor(private fb: FormBuilder, private renderer: Renderer2) {
     this.generateForm();
@@ -46,7 +49,9 @@ export class ForgotPasswordPage {
 
   private generateForm(): void {
     this.FormEmail = this.fb.group({
-      email: new FormControl('', [Validators.required, Validators.email]),
+      email: new FormControl('', [Validators.required, 
+        formatValidator(this.REGEX_EMAIL, 'formatoEmailInvalido')
+      ]),
     });
   }
 
@@ -90,63 +95,82 @@ export class ForgotPasswordPage {
     }, 5000);
   }
 
-  public async onSubmit() {
-    this.showSpinner = true;
-    try {
-      if (this.FormEmail.valid) {
-        // this.mostrarToast('¡Correo enviado con éxito!', 'toast-success');
-        this.showSuccess = true;
-        const inputEmail = this.FormEmail.get('email')?.value?.trim().toLowerCase();
-        const emailExiste = this.email.some(e => e.toLowerCase() === inputEmail);
-        // const emailPassword = {
-        //   userName: this.FormEmail.get('email')?.value,
-        //   logoUrl: 'https://docs.polizaqui.com/logoArys.png',
-        //   toEmail: this.FormEmail.get('email')?.value,
-        //   reset: `https://arys.polizaqui.com/restore-password/user/${email}`,
-        // };
-        // timer(2000).subscribe(() => {
-        //   this.showSpinner = false;
-        // });
-        // this._notificationService.sendEmailPassword(emailPassword);
-      } else {
-        this.showSpinner = false;
-        this.FormEmail.markAllAsTouched();
-        this.mostrarToast('¡El campo es obligatorio!', 'toast-error');
-      }
-    } catch (e) {
-      this.showSpinner = false;
-      console.log('¡Error al comunicarse con emailJs', e);
-    }
-  }
-
 
   public async Submit() {
-    this.showSpinner = true;
-  
-    if (this.FormEmail.valid) {
-      const inputEmail = this.FormEmail.get('email')?.value?.trim().toLowerCase();
-      const emailExiste = this.email.some(e => e.toLowerCase() === inputEmail);
-  
-      if (emailExiste) {
-        this.mostrarToast('¡Correo encontrado!', 'toast-success');
-        this.showSuccess = true;
-          const emailPassword = {
-          userName: this.FormEmail.get('email')?.value,
-          logoUrl: 'https://docs.polizaqui.com/logoArys.png',
-          toEmail: this.FormEmail.get('email')?.value,
-          reset: `https://arys.polizaqui.com/restore-password/user/${emailExiste}`,
-        };
-        timer(2000).subscribe(() => {
-          this.showSpinner = false;
-        });
-        this._notificationService.sendEmailPassword(emailPassword);
 
-      } else {
-        this.mostrarToast('Correo no registrado.', 'toast-error');
-        this.showSuccess = false;
+    this.showSpinner = true;
+    this.emailNoExiste = false
+  
+    const emailControl = this.FormEmail.get('email');
+    const mensajesError: string[] = [];
+
+    // 1. Marcar el campo como 'tocado'
+    this.FormEmail.markAllAsTouched();
+  
+    // 2. Verificar la validez del formulario y construir los mensajes
+    if (this.FormEmail.invalid) {
+        this.showSpinner = false;
+
+        if (emailControl?.errors) {
+            // Error de Campo Requerido (Validación de Vacío)
+            if (emailControl.hasError('required')) {
+              console.log('Correo electronico obligatorio')
+                this.mostrarToast('El correo electrónico es obligatorio.', 'toast-error');
+            }
+            // Error de Formato (Validación de RegExp)
+            if (emailControl.hasError('formatoEmailInvalido')) {
+              console.log('Correo electronico con formato invalido', emailControl.value)
+                this.mostrarToast('El correo electrónico no tiene un formato válido.', 'toast-error');
+            }
+        }
+        return; // Detiene la ejecución si hay errores de formulario
       }
+    if (this.FormEmail.valid) {
+      const next = {
+          email:this.FormEmail.get('email')?.value
+      }
+      console.log(next)
+      this._authService.update_password(next).subscribe({
+          next:(result) => {
+            console.log('Servicio de update_password exitoso', result)
+            const inputEmail = this.FormEmail.get('email')?.value?.trim().toLowerCase();
+            
+            const payload = {
+              to_email:this.FormEmail.get('email')?.value,
+              reset_link:`https://demo-arys.polizaqui.com/restore/${inputEmail}`,
+              user_name:this.FormEmail.get('email')?.value,
+              logo_url: 'https://docs.polizaqui.com/logoArys.png'
+            }
+            console.log(payload)
+            this._notificationService.sendEmailPassword(payload)
+            .then((response) => {
+              // ÉXITO REAL: El correo salió de los servidores de EmailJS
+              this.showSpinner = false;
+              this.showSuccess = true; // Muestra el banner verde en el HTML
+              this.mostrarToast('Enlace de recuperación enviado con éxito', 'toast-success');
+              console.log('EmailJS Success:', response);
+            })
+            .catch((error) => {
+              // ERROR DE ENVÍO: Falló EmailJS (ej: límite de correos, error de red)
+              this.showSpinner = false;
+              this.mostrarToast('Error al enviar el correo. Intente más tarde.', 'toast-error');
+              console.error('EmailJS Error:', error);
+            });
+          },error:(error) => {
+            console.log('Error en servico de restore_password', error)
+            this.EmailControl.markAllAsTouched()
+            this.FormEmail.markAllAsTouched()
+            this.emailNoExiste = true;
+            this.mostrarToast(`El correo ingresado no esta registrado`,'toast-error')
+            this.showSpinner = false
+          }
+        })
     } else {
-      this.mostrarToast('Por favor ingresa un correo válido.', 'toast-error');
+        console.log('Correo electronico invalido')
+        this.FormEmail.markAllAsTouched()
+        this.mostrarToast('Debes ingresar un correo válido','toast-error')
+        this.showSpinner = false
+    
     }
   
     this.showSpinner = false;
