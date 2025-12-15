@@ -172,8 +172,6 @@ export class ForgotPasswordPage {
         this.showSpinner = false
     
     }
-  
-    this.showSpinner = false;
   }
   
 
