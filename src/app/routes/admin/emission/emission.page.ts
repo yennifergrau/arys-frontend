@@ -36,6 +36,9 @@ import { DataArysService } from '../services/data-arys.service';
   providers: [EmissionService, DataArysService, provideNgxMask()],
 })
 export class EmissionPage implements OnInit {
+  private terminosAcept : boolean = false;
+  public showTerminosError: boolean = false;
+  public checkboxError: boolean = false;
   activatedRoute = inject(ActivatedRoute);
   navCtrl = inject(NavController);
   fb = inject(FormBuilder);
@@ -79,7 +82,8 @@ export class EmissionPage implements OnInit {
       version: [null, Validators.required],
       anio: [null, [Validators.required, Validators.min(1900)]],
       color: [null, Validators.required],
-      placa: ['', Validators.pattern(/^[A-Z0-9]{3}-[A-Z0-9]{3,4}$/)],
+      placa: ['', [Validators.required, 
+        Validators.pattern(/^[A-Z0-9]{3}-[A-Z0-9]{3,4}$/)]],
       serial: ['', Validators.required],
     }),
   });
@@ -297,7 +301,7 @@ export class EmissionPage implements OnInit {
     this.emissionForm.get('vehiculo')?.get('modelo')?.disable();
     this.emissionForm.get('vehiculo')?.get('version')?.disable();
     this.emissionForm.get('vehiculo')?.get('anio')?.disable();
-    this.StorageDataFound();
+    // this.StorageDataFound();
     forkJoin({
       estados: this.emission.getEstados(),
       estadoCivil: this.emission.getEstadoCivil(),
@@ -852,6 +856,69 @@ export class EmissionPage implements OnInit {
     }
   }
 
+  public onValidateAndSubmit(): void {
+  // 1. Marcar todos los campos del formulario como "tocados" 
+  //    para que el usuario vea todos los errores de validación (si los hay).
+  this.emissionForm.markAllAsTouched(); 
+  
+  // Resetear la visibilidad de los errores de términos al inicio
+  this.showTerminosError = false;
+  this.checkboxError = false;
+
+  const formValido = this.emissionForm.valid;
+  const terminosAceptados = this.terminosAcept;
+
+  // ------------------------------------------------------------------
+  // A. CASO: Formulario VÁLIDO Y Términos ACEPTADOS (TODO CORRECTO)
+  // ------------------------------------------------------------------
+  if (formValido && terminosAceptados) {
+    this.showSpinner = true;
+    this.verifyPlate(); // Pasar al siguiente paso (Verificación de placa)
+    return;
+  }
+  
+  // ------------------------------------------------------------------
+  // B. CASO: Formulario VÁLIDO, pero Términos NO ACEPTADOS
+  // ------------------------------------------------------------------
+  if (formValido && !terminosAceptados) {
+    // Si el formulario está perfecto, pero faltan los términos:
+    this.showTerminosError = true;
+    this.checkboxError = true;
+    this.mostrarToast(
+      'Debe aceptar los Términos y Condiciones para continuar.',
+      'toast-error'
+    );
+    return;
+  }
+
+  // ------------------------------------------------------------------
+  // C. CASO: Formulario INVÁLIDO (Independientemente de los Términos)
+  // ------------------------------------------------------------------
+
+  // En cualquier otro caso (Formulario INVÁLIDO), mostramos el error general
+  // y aplicamos la lógica de términos solo si es necesario.
+  
+  if (!formValido) {
+    this.mostrarToast(
+      'Por favor, complete todos los campos requeridos correctamente.',
+      'toast-error'
+    );
+    
+    // Si el formulario es inválido Y tampoco aceptó los términos:
+    if (!terminosAceptados) {
+      this.showTerminosError = true;
+      this.checkboxError = true;
+      // No necesitamos un Toast adicional, el anterior ya es suficiente.
+    } else {
+      // Si el formulario es inválido PERO SÍ aceptó los términos:
+      // No pasa nada con los términos, solo se muestra el error del formulario.
+      this.showTerminosError = false;
+      this.checkboxError = false;
+    }
+    return;
+  }
+}
+
   public verifyPlate() {
     const placa =
       this.emissionForm
@@ -863,7 +930,6 @@ export class EmissionPage implements OnInit {
     this.emission.userIsActive({ placa: placa }).subscribe({
       next: (response: any) => {
         console.log(response);
-
         if (response.estatus_gene1 === 'ACTIVO') {
           this.mostrarToast(
             `El vehículo con placa ${placa} ya se encuentra con una subscripción activa`,
@@ -872,11 +938,12 @@ export class EmissionPage implements OnInit {
           this.emissionForm.markAllAsTouched();
           this.showSpinner = false;
         } else {
-          this.showSpinner = false;
+          // this.showSpinner = false;
           this.onSubmit();
         }
       },
       error: (err: any) => {
+        console.log(err)
         this.mostrarToast(
           'No se pudo verificar la actividad del usuario',
           'toast-error'
@@ -894,6 +961,7 @@ export class EmissionPage implements OnInit {
       cedula: this.emissionForm.get('titular.prefijo')?.value + ' ' + this.emissionForm.get('titular.cedula')?.value,
       phone: this.emissionForm.get('titular.telefono')?.value
     }
+        console.log(data_person)
     this.emission_details.data_person = data_person;
 
     let dataVehicle = {
@@ -903,11 +971,20 @@ export class EmissionPage implements OnInit {
       color: this.currentColor,
       plate : this.emissionForm.get('vehiculo.placa')?.value
     }
+        console.log(dataVehicle)
     this.emission_details.data_vehicle = dataVehicle
   }
 
+public onTerminosChange(): void {
+    this.terminosAcept = !this.terminosAcept; 
+    if(this.terminosAcept){
+      this.showTerminosError = false;
+      this.checkboxError = false;
+    }
+  }
+
   onSubmit() {
-    this.showSpinner = true;
+    // this.showSpinner = true;
 
     this.emissionForm.get('pagador')!.value;
     this.emissionForm
@@ -935,9 +1012,11 @@ export class EmissionPage implements OnInit {
         ocupacion: '',
         es_responsable_pago: true,
       };
+      console.log(dataProperty)
       this.emission.addProperty(dataProperty).subscribe({
         next: async (result) => {
           const idPerson = result;
+      console.log(result)
           if (idPerson) {
             this.add_person_arys();
             this.saveData()
@@ -953,6 +1032,7 @@ export class EmissionPage implements OnInit {
           }
         },
         error: (error) => {
+      console.log(error)
           this.mostrarToast(
             'No se pudo registrar el propietario',
             'toast-error'
@@ -961,6 +1041,7 @@ export class EmissionPage implements OnInit {
         },
       });
     } catch (e) {
+      console.log(e)
       console.error(e);
     }
   }
@@ -1029,17 +1110,21 @@ export class EmissionPage implements OnInit {
         phone: this.emissionForm.get('titular.telefono')?.value,
         direction: this.emissionForm.get('titular.direccion')?.value,
       };
+      console.log(data)
       this.arys_service.add_person(data).subscribe({
         next: (result) => {
+      console.log(result)
           this.add_vehicle_arys(result.id_person);
           this.emission_details.id_person_arys = result.id_person;
         },
         error: (error) => {
-          console.error(error);
+      console.log(error)
+          // console.error(error);
         },
       });
     } catch (e) {
-      console.error(e);
+      console.log(e)
+      // console.error(e);
     }
   }
 
@@ -1055,22 +1140,26 @@ export class EmissionPage implements OnInit {
         plate: this.emissionForm.get('vehiculo.placa')?.value!.replace('-', ''),
         id_person: idPerson,
       };
+      console.log(data)
       this.arys_service.add_vehicle(data).subscribe({
         next: (result) => {
-          console.log(result);
+      console.log(result)
+          // console.log(result);
           this.emission_details.vehicle_id_arys = result.id_veh;
         },
         error: (error) => {
-          console.log(error);
+      console.log(error)
+          // console.log(error);
         },
       });
     } catch (e) {
-      console.error(e);
+      console.log(e)
+      // console.error(e);
     }
   }
 
   private mostrarToast(mensaje: string, estilo: string) {
-    const toastContainer = document.getElementById('toastContainer');
+    const toastContainer = document.getElementById('toastContainer-emission');
     if (!toastContainer) return;
 
     toastContainer.innerHTML = '';

@@ -28,3 +28,117 @@ select#prefijo {
   overflow-y: auto;
   z-index: 99;
 }
+  .checkbox-container {
+    display: flex;
+    flex-direction: column;
+    margin: 20px;
+  }
+
+    .checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+    font-size: 12px;
+    margin-bottom: 10px;
+    user-select: none;
+
+    &.checkbox-error .checkbox-text {
+      color: #dc3545; /* Pone el texto en rojo */
+  }
+  }
+  
+  .checkbox-label input {
+    display: none;
+  }
+
+  .custom-checkbox {
+    width: 60px;
+    height: 20px;
+    border: 2px solid var(--pink);
+    border-radius: 4px;
+    position: relative;
+    display: block;
+    margin-right: 10px;
+    transition: background-color 0.3s, border-color 0.3s;
+
+    .checkbox-label .checkbox-error & { /* El '&' aquí representa .custom-checkbox */
+      border-color: #dc3545 !important; /* Aplica el borde rojo */
+      box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.5) !important;
+  }
+  }
+  
+  .custom-checkbox::after {
+    content: '';
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    top: 4px;
+    left: 5px;
+    transform: rotate(45deg);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .checkbox-label input:checked + .custom-checkbox {
+    background-color: var(--pink);
+    border-color: var(--pink);
+  }
+  
+  .checkbox-label input:checked + .custom-checkbox::after {
+    opacity: 1;
+  }
+  
+  .checkbox-label:hover .custom-checkbox {
+    border-color: var(--pink);
+  }
+  
+  .checkbox-text {
+    font-size: 10px;
+    line-height: 1.4;
+    color: #918f8f;
+    text-align: left;
+  }
+  
+  .checkbox-text a {
+    color: #1a1a1b;
+    text-decoration: underline;
+  }
+  
+  .checkbox-text a:hover {
+    color: var(--pink);
+  }
+
+  .checkbox-error {
+    border-color: #dc3545 !important; /* Rojo estándar de error */
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25); /* Sombra roja opcional */
+}
+
+.warning-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0 30px 0;
+}
+
+.warning-box {
+  background-color: #fff3cd;        
+  color: #856404;                   
+  border: 1px solid #ffeeba;        
+  border-radius: 12px;
+  padding: 16px 20px;
+  max-width: 600px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 8px;
+}
+
+.warning-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+.warning-text {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  margin: 0;
+}

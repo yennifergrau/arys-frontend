@@ -70,6 +70,11 @@
           <i class="fa-sharp text-primary fa-solid fa-share font-15 m-1"></i>
         Abrir Financiamiento
       </a>
+      <br><br>
+      <a (click)="openModal()" class="btn px-3 btn-thin rounded btn-secondary w-100">
+          <i class="fa-sharp text-primary fa-solid fa-share font-15 m-1"></i>
+       Compartir
+      </a>
       </div>
     </div>
   </div>  
@@ -77,4 +82,22 @@
   <app-tab />
   </div>
   
+<div *ngIf="isModalOpen" class="modal">
+        <div class="modal-content">
+            <span class="close" (click)="closeModal()">&times;</span>
+            <h3 class="title">Compartir</h3>
+            <div class="share-icons">
+                <a (click)="downloadPolicy()">
+                    <img src="../../../assets/imagenes/icon/Dowloands.png" alt="Dowloands">
+                  </a>
+                <a (click)="shareByWhatsapp()">
+                  <img src="../../../assets/imagenes/icon/wpp.png" alt="WhatsApp">
+                </a>
+                <a (click)="shareByEmail()">
+                  <img src="../../../assets/imagenes/icon/gmail-icon.png" alt="Gmail">
+                </a>
+              </div>
+        </div>
+    </div>
+
   <div class="toast-container" id="toastContainer"></div>

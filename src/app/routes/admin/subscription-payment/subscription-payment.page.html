@@ -55,6 +55,16 @@
           </div>
         </div>
 
+        <div class="warning-container">
+          <div class="warning-box">
+            <h6 class="warning-title">⚠️ Importante</h6>
+            <p class="warning-text">
+              Asegúrate de tener instalada la aplicación de tu banco emisor. 
+              El código se enviará a través de una notificación por esta vía.
+            </p>
+          </div>
+        </div>
+
         <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
           <div class="card style-2">
             <div class="card-header">
@@ -203,4 +213,4 @@
   </div>
 </div>
 
-<div class="toast-container" id="toastContainer"></div>
+<div class="toast-container" id="toastContainer-subPayment"></div>

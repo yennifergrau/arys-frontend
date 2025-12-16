@@ -633,7 +633,7 @@
               </div>
               <div class="m-b15 input-group input-lg input-rounded">
                 <input
-         
+                  [ngClass]="{'invalid-input': vehiculoPlaca.invalid && (vehiculoPlaca.dirty || vehiculoPlaca.touched)}"
                   type="text"
                   id="placa"
                   class="form-control"
@@ -657,9 +657,38 @@
             </div>
           </div>
 
+          <div class="warning-container">
+            <div class="warning-box">
+                <h6 class="warning-title">⚠️ Importante</h6>
+                <p class="warning-text">
+                  ⚠️ Antes de continuar con el pago, verifica que todos los datos
+                  ingresados (nombre, vehículo, placa y detalles de la membresía) sean correctos. 
+                  Una vez procesado el pago no podrán realizarse modificaciones en la 
+                  información registrada.
+                </p>
+            </div>
+          </div>
+
+          <div class="informacion-details">
+              <h6>Términos y condiciones </h6>
+              <div class="checkbox-container">
+                <label class="checkbox-label"  [ngClass]="{'error': checkboxError}">
+                  <input type="checkbox" id="checkbox1" (change)="onTerminosChange()"> 
+                  <span class="custom-checkbox" [ngClass]="{'checkbox-error': showTerminosError}"></span>
+                  <span class="checkbox-text">
+                    Declaro que acepto todos los mecanismos electrónicos dispuestos por La Mundial de Seguros C.A., para la contratación de la presente póliza. 
+                    <a href="https://docs.polizaqui.com/terminosArys.pdf" target="_blank">Ver términos y condiciones</a>
+                  </span>
+                </label>
+                <!-- <div *ngIf="checkboxError" class="error-message">
+                  Debes aceptar los términos y condiciones.
+                </div> -->
+              </div>
+            </div>
+
           <div class="footer-btn mb-4">
             <button
-             (click)="verifyPlate()"
+             (click)="onValidateAndSubmit()"
               class="btn btn-lg btn-thin btn-secondary text-primary w-100 rounded-xl"
             >
               Continuar
@@ -671,4 +700,4 @@
   </div>
 </div>
 
-<div class="toast-container" id="toastContainer"></div>
+<div class="toast-container" id="toastContainer-emission"></div>

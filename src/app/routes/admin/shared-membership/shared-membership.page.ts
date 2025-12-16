@@ -24,8 +24,9 @@ import { userCreateCustomer } from '../interface/meritop.interface';
     providers:[MeritopService]
 })
 export class SharedMembershipPage implements OnInit {
-
+  public  isModalOpen : boolean = false;
   private emission_details = inject(EmissionDetailsService)
+  private dataMembership : any 
 
   get amount(){
     return this.emission_details.planDetails[1].amount.amt;
@@ -71,6 +72,15 @@ export class SharedMembershipPage implements OnInit {
   }
 
 
+   openModal() {
+    this.isModalOpen = true;
+    console.log(this.dataMembership)
+  }
+
+  closeModal() {
+    this.isModalOpen = false;
+  }
+
   private SendDataEmail() : void {
       const templateParams = {
         logo_url:'https://docs.polizaqui.com/logoArys.png',
@@ -107,9 +117,50 @@ export class SharedMembershipPage implements OnInit {
 
   ngOnInit() {
     this.mostrarToast('Pago confirmado','toast-success')
+    this.dataMembership = sessionStorage.getItem('dataMembership')
+    this.dataMembership = JSON.parse(this.dataMembership)
     setTimeout(() => {
       this.SendDataEmail()
     }, 3000);
+  }
+
+  public shareByWhatsapp(): void {
+    const urlObtenida = this.dataMembership.pdf_url
+    const message = [
+        '¡Bienvenido a la familia Arys Auto!',
+        '',
+        'Tu membresía Arys Club ya está activa y ahora formas parte de una comunidad que valora seguridad, beneficios exclusivos y tranquilidad al conducir.',
+        '',
+        '✅ Descarga tu membresía aquí:',
+        urlObtenida,
+        '',
+        'Gracias por confiar en Arys Auto.',
+        'Estamos para acompañarte en cada kilómetro.',
+        'Tu seguridad y satisfacción son nuestra prioridad.'
+    ].join('\n');
+      // const message = `Hola, te comparto el documento de la póliza: ${this.urlDocumentObtenido} y su membresia ${this.urlMembresia}`;
+      const encodedMessage = encodeURIComponent(message);
+      // window.open(`whatsapp://send?text=${encodedMessage}`, '_blank');
+      window.open(`https://api.whatsapp.com/send?text=${encodedMessage}`, '_blank');
+  }
+
+  public shareByEmail(): void {
+      const urlObtenida = this.dataMembership.pdf_url
+      const subject = 'Membership Document';
+      const body = `Puedes ver el documento de la membresia en el siguiente enlace: ${urlObtenida}`;
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    }
+
+    public downloadPolicy(): void {
+    const urlObtenida = this.dataMembership.pdf_url
+    if (urlObtenida ) {
+      this.mostrarToast('Póliza descargada con exito','toast-success')
+      setTimeout(() => {
+        window.open(urlObtenida, '_blank');
+      },3000)
+    } else {
+      console.error('No hay documento disponible');
+    }
   }
 
   private mostrarToast(mensaje: string, estilo: string) {

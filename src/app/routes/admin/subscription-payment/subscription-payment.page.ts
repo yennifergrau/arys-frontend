@@ -105,11 +105,13 @@ export class SubscriptionPaymentPage implements OnInit {
         }).rate;
         this.showSpinner = false;
       },
-      error: () => {
+      error: (error) => {
+        console.log(error)
         this.mostrarToast(
           'No se pudo recuperar la información del servidor',
           'toast-error'
         );
+        this.showSpinner = false;
       },
     });
   }
@@ -183,7 +185,7 @@ export class SubscriptionPaymentPage implements OnInit {
   }
 
   private mostrarToast(mensaje: string, estilo: string) {
-    const toastContainer = document.getElementById('toastContainer');
+    const toastContainer = document.getElementById('toastContainer-subPayment');
     if (!toastContainer) return;
 
     toastContainer.innerHTML = '';

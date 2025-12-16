@@ -27,6 +27,7 @@ import { EmissionDetailsService } from '../services/emission-details.service';
 import { EmissionService } from '../services/emission.service';
 import { DataArysService } from '../services/data-arys.service';
 import { NotificationService } from 'src/app/shared/services/notification.service';
+import { operationStatuses } from 'src/app/shared/interface/error.interface';
 
 @Component({
   selector: 'app-subscription-payment-otp',
@@ -105,6 +106,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
       this.emission
         .startCotizador(Number(vehicleId), tipoMembresia)
         .subscribe((res: any) => {
+      console.log(res)
           this.emission
             .registerSubscription(
               res,
@@ -115,9 +117,10 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
             .subscribe(
               (res: any) => {
                 if (res) {
+      console.log(res)
                   console.log(res);
                   this.emission_details.numberContract = res;
-                  this.membership(res.certificado);
+                  this.membership(res.certificado, res.urlPDF);
                   this.mostrarToast('Subscripcion con exito', 'toast-success');
                   setTimeout(() => {
                     this.nav.navigateRoot(
@@ -174,6 +177,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
         bank_acc: this.emission_details.planDetails[1].debitor_account.number,
         reference: transaction_id,
       };
+      console.log(data)
       this.arys_service.add_payment(data).subscribe({
         next: (result) => {
           console.log(result);
@@ -211,22 +215,27 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
     });
   }
 
-  private membership(certificate: any) {
+  private membership(certificate: any, urlPDF: any) {
     const decode: any = sessionStorage.getItem('accessToken');
+    console.log(decode)
     const decodeToken: any = jwtDecode(decode);
+    console.log(decodeToken)
     try {
       const data = {
         id_pay: this.id_pay,
         id_veh: this.emission_details.vehicle_id_arys,
         id_payer: this.emission_details.id_person_arys,
         certificate: certificate,
-        pdf_url: '',
+        pdf_url: urlPDF,
         id_user: decodeToken.id_user,
         name: this.emission_details.planDetails[0].title,
       };
+      console.log(data)
       this.arys_service.add_membership(data).subscribe({
         next: (result) => {
           console.log(result);
+          sessionStorage.setItem('resultMembership', JSON.stringify(result))
+          sessionStorage.setItem('dataMembership', JSON.stringify(data))
         },
         error: (error) => {
           console.log(error);
@@ -235,6 +244,11 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
     } catch (e) {
       console.error(e);
     }
+  }
+
+  getDescription(code: string): string {
+    const status = operationStatuses.find(s => s.code === code);
+    return status ? status.description : "Código desconocido";
   }
 
   onSubmit() {
@@ -280,8 +294,10 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
           };
           const interval = setInterval(() => {
             this.payment.getNotification(datos).subscribe((data) => {
+              console.log(data.data.status)
               switch (data.data.status) {
                 case 'ACCP':
+                  console.log('entro aca')
                   this.mostrarToast('Pago confirmado', 'toast-success');
                   this.paymentDataArys(transaction_id);
                   // this
@@ -312,15 +328,24 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
                   clearInterval(interval);
                   break;
                 case 'RJCT':
-                  this.mostrarToast(
-                    'Operación rechazada. Por favor, revisa los detalles e inténtalo de nuevo.',
-                    'toast-error'
-                  );
+                  const code = data?.data?.rejected_code || 'Código desconocido';
+                  console.log(`La operación fue rechazada: ${this.getDescription(code)}`)
+                  this.mostrarToast(`La operación fue rechazada: ${this.getDescription(code)}`, 'toast-error');
+                  // this.mostrarToast(
+                  //   'Operación rechazada. Por favor, revisa los detalles e inténtalo de nuevo.',
+                  //   'toast-error'
+                  // );
                   this.showSpinner = false;
                   clearInterval(interval);
                   break;
                 case 'PEND':
-                  this.showSpinner = true;
+                case 'PROC':
+                  const codePend = data?.data || 'Código desconocido';
+                  console.log(codePend)
+                  console.log(`La operación aún está en proceso: ${this.getDescription(codePend)}`);
+                  this.mostrarToast('La operación está en proceso. Intento nuevamente con el mismo otp', 'toast-success');
+                  this.showSpinner = false;
+                  clearInterval(interval);
                   break;
                 default:
                   this.showSpinner = false;
@@ -335,8 +360,19 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
           }, 10000);
         },
         error: (error) => {
-          console.error('OTP verification error:', error);
+          console.error('Error recibido del backend SyPago:', error);
+
+          // Obtener el mensaje de error especifico del backend de Sypago
+          const backendMessage = error?.error?.message || 'Hubo un error al procesar el OTP.';
+          console.log('Mensaje de error del backend de Sypago:', backendMessage);
+          const backendCode = error?.error?.code 
+          ? `(Código ${error.error.code})`
+          : '';
+
+          // Mostar mensaje real al usuario
+          this.mostrarToast(`${backendMessage}${backendCode}`, 'toast-error');
           this.showSpinner = false;
+          console.error('OTP verification error:', error);
           this.otpForm.reset();
         },
       });
@@ -355,7 +391,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   }
 
   private mostrarToast(mensaje: string, estilo: string) {
-    const toastContainer = document.getElementById('toastContainer');
+    const toastContainer = document.getElementById('toastContainer-paymentOTP');
     if (!toastContainer) return;
 
     toastContainer.innerHTML = '';
