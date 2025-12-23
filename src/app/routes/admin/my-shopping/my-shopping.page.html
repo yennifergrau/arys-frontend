@@ -42,10 +42,10 @@
           </p>
         </div>
         
-        <div class="chat-list mt-4">
+        <!-- <div class="chat-list mt-4"> -->
           
           <!-- En Proceso -->
-          <div *ngIf="activeTab === 'enProceso'" class="space-y-4">
+          <!-- <div *ngIf="activeTab === 'enProceso'" class="space-y-4">
             <ul>
               @for(x of purchases ;track $index) {
  <li (click)="routing(x)"
@@ -63,14 +63,14 @@
               }
              
             </ul>
-          </div>
+          </div> -->
 
           <!-- Finalizadas -->
-          <div *ngIf="activeTab === 'finalizadas'" class="space-y-4">
+          <!-- <div *ngIf="activeTab === 'finalizadas'" class="space-y-4">
             <ul>
               <li>
                 <span>No se encontraron cuotas finalizadas</span>
-              </li>
+              </li> -->
               <!-- <li class="border rounded-lg p-4 shadow-md flex items-center justify-between bg-green-100">
                 <a class="list-items flex items-center space-x-4">	
                   <div class="ic-media">
@@ -83,10 +83,68 @@
                   <span class="data-payment font-bold text-green-600">2.100,75 BS</span>
                 </a>
               </li> -->
-            </ul>
-          </div>
+            <!-- </ul> -->
+          <!-- </div> -->
 
+        <!-- </div> -->
+
+        
+        <div class="chat-list mt-4">
+  
+  <div *ngIf="activeTab === 'enProceso'" class="space-y-4">
+    <ul class="p-0">
+      @for(x of enProceso; track x.id_purchase) {
+        <li class="border rounded-lg p-3 mb-3 shadow-sm bg-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="flex items-center space-x-3" (click)="routing(x)">
+              <div class="ic-media">
+                <img src="../../../../assets/imagenes/icon/favicon.png" alt="" class="w-5 h-5 rounded">
+              </div>
+              <div class="list-content">
+                <h6 class="mb-0 font-semibold">{{x.commerce}}</h6>
+                <small class="text-muted">Monto: {{x.amount}} Bs</small>
+              </div>
+            </div>
+            
+            <button class="btn btn-sm btn-success px-3" (click)="irAPagar(x)">
+              Pagar
+            </button>
+          </div>
+        </li>
+      } @empty {
+        <div class="text-center p-4">
+          <p class="text-muted">No tienes pagos pendientes.</p>
         </div>
+      }
+    </ul>
+  </div>
+
+  <div *ngIf="activeTab === 'finalizadas'" class="space-y-4">
+    <ul class="p-0">
+      @for(x of finalizadas; track x.id_purchase) {
+        <li class="border rounded-lg p-3 mb-3 bg-light opacity-75">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <div class="ic-media me-3">
+                <img src="../../../../assets/imagenes/icon/favicon.png" class="w-2 h-2 grayscale">
+              </div>
+              <div>
+                <h6 class="mb-0">{{x.commerce}}</h6>
+                <small class="text-muted">Pagado el: {{x.date}}</small>
+              </div>
+            </div>
+            <span class="badge bg-secondary">{{x.amount}} Bs</span>
+          </div>
+        </li>
+      } @empty {
+        <div class="text-center p-4">
+          <p class="text-muted">No tienes historial de pagos.</p>
+        </div>
+      }
+    </ul>
+  </div>
+
+</div>
       </div>
     </main>
     <app-tab />

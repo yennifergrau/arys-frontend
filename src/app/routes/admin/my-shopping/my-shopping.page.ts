@@ -20,6 +20,24 @@ export class MyShoppingPage implements OnInit {
   activeTab: string = 'enProceso';
   rif!: string;
   purchases: any[] = [];
+  public purchases_mock: any[] = [
+  {
+    commerce: "Repuestos El Chino",
+    document_commerce: "J-12345678",
+    amount: "150.00",
+    date: "20/05/2024",
+    status: "pendiente", // Para la pestaña "En Proceso"
+    id_purchase: "P-001"
+  },
+  {
+    commerce: "Cauchos La Guaira",
+    document_commerce: "J-87654321",
+    amount: "2,100.75",
+    date: "10/03/2024",
+    status: "finalizada", // Para la pestaña "Finalizadas"
+    id_purchase: "P-002"
+  }
+];
 
   constructor(
     private _dataService: DataArysService,
@@ -28,9 +46,26 @@ export class MyShoppingPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.decodeToken();
-    this.getFilteredPurchases();
+    // this.decodeToken();
+    // this.getFilteredPurchases();
   }
+
+  // Getters para filtrar automáticamente en la vista
+get enProceso() {
+  return this.purchases_mock.filter(p => p.status === 'pendiente');
+}
+
+get finalizadas() {
+  return this.purchases_mock.filter(p => p.status === 'finalizada');
+}
+
+public irAPagar(purchase: any) {
+  // Guardamos la información de la compra que se va a pagar
+  this._emissionDetails.paymentData = purchase;
+  
+  // Redirigimos a tu vista de pago (ajusta la ruta si es necesario)
+  this.router.navigate(['/admin/customer/payment/purchased']);
+}
 
   public routing(data:string){
     this._emissionDetails.paymentData = data

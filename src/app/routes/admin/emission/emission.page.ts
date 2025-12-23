@@ -720,38 +720,150 @@ export class EmissionPage implements OnInit {
     }
   }
 
-  selectMarca(marca: any) {
-    this.currentBrand = marca.marca1;
+  // selectMarca(marca: any) {
+  //   this.currentBrand = marca.marca1;
 
-    this.emissionForm.get('vehiculo')?.get('marca')?.setValue(marca.id_marca);
+  //   this.emissionForm.get('vehiculo')?.get('marca')?.setValue(marca.id_marca);
 
-    // Update the input field to show the selected estado name
-    const inputElement = document.getElementById('marca') as HTMLInputElement;
-    if (inputElement) {
-      inputElement.value = marca.marca1;
-    }
+  //   // Update the input field to show the selected estado name
+  //   const inputElement = document.getElementById('marca') as HTMLInputElement;
+  //   if (inputElement) {
+  //     inputElement.value = marca.marca1;
+  //   }
 
-    // Clear the model, version, and year since brand has changed
-    this.emissionForm.get('vehiculo')?.get('modelo')?.setValue(null);
-    this.emissionForm.get('vehiculo')?.get('version')?.setValue(null);
-    this.emissionForm.get('vehiculo')?.get('anio')?.setValue(null);
-    const modeloInput = document.getElementById('modelo') as HTMLInputElement;
-    if (modeloInput) {
-      modeloInput.value = '';
-    }
+  //   // Clear the model, version, and year since brand has changed
+  //   this.emissionForm.get('vehiculo')?.get('modelo')?.setValue(null);
+  //   this.emissionForm.get('vehiculo')?.get('version')?.setValue(null);
+  //   this.emissionForm.get('vehiculo')?.get('anio')?.setValue(null);
+  //   const modeloInput = document.getElementById('modelo') as HTMLInputElement;
+  //   if (modeloInput) {
+  //     modeloInput.value = '';
+  //   }
 
-    this.emissionForm!.get('vehiculo')!.get('modelo')!.enable();
+  //   this.emissionForm!.get('vehiculo')!.get('modelo')!.enable();
 
-    this.showSpinner = true;
+  //   this.showSpinner = true;
 
-    this.emission.getModelos(marca.id_marca).subscribe((modelos) => {
-      this.showSpinner = false;
-      this.modelosOptions = modelos;
-      this.filteredModelosOptions = [];
-      this.filteredVersionesOptions = [];
-      this.filteredAniosOptions = [];
-    });
+  //   this.emission.getModelos(marca.id_marca).subscribe((modelos) => {
+  //     this.showSpinner = false;
+  //     console.log(modelos)
+  //     this.modelosOptions = modelos;
+  //     this.filteredModelosOptions = [];
+  //     this.filteredVersionesOptions = [];
+  //     this.filteredAniosOptions = [];
+  //   });
+  // }
+
+  private async isMotoModel(idMarca: number, idModelo: number): Promise<boolean> {
+  try {
+    const versiones: any[] = await this.emission.getVersiones(idMarca, idModelo).toPromise();
+    
+    if (!versiones || versiones.length === 0) return false;
+
+    // Buscamos si AL MENOS una versión de este modelo es tipo 7 (Moto)
+    return versiones.some(v => v.id_tipo_vehi === 7);
+  } catch (error) {
+    return false;
   }
+}
+
+private resetFormDesdeModelo() {
+  this.emissionForm.get('vehiculo')?.get('modelo')?.setValue(null);
+  this.emissionForm.get('vehiculo')?.get('version')?.setValue(null);
+  this.emissionForm.get('vehiculo')?.get('anio')?.setValue(null);
+  
+  ['modelo', 'version', 'anio'].forEach(id => {
+    const el = document.getElementById(id) as HTMLInputElement;
+    if (el) el.value = '';
+  });
+}
+
+ public async  promisePool<T, R>(
+  array: T[],
+  iteratorFn: (item: T) => Promise<R>,
+  limit: number
+): Promise<R[]> {
+  const results: R[] = [];
+  const running: Promise<any>[] = [];
+
+  for (const item of array) {
+    const p = iteratorFn(item).then(result => {
+      // Elimina esta promesa cuando se resuelva
+      running.splice(running.indexOf(p), 1);
+      return result;
+    });
+
+    results.push(p as any);
+    running.push(p);
+
+    if (running.length >= limit) {
+      // Espera a que se resuelva la más rápida de las promesas en curso
+      await Promise.race(running);
+    }
+  }
+
+  // Espera a que terminen todas las promesas restantes
+  await Promise.all(running);
+
+  // Retorna los resultados en el orden original
+  return (await Promise.all(results)) as R[];
+}
+
+  async selectMarca(marca: any) {
+  this.currentBrand = marca.marca1;
+  this.emissionForm.get('vehiculo')?.get('marca')?.setValue(marca.id_marca);
+
+  // Actualizar UI
+  const inputElement = document.getElementById('marca') as HTMLInputElement;
+  if (inputElement) inputElement.value = marca.marca1;
+
+  // Resetear hijos
+  this.resetFormDesdeModelo();
+
+  this.showSpinner = true;
+
+  try {
+    // 1. Obtener todos los modelos de la marca
+    const todosLosModelos: any[] = await this.emission.getModelos(marca.id_marca).toPromise();
+    
+    // 2. Determinar si buscamos Motos o Carros
+    const dataDetails = localStorage.getItem('planDetails');
+    const JsonData = dataDetails ? JSON.parse(dataDetails) : null
+    console.log(JsonData)
+    const isMotoClub = (JsonData && JsonData[0]?.title === 'Club Motos');
+    
+    // 3. Filtrar modelos usando el pool de promesas
+    // Pasamos el id_marca y cada id_modelo para revisar sus versiones
+    const modelChecks = todosLosModelos.map(mod => 
+      this.isMotoModel(marca.id_marca, mod.id_modelo)
+    );
+
+    // BRAND_CHECK_LIMIT puede ser 5 o 10 para no saturar
+    const results = await this.promisePool(modelChecks, (p) => p, 10);
+
+    this.modelosOptions = todosLosModelos.filter((_, index) => {
+      const tieneVersionesDeMoto = results[index];
+      // Si es MotoClub, solo dejamos los que tienen versiones de moto (true)
+      // Si no es MotoClub (Carros), dejamos los que NO tienen versiones de moto (false)
+      return isMotoClub ? tieneVersionesDeMoto : !tieneVersionesDeMoto;
+    });
+
+    if (this.modelosOptions.length === 0) {
+      this.modelosOptions = [{
+        id_modelo: 0, 
+        modelo1: isMotoClub ? "No hay modelos de moto" : "No hay modelos de auto"
+      }];
+    }
+
+    this.emissionForm.get('vehiculo')?.get('modelo')?.enable();
+    
+  } catch (error) {
+    console.error("Error filtrando modelos:", error);
+  } finally {
+    this.showSpinner = false;
+    this.filteredModelosOptions = [];
+  }
+}
 
   selectModelo(modelo: any) {
     this.currentModel = modelo.modelo1;
@@ -786,6 +898,7 @@ export class EmissionPage implements OnInit {
       .getVersiones(selectedMarca, modelo.id_modelo)
       .subscribe((versiones) => {
         this.showSpinner = false;
+        console.log(versiones)
         this.versionesOptions = versiones;
         this.filteredVersionesOptions = [];
         this.filteredAniosOptions = [];
@@ -857,63 +970,48 @@ export class EmissionPage implements OnInit {
   }
 
   public onValidateAndSubmit(): void {
-  // 1. Marcar todos los campos del formulario como "tocados" 
-  //    para que el usuario vea todos los errores de validación (si los hay).
-  this.emissionForm.markAllAsTouched(); 
-  
-  // Resetear la visibilidad de los errores de términos al inicio
+  // 1. Sincronizar datos SI la persona que paga es la misma titular
+  // Esto debe ocurrir ANTES de evaluar this.emissionForm.valid
+  if (this.vehicleOwnership) {
+    const datosPagador = this.emissionForm.get('pagador')?.value;
+    if (datosPagador) {
+      this.emissionForm.get('titular')?.patchValue(datosPagador);
+    }
+  }
+
+  // 2. Marcar como tocados para mostrar errores visuales
+  this.emissionForm.markAllAsTouched();
+
+  // 3. Resetear estados de error de términos
   this.showTerminosError = false;
   this.checkboxError = false;
 
+  // 4. AHORA evaluar la validez (con los datos ya sincronizados)
   const formValido = this.emissionForm.valid;
   const terminosAceptados = this.terminosAcept;
 
-  // ------------------------------------------------------------------
-  // A. CASO: Formulario VÁLIDO Y Términos ACEPTADOS (TODO CORRECTO)
-  // ------------------------------------------------------------------
+  // CASO A: TODO CORRECTO
   if (formValido && terminosAceptados) {
     this.showSpinner = true;
-    this.verifyPlate(); // Pasar al siguiente paso (Verificación de placa)
+    this.verifyPlate(); 
     return;
   }
-  
-  // ------------------------------------------------------------------
-  // B. CASO: Formulario VÁLIDO, pero Términos NO ACEPTADOS
-  // ------------------------------------------------------------------
+
+  // CASO B: FORMULARIO VÁLIDO PERO SIN TÉRMINOS
   if (formValido && !terminosAceptados) {
-    // Si el formulario está perfecto, pero faltan los términos:
     this.showTerminosError = true;
     this.checkboxError = true;
-    this.mostrarToast(
-      'Debe aceptar los Términos y Condiciones para continuar.',
-      'toast-error'
-    );
+    this.mostrarToast('Debe aceptar los Términos y Condiciones para continuar.', 'toast-error');
     return;
   }
 
-  // ------------------------------------------------------------------
-  // C. CASO: Formulario INVÁLIDO (Independientemente de los Términos)
-  // ------------------------------------------------------------------
-
-  // En cualquier otro caso (Formulario INVÁLIDO), mostramos el error general
-  // y aplicamos la lógica de términos solo si es necesario.
-  
+  // CASO C: FORMULARIO INVÁLIDO
   if (!formValido) {
-    this.mostrarToast(
-      'Por favor, complete todos los campos requeridos correctamente.',
-      'toast-error'
-    );
+    this.mostrarToast('Por favor, complete todos los campos requeridos correctamente.', 'toast-error');
     
-    // Si el formulario es inválido Y tampoco aceptó los términos:
     if (!terminosAceptados) {
       this.showTerminosError = true;
       this.checkboxError = true;
-      // No necesitamos un Toast adicional, el anterior ya es suficiente.
-    } else {
-      // Si el formulario es inválido PERO SÍ aceptó los términos:
-      // No pasa nada con los términos, solo se muestra el error del formulario.
-      this.showTerminosError = false;
-      this.checkboxError = false;
     }
     return;
   }
@@ -986,10 +1084,10 @@ public onTerminosChange(): void {
   onSubmit() {
     // this.showSpinner = true;
 
-    this.emissionForm.get('pagador')!.value;
-    this.emissionForm
-      .get('titular')!
-      .patchValue(this.emissionForm.get('pagador')!.value);
+    // this.emissionForm.get('pagador')!.value;
+    // this.emissionForm
+    //   .get('titular')!
+    //   .patchValue(this.emissionForm.get('pagador')!.value);
 
      
     try {

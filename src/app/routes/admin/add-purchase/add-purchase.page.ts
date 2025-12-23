@@ -59,17 +59,17 @@ export class AddPurchasePage {
     private fb: FormBuilder,
     private _emisionService: EmissionDetailsService
   ) {
-    this.meritopService.getAccessToken().subscribe({
-      next: async (result) => {
-        if (result.status === 200) {
+    // this.meritopService.getAccessToken().subscribe({
+    //   next: async (result) => {
+    //     if (result.status === 200) {
           
-         await this.loadCustomer();
+    //      await this.loadCustomer();
          
-      }},
-      error: (error) => {
-        console.error('Error al generar el token', error);
-      },
-    });
+    //   }},
+    //   error: (error) => {
+    //     console.error('Error al generar el token', error);
+    //   },
+    // });
    
     this.aumount = this.fb.group({
       amount: ['', Validators.required],
@@ -121,43 +121,52 @@ export class AddPurchasePage {
             paidon: '2025-05-05T16:49:04.369Z',
           },
         };
-        await this.meritopService.addPurchased(dataPurchased).subscribe({
-          next: async (result) => {
-            if (result.code === 915) {
-              await this.data_add_purchased()
-              await this.mostrarToast(`${result.message}`, 'toast-success');
-              this.aumount.reset();
-              this.purchaseService.idPurchase = result.payid;
-              this.purchaseService.amountPurchase =
+       
+        // await this.data_add_purchased()
+        this.purchaseService.amountPurchase =
                 dataPurchased.amount.toString();
-              setTimeout(() => {
-                this.router.navigate(['/admin/purchase/recipe']);
-              }, 4000);
-            } else if (result.code === 915) {
-              this.mostrarToast(result.message, 'toast-error');
-            } else {
-              this.mostrarToast(
-                'Usted ha excedido el monto maximo de pago diario',
-                'toast-error'
-              );
-            }
-          },
-          error: (error) => {
-            console.error('Error al agregar el purchased' + error);
-            this.mostrarToast(
-              'Saldo del producto es insuficiente',
-              'toast-error'
-            );
-            this.showLoading = false;
-            this.aumount.reset();
-          },
-        });
+        this.aumount.reset();
+        this.router.navigate(['/admin/purchase/recipe']);
+         
+        this.showLoading = false;
+        // await this.meritopService.addPurchased(dataPurchased).subscribe({
+        //   next: async (result) => {
+        //     if (result.code === 915) {
+        //       await this.data_add_purchased()
+        //       await this.mostrarToast(`${result.message}`, 'toast-success');
+        //       this.aumount.reset();
+        //       this.purchaseService.idPurchase = result.payid;
+        //       this.purchaseService.amountPurchase =
+        //         dataPurchased.amount.toString();
+        //       setTimeout(() => {
+        //         this.router.navigate(['/admin/purchase/recipe']);
+        //       }, 4000);
+        //     } else if (result.code === 915) {
+        //       this.mostrarToast(result.message, 'toast-error');
+        //     } else {
+        //       this.mostrarToast(
+        //         'Usted ha excedido el monto maximo de pago diario',
+        //         'toast-error'
+        //       );
+        //     }
+        //   },
+        //   error: (error) => {
+        //     console.error('Error al agregar el purchased' + error);
+        //     this.mostrarToast(
+        //       'Saldo del producto es insuficiente',
+        //       'toast-error'
+        //     );
+        //     this.showLoading = false;
+        //     this.aumount.reset();
+        //   },
+        // });
       } catch (e) {
         console.error(e);
       }
     } else {
       this.aumount.markAllAsTouched();
       this.mostrarToast('El monto es obligatorio!', 'toast-error');
+      this.showLoading = false;
     }
   }
 

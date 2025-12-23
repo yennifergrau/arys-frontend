@@ -53,6 +53,7 @@ import { operationStatuses } from 'src/app/shared/interface/error.interface';
 export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   nav = inject(NavController);
   renderer = inject(Renderer2);
+  public otpLocked: boolean = false;
   activatedRoute = inject(ActivatedRoute);
   payment = inject(PaymentService);
   emission_details = inject(EmissionDetailsService);
@@ -254,6 +255,8 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   onSubmit() {
     if (this.otpForm.valid) {
       this.showSpinner = true;
+      
+      
       const otp = Object.values(this.otpForm.value).join('');
       const datos = {
         internal_id: '0000001800',
@@ -288,6 +291,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
 
       this.payment.verifyCodeOTP(datos).subscribe({
         next: ({ transaction_id }) => {
+          sessionStorage.setItem('transactionId', transaction_id);
           console.log('OTP verification response:', transaction_id);
           const datos = {
             id_transaction: transaction_id,
@@ -300,30 +304,6 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
                   console.log('entro aca')
                   this.mostrarToast('Pago confirmado', 'toast-success');
                   this.paymentDataArys(transaction_id);
-                  // this
-                  //   .sendDocument(  
-                  //     this.emission_details.numberContract.id_persona,
-                  //      "* COPIA CEDULA DE IDENTIDAD AFILIADO (Propietario)",
-                  //      2127,
-                  //      this.emission_details.idCard,
-                  //      new Date().toString()
-                  //      );
-                  // this
-                  //   .sendDocument(
-                  //     this.emission_details.numberContract.id_persona,
-                  //   "* COPIA LICENCIA CONDUCIR AFILIADO (Propietario)",
-                  //    2128,
-                  //   this.emission_details.licence,
-                  //   new Date().toString()
-                  //   );
-                  // this
-                  //   .sendDocument(    
-                  //     this.emission_details.numberContract.id_persona,
-                  //     "* COPIA CARNET DE CIRCULACION",
-                  //     2136,
-                  //     this.emission_details.carnet,
-                  //     new Date().toString()
-                  //   ) 
                   this.generateSubscriptions();
                   clearInterval(interval);
                   break;
@@ -389,6 +369,8 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
     nuevaFecha.setFullYear(fechaActual.getFullYear() + 1);
     return nuevaFecha;
   }
+
+  
 
   private mostrarToast(mensaje: string, estilo: string) {
     const toastContainer = document.getElementById('toastContainer-paymentOTP');

@@ -110,8 +110,8 @@ export class AuthService {
   }
 
 
-  public view_user_info() {
-    return this.http.get<any>(`${this.urlUser}/${this.view_user}`).pipe(
+  public view_user_info(data:any) {
+    return this.http.post<any>(`${this.urlUser}/${this.view_user}`, data).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error al obtener información del usuario'))
       })

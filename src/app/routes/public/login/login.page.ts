@@ -54,7 +54,7 @@ export class LoginPage implements OnInit {
 
   private generateForm(): void {
     this.Formauth = this.fb.group({
-      email: new FormControl('', [Validators.required, Validators.email]),
+      email: new FormControl('', [Validators.required]),
       password: new FormControl('', [Validators.required]),
     });
   }
@@ -109,10 +109,13 @@ export class LoginPage implements OnInit {
   public async Submit() {
     this.showSpinner = true;
     try {
+      console.log('paso')
       if (this.Formauth.valid) {
         const data = this.Formauth.value;
+        console.log(data)
         this._authService.login(data).subscribe({
           next: (response: any) => {
+            console.log(response)
             this.navCtrl.navigateRoot(['admin/auth-veirify-sarys']);
           },
           error: (err: HttpErrorResponse) => {
@@ -124,7 +127,9 @@ export class LoginPage implements OnInit {
               );
             } else if (
               err.error.message === 'Contrase�a inv�lida' ||
-              err.error.message === 'Fallo en la autenticación'
+              err.error.message === 'Fallo en la autenticación' ||
+              err.error.message === 'invalid to password' ||
+              err.error.message === 'Failed to authenticate'
             ) {
               this.showSpinner = false;
               this.mostrarToast('¡Credenciales inválidas!', 'toast-error');

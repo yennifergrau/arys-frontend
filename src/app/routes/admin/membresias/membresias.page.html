@@ -64,10 +64,12 @@
                 <span class="about">Bs {{ formatBs(x.payment_amount) }} </span>
               </li>
             </ul>
-            <a class="btn px-3 btn-thin rounded btn-secondary w-100"
-              ><i class="fa-sharp text-primary fa-solid fa-eye font-15"></i
-              >Ver/Descargar</a
-            >
+            <button class="btn px-3 btn-thin rounded btn-secondary w-100" 
+            [disabled]="!x.pdf_url"
+            (click)="downloadPolicy(x.pdf_url)" >
+            <i class="fa-sharp text-primary fa-solid fa-eye font-15"></i>
+            Descargar
+            </button>
           </div>
         </div>
       }@empty {

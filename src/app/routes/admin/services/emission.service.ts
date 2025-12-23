@@ -6,6 +6,7 @@ import { environment } from 'src/environments/environment';
 interface UserIsActiveRequest {
   placa?: string;
   cedula?: string;
+  id_user?: number; 
 }
 
 interface UserIsActiveResponse {

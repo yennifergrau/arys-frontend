@@ -31,7 +31,9 @@
                       alt="profile-image"
                     />
                   </div>
-                  <h4 class="name mb-0">{{data.commerce}}</h4>
+                  <h4 class="name mb-0">Titulo
+                    <!-- {{data.commerce}} -->
+                  </h4>
                 </div>
               </div>
               <ul class="ic-list-group">
@@ -42,8 +44,8 @@
                     </div>
                     <div class="list-content">
                       <h6 class="title">Saldo disponible</h6>
-                      <p class="active-status">   {{ `${+amountTotal |
-                        formatCurrency}` }} Bs</p>
+                      <p class="active-status">   {{amountTotal ? `${+amountTotal |
+                        formatCurrency}` : '1000' }} Bs</p>
                     </div>
                   </a>
                 </li>
@@ -55,16 +57,16 @@
                 <ul>
                   <li>
                     <span class="name">Limite de crédito</span>
-                    <span class="about">$ {{limit}}</span>
+                    <span class="about">$ {{limit ? limit : '500'}}</span>
                   </li>
                   <li>
                     <span class="name">Saldo actual</span>
-                    <span class="about"> {{ `${+amountTotal |
-                        formatCurrency}` }} BS</span>
+                    <span class="about"> {{amountTotal ? `${+amountTotal |
+                        formatCurrency}` : '500' }} BS</span>
                   </li>
                   <li>
                     <span class="name">Pague antes de</span>
-                    <span class="about">{{pay_before | date :'dd/MM/yyyy'}}</span>
+                    <span class="about">{{pay_before ? `${pay_before | date :'dd/MM/yyyy'}` : '31/12/2025'}}</span>
                   </li>
                 </ul>
               </div>

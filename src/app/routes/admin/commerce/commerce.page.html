@@ -10,7 +10,7 @@
 					<i class="feather icon-arrow-left"></i>
 				</a>
 			</div>
-			<div class="mid-content"><h5 class="title">Comercios</h5></div>
+			<div class="mid-content"><h5 class="title">Ordenes de compra</h5></div>
 			<div class="right-content">
 				<a class="ic-icon icon-sm" (click)="getShowSearch()">
 					<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -30,6 +30,14 @@
 	<div class="page-content space-top">
 		<div class="container p-2">
 
+			<div class="mb-3">
+            <button class="btn btn-primary w-100 d-flex align-items-center justify-content-center" 
+                    (click)="solicitarNuevaOrdenSimulada()">
+                <i class="feather icon-plus-circle me-2"></i> 
+                Solicitar Nueva Orden (Simulado)
+            </button>
+        </div>
+
 			@if(showSearch){
 			<div class="search-area m-t10 mb-2" >
 				<div class="input-group w-100">
@@ -41,7 +49,7 @@
 		</div>
 	}
 			<div class="chat-list">
-				<ul id="myList">
+				<!-- <ul id="myList">
 					@for(x of filtered_commerce_data;track $index){
 				
 					<li (click)="routingPage(x) ">
@@ -58,6 +66,32 @@
 				}
 			
 				</ul>
+				<ul id="myList"> -->
+					<div class="orders-scroll-area">
+					<ul id="myList" class="p-0">
+    @for(order of mock_orders; track order.order_id){
+    <li class="border rounded-lg p-3 mb-3 shadow-sm bg-white" (click)="verDetalleOrden(order)">
+        <a class="list-items d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="ic-media m-r10">
+                    <img src="../../../../assets/imagenes/icon/favicon.png" alt="Logo">
+                </div>
+                <div class="list-content">
+                    <h5 class="title">{{order.commerce_description}}</h5>
+                    <span class="ic-text text-primary fw-bold">{{order.amount }} Bs</span>
+                    <br>
+                    <small class="text-muted">ID: {{order.order_id}}</small>
+                </div>
+            </div>
+            <div class="clase-container-btns">
+                <span >{{order.status}}</span>
+                <button class="btn btn-sm btn-primary d-block">Ver</button>
+            </div>
+        </a>
+    </li>
+    }
+</ul>
+</div>
 			</div>
 		</div>
 	</div>

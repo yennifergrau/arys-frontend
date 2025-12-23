@@ -1,0 +1,39 @@
+.orders-scroll-area {
+    /* Define cuánto espacio quieres que ocupe la lista antes de scrollear */
+    max-height: 60vh; /* Ocupará el 60% del alto de la pantalla */
+    overflow-y: auto; /* Activa el scroll vertical solo si es necesario */
+    overflow-x: hidden;
+    padding-right: 5px; /* Espacio para que el scroll no tape el contenido */
+
+    /* Estilo opcional para que el scroll sea más estético (Chrome/Safari) */
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+    &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 10px;
+    }
+}
+
+#myList {
+    list-style: none;
+    margin: 0;
+}
+
+.clase-container-btns{
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.clase-container-btns > span {
+    padding: 0.7rem;
+    background-color: #189D42;
+    color: white;
+    border-radius: 1rem;
+}

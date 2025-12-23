@@ -85,8 +85,8 @@ export class RegisterPage {
       sub_ape: new FormControl('', [Validators.required,
         formatValidator(this.REGEX_STRING, 'formatoApellidoInvalido')
       ]),
-      // rif: new FormControl('', [Validators.required]),
-      // prefix: new FormControl('V', Validators.required),
+      rif: new FormControl('', [Validators.required]),
+      prefix: new FormControl('V', Validators.required),
       email: new FormControl('', [Validators.required, 
         formatValidator(this.REGEX_EMAIL, 'formatoEmailInvalido')
       ]),
@@ -129,9 +129,9 @@ export class RegisterPage {
     return this.formAuth.get('password')!;
   }
 
-  // get rifControl(): AbstractControl<string, string> {
-  //   return this.formAuth.get('rif')!;
-  // }
+  get rifControl(): AbstractControl<string, string> {
+    return this.formAuth.get('rif')!;
+  }
 
   private mostrarToast(mensaje: string, estilo: string) {
     const toastContainer = document.getElementById('toastContainer');
@@ -176,7 +176,7 @@ private procesarErroresDeFormulario() {
   const erroresActivos: string[] = [];
   
   // Lista de controles a revisar
-  const controles = ['name', 'sub_ape', 'email', 'confirEmail', 'phone', 'password'];
+  const controles = ['name', 'sub_ape', 'email', 'confirEmail', 'phone', 'password', 'rif'];
 
   controles.forEach(key => {
     const control = this.formAuth.get(key);

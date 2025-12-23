@@ -44,7 +44,7 @@ export class ForgotPasswordPage {
 
   constructor(private fb: FormBuilder, private renderer: Renderer2) {
     this.generateForm();
-    this.getEmailUser()
+    // this.getEmailUser()
   }
 
   private generateForm(): void {
@@ -175,20 +175,20 @@ export class ForgotPasswordPage {
   }
   
 
-  private getEmailUser () {
-    try{
-      this._authService.view_user_info().subscribe({
-        next: (result) => {
-          console.log(result);
-          this.email = result.users.map((user: any) => user.email);
-          console.log(this.email);
+  // private getEmailUser () {
+  //   try{
+  //     this._authService.view_user_info().subscribe({
+  //       next: (result) => {
+  //         console.log(result);
+  //         this.email = result.users.map((user: any) => user.email);
+  //         console.log(this.email);
           
-        },error:(e)  => {
-          console.error(e);
-        }
-      })
-    }catch (error) {
-      console.error(error);
-    }
-  }
+  //       },error:(e)  => {
+  //         console.error(e);
+  //       }
+  //     })
+  //   }catch (error) {
+  //     console.error(error);
+  //   }
+  // }
 }

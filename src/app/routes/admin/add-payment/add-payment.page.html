@@ -41,7 +41,7 @@
                   <div class="list-content">
                     <h5 class="title">Pague antes de:</h5>
                   </div>
-                  <div class="ic-status">{{pay_before | date : 'dd/MM/yyyy'}}</div>
+                  <div class="ic-status">{{pay_before ? `${pay_before | date : 'dd/MM/yyyy'}` : '31/12/2025'}}</div>
                 </a>
               </li>
             </ul>
@@ -61,15 +61,15 @@
               <ul>
                 <li>
                   <span class="name">BANCO</span>
-                  <span class="about">{{datapayment?.bankname}}</span>
+                  <span class="about">{{datapayment?.bankname ? datapayment?.bankname : 'Banesco'}}</span>
                 </li>
                 <li>
                   <span class="name">RIF</span>
-                  <span class="about">{{datapayment?.clientid}}</span>
+                  <span class="about">{{datapayment?.clientid ? datapayment?.clientid : 'J-123456789'}}</span>
                 </li>
                 <li>
                   <span class="name">TLF.</span>
-                  <span class="about">{{datapayment?.phonenumber}}</span>
+                  <span class="about">{{datapayment?.phonenumber ? datapayment?.phonenumber : '0412-12345678'}}</span>
                 </li>
               </ul>
             </div>
@@ -93,7 +93,7 @@
                   <span class="checkmark"></span>
                   Pago Total
                 </label>
-                <div class="ic-status">{{amount_use}}</div>
+                <div class="ic-status">{{amount_use ? amount_use : '500'}}</div>
               </div>
 
               <div class="radio-option">

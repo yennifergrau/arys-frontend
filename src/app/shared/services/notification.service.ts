@@ -35,7 +35,7 @@ export class NotificationService {
         'service_cghilso',
         'template_5g4a73r',
         templateParams,
-        'nGInkWSw4blaz1t2j'
+        'k_5UFakYBXg08PFDH'
       )
       .then(
         (response) => {

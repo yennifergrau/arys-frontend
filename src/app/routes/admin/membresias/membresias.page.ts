@@ -53,6 +53,14 @@ export class MembresiasPage implements OnInit {
     }).format(amount);
   }
   
+  public downloadPolicy(pdf_url: any): void {
+    const urlObtenida = pdf_url
+    if (urlObtenida ) {
+        window.open(urlObtenida, '_blank');
+    } else {
+      console.error('No hay documento disponible');
+    }
+  }
 
   private getMembership(){
     try{

@@ -46,6 +46,15 @@
                   #otpInput
                 />
               </div>
+
+              <!-- <div class="section-head text-center" *ngIf="!otpLocked">
+        	  <P class="t px-1">Solicitar código nuevo <a (click)="resendOtp()" style="color: var(--primary);">Reenviar</a></P>
+        	</div> -->
+        	<div class="section-head text-center" *ngIf="otpLocked">
+        	  <p class="t px-1 text-muted">
+        	    Operación en proceso.
+        	  </p>
+        	</div>
   
               <div class="bottom-btn mt-auto">
                 <button

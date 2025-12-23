@@ -70,6 +70,7 @@ export class PaymentService {
     return firstValueFrom(
       this.httpService.get<any>(`${this.apiUrl}/bankOptions`, { headers }).pipe(
         catchError((err: HttpErrorResponse) => {
+          console.log(err)
           let msg = 'no se encontró ningún banco 😰';
           if (err.error) {
             return throwError(() => new Error(msg));

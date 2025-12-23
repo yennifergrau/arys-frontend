@@ -42,18 +42,18 @@ export class CustomerPage implements OnInit {
     private changeDetector: ChangeDetectorRef,
     private meritopService: MeritopService
   ) {
-    this.meritopService.getAccessToken().subscribe({
-      next: async (result) => {
-        if (result.status === 200) {
+    // this.meritopService.getAccessToken().subscribe({
+    //   next: async (result) => {
+    //     if (result.status === 200) {
           
-         await this.loadCustomer();
-         await this.dataCustomer()
-      }},
-      error: (error) => {
-        console.error('Error al generar el token', error);
-      },
-    });
-   this.data =  this._emisionService.paymentData 
+    //      await this.loadCustomer();
+    //      await this.dataCustomer()
+    //   }},
+    //   error: (error) => {
+    //     console.error('Error al generar el token', error);
+    //   },
+    // });
+  //  this.data =  this._emisionService.paymentData 
   }
 
   toggleVisibility(event: Event) {
@@ -74,16 +74,16 @@ export class CustomerPage implements OnInit {
         cardnumber:this._emisionService.CardNumber
       }
 
-      this.meritopService.transactionCustomer(data).subscribe({
-        next: (result) => {
+      // this.meritopService.transactionCustomer(data).subscribe({
+      //   next: (result) => {
  
-          this.data_customer = result.transactions
-          console.log(this.data_customer);
+      //     this.data_customer = result.transactions
+      //     console.log(this.data_customer);
           
-        },error: (e) => {
-          console.error(e);
-        }
-      })
+      //   },error: (e) => {
+      //     console.error(e);
+      //   }
+      // })
     }catch(e) {
       console.error(e);
     }
@@ -128,6 +128,37 @@ export class CustomerPage implements OnInit {
 
 
   ngOnInit() {
-
+    this.data_customer = [
+    {
+      transaction_date: "2024-05-20",
+      transaction_desc: "Compra en Repuestos El Chino",
+      transaction_amt: "150,00",
+      type: "cargo"
+    },
+    {
+      transaction_date: "2024-05-18",
+      transaction_desc: "Abono a cuenta - Pago Móvil",
+      transaction_amt: "500,00",
+      type: "abono"
+    },
+    {
+      transaction_date: "2024-05-15",
+      transaction_desc: "Compra en Cauchos La Guaira",
+      transaction_amt: "2.100,75",
+      type: "cargo"
+    },
+    {
+      transaction_date: "2024-05-10",
+      transaction_desc: "Mantenimiento de cuenta Sarys",
+      transaction_amt: "25,00",
+      type: "cargo"
+    },
+    {
+      transaction_date: "2024-05-01",
+      transaction_desc: "Compra en Farmatodo",
+      transaction_amt: "340,50",
+      type: "cargo"
+    }
+  ];
   }
 }

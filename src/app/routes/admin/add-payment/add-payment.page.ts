@@ -44,7 +44,17 @@ import { EmissionDetailsService } from '../services/emission-details.service';
 export class AddPaymentPage implements AfterViewInit {
   public showLoading: boolean = false;
   private json_bank: listBank[] | any;
-  public data_bank!: string | any;
+  // public data_bank!: string | any;
+  public data_bank = [
+  { accountPrefix: '0102', name: 'Banco de Venezuela' },
+  { accountPrefix: '0105', name: 'Mercantil Banco' },
+  { accountPrefix: '0108', name: 'Provincial' },
+  { accountPrefix: '0134', name: 'Banesco' },
+  { accountPrefix: '0172', name: 'Bancamiga' },
+  { accountPrefix: '0174', name: 'Banplus' },
+  { accountPrefix: '0175', name: 'Banco Bicentenario' },
+  { accountPrefix: '0191', name: 'BNC (Banco Nacional de Crédito)' }
+];
   public selectedBankCode: string = 'Banco';
   public selectedBankName: string = '';
   public selectedPaymentOption: number = 1;
@@ -77,35 +87,35 @@ export class AddPaymentPage implements AfterViewInit {
     private renderer: Renderer2,
     private router: Router
   ) {
-    this.meritopService.getAccessToken().subscribe({
-      next: async (result) => {
-        if (result.status === 200) {
+    // this.meritopService.getAccessToken().subscribe({
+    //   next: async (result) => {
+    //     if (result.status === 200) {
           
-         await this.loadCustomer();
+    //      await this.loadCustomer();
          
-      }},
-      error: (error) => {
-        console.error('Error al generar el token', error);
-      },
-    });
+    //   }},
+    //   error: (error) => {
+    //     console.error('Error al generar el token', error);
+    //   },
+    // });
    
   }
 
   ngAfterViewInit(): void {
-    this.showLoading = true;
-    this.jsonPath.getListBank().subscribe({
-      next: async (data) => {
-        this.json_bank = data;
-        if (this.json_bank) {
-          this.showLoading = false;
-          await this.getBankList();
-        }
-        this.changeDetector.detectChanges();
-      },
-      error: (err) => {
-        console.error(err);
-      },
-    });
+    this.showLoading = false;
+    // this.jsonPath.getListBank().subscribe({
+    //   next: async (data) => {
+    //     this.json_bank = data;
+    //     if (this.json_bank) {
+    //       this.showLoading = false;
+    //       await this.getBankList();
+    //     }
+    //     this.changeDetector.detectChanges();
+    //   },
+    //   error: (err) => {
+    //     console.error(err);
+    //   },
+    // });
   }
 
 
@@ -208,24 +218,24 @@ getFechaActualISO(): string {
         };
   
         localStorage.setItem('data-payment', JSON.stringify(data));
-
-        this.meritopService.addPayment(data)
-        .subscribe({
-          next: (result) => {
-            if (result) {
-              console.log('Pago exitoso:', result);
-              this.mostrarToast('Pago realizado con éxito', 'toast-success');
-              setTimeout(() => {
-                this.router.navigate(['/admin/report/credit/payment']);
-              }, 2000);
-            }
-          },
-          error: (error) => {
-            console.log('Error en el pago:', error);
-            this.mostrarToast('El pago no pudo ser verificado', 'toast-error');
-            this.showLoading = false;
-          }
-        });
+        this.router.navigate(['/admin/report/credit/payment']);
+        // this.meritopService.addPayment(data)
+        // .subscribe({
+        //   next: (result) => {
+        //     if (result) {
+        //       console.log('Pago exitoso:', result);
+        //       this.mostrarToast('Pago realizado con éxito', 'toast-success');
+        //       setTimeout(() => {
+        //         this.router.navigate(['/admin/report/credit/payment']);
+        //       }, 2000);
+        //     }
+        //   },
+        //   error: (error) => {
+        //     console.log('Error en el pago:', error);
+        //     this.mostrarToast('El pago no pudo ser verificado', 'toast-error');
+        //     this.showLoading = false;
+        //   }
+        // });
       } else {
         this.paymentForm.markAllAsTouched();
         this.showLoading = false;

@@ -45,23 +45,9 @@ export class CreateCustomerPage implements OnInit {
     private nav: Router,
     private fb: FormBuilder
   ) { 
-    this.showLoading = true
+
     this.generateForm()
-    try {
-      this._meritopService.getAccessToken().subscribe({
-        next: async (result) => {
-          if (result.status === 200) {
-            this.showLoading = false
-          }
-        },
-        error: (error) => {
-          console.error('Error al generar el token', error);
-          this.mostrarToast(' Error de red no se pudo generar el Token','toast-error')
-        },
-      });
-    } catch (e) {
-      console.error(e);
-    }
+   
   }
 
   private updateCredit () {
@@ -77,8 +63,8 @@ export class CreateCustomerPage implements OnInit {
     this.emissionForm = this.fb.group({
       ip: new FormControl('127.0.0.1'),
       clientId: this.fb.group({
-        doctype: new FormControl(''),
-        docid: new FormControl('')
+        doctype: new FormControl('', Validators.required),
+        docid: new FormControl('', Validators.required)
       }),
       name: new FormControl(''),
       last_name: new FormControl(''),
@@ -98,6 +84,7 @@ export class CreateCustomerPage implements OnInit {
 
 
   ngOnInit() {
+    this.showLoading = true
     if (this._emisionService?.data_user) {
       this.emissionForm.patchValue({
         clientId: {
@@ -113,10 +100,27 @@ export class CreateCustomerPage implements OnInit {
         // segment: (this._emisionService.planDetails?.[0]?.id || '').toString()
       });
     }
+    //  try {
+    //   this._meritopService.getAccessToken().subscribe({
+    //     next: async (result) => {
+    //       if (result.status === 200) {
+    //         this.showLoading = false
+    //       }
+    //     },
+    //     error: (error) => {
+    //       console.error('Error al generar el token', error);
+    //       this.showLoading = false
+    //       this.mostrarToast(' Error de red no se pudo generar el Token','toast-error')
+    //     },
+    //   });
+    // } catch (e) {
+    //   console.error(e);
+    // }
+    this.showLoading = false
   }
 
   private mostrarToast(mensaje: string, estilo: string) {
-    const toastContainer = document.getElementById('toastContainer');
+    const toastContainer = document.getElementById('toastContainer-create-custormer');
     if (!toastContainer) return;
 
     toastContainer.innerHTML = '';
@@ -155,20 +159,28 @@ export class CreateCustomerPage implements OnInit {
       if(this.emissionForm.valid){
         console.log(this.emissionForm.value);
         const data = this.emissionForm.value
-         this._meritopService.createCustomer(data).subscribe({
-          next:(result) => {
-            this.updateCredit()
-            console.log(result);
-            this._emisionService.lineaCustomer = result
-            this.mostrarToast('¡Línea activada con éxito!','toast-success')
-            if(result){
-              this.nav.navigate(['/admin/dashboard/sarys'])
-            }
-          },error : async(e:HttpErrorResponse) => {
-            this.showLoading = false
-             await this.mostrarToast(`El prefijo del banco no es válido`,'toast-error')
-          }
-         })
+        this.mostrarToast('¡Línea activada con éxito!','toast-success')
+        this.nav.navigate(['/admin/dashboard/sarys'])
+        this.showLoading = false
+        this.emissionForm.reset
+        //  this._meritopService.createCustomer(data).subscribe({
+        //   next:(result) => {
+        //     this.updateCredit()
+        //     console.log(result);
+        //     this._emisionService.lineaCustomer = result
+        //     this.mostrarToast('¡Línea activada con éxito!','toast-success')
+        //     if(result){
+        //       this.nav.navigate(['/admin/dashboard/sarys'])
+        //     }
+        //   },error : async(e:HttpErrorResponse) => {
+        //     this.showLoading = false
+        //     console.log('//// error//////')
+        //     // console.log(error)
+        //     console.log('///// E //////7')
+        //     console.log(e)
+        //      await this.mostrarToast(`El prefijo del banco no es válido`,'toast-error')
+        //   }
+        //  })
       }else{
         this.emissionForm.markAllAsTouched();
         this.showLoading = false,

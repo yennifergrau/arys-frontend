@@ -1,7 +1,7 @@
 import { Component, OnInit, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import {jwtDecode} from 'jwt-decode'
@@ -36,6 +36,7 @@ export class EditUserPage implements OnInit {
   constructor(
     private fb : FormBuilder,
     private renderer :  Renderer2,
+    private router : Router,
     private _authService : AuthService
   ) { 
     this.showLoading = true;
@@ -73,12 +74,15 @@ export class EditUserPage implements OnInit {
 
 
   private getInfoUser() {
-  
+    const data = {
+      id_user: this.id_user
+    }
     try {
-      this._authService.view_user_info().subscribe({
+      this._authService.view_user_info(data).subscribe({
         next: (result) => {
-          if (result && result.users) {
-            const usuario = result.users.find((user: { id_user: number; }) => user.id_user === this.id_user);
+          console.log(result)
+          if (result && result.user) {
+            const usuario = result.user
             if (usuario) {
               this.fullName = (`${usuario.name} ${usuario.sub_ape}`).toUpperCase();
               let telefono = usuario.phone
@@ -119,7 +123,7 @@ export class EditUserPage implements OnInit {
           next:(result) => {
             this.mostrarToast(`Usuario ${this.fullName } editado con exito`,'toast-success');
             setTimeout(() => {
-              location.reload();
+              this.router.navigate(['/admin/dashboard/sarys'])
             }, 4000);
           },error: (error) => {
             this.showLoading = false

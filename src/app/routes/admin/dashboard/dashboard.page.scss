@@ -221,3 +221,41 @@
 .btn-thin {
   padding: 10px; /* Reducir el padding interno del botón */
 }
+
+.list-group-items {
+  transition: transform 0.2s ease;
+  border: 1px solid #eaeaea !important;
+  
+  .title {
+    font-size: 15px;
+    letter-spacing: -0.3px;
+  }
+
+  small {
+    font-size: 12px;
+  }
+
+  .fs-5 {
+    font-size: 1.1rem !important; /* Tamaño para los montos en Bs */
+  }
+}
+
+.btn-success {
+  background-color: #24a148 !important; /* Verde similar al de la captura */
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.text-warning {
+  color: #f1c40f !important; /* Color dorado para el disponible */
+}
+
+.lh-1 {
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
