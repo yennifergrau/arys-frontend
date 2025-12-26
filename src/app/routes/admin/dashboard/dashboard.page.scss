@@ -259,3 +259,18 @@
   line-height: 1.4;
   margin-bottom: 2px;
 }
+
+.contenedor-header{
+  // background-color: rebeccapurple;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.contenedor-fecha-corte{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5em;
+}

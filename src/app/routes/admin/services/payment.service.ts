@@ -12,6 +12,7 @@ import { environment } from 'src/environments/environment';
 })
 export class PaymentService {
   private apiUrl = environment.paymentSypago;
+  // private apiLocal = environment.paymentSypagoLocal
   private httpService = inject(HttpClient);
 
   constructor() {}
@@ -99,20 +100,28 @@ export class PaymentService {
     );
   }
 
-  public getNotification(data: any): Observable<any> {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    return this.httpService
-      .post(`${this.apiUrl}/getNotifications`, data, { headers })
-      .pipe(
-        catchError((err: HttpErrorResponse) => {
-          let msg = 'No se pudo obtener la notificación';
-          if (err.error) {
-            return throwError(() => new Error(msg));
-          }
-          return throwError(() => err);
-        })
-      );
+   public getNotification( next:any ) {
+    return this.httpService.post<string>(`${this.apiUrl}/getNotifications`,next).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(error)
+      })
+    )
   }
+
+  // public getNotification(data: any): Observable<any> {
+  //   const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+  //   return this.httpService
+  //     .post(`${this.apiUrl}/getNotifications`, data, { headers })
+  //     .pipe(
+  //       catchError((err: HttpErrorResponse) => {
+  //         let msg = 'No se pudo obtener la notificación';
+  //         if (err.error) {
+  //           return throwError(() => new Error(msg));
+  //         }
+  //         return throwError(() => err);
+  //       })
+  //     );
+  // }
 
   public getTasaBank() {
     const headers = new HttpHeaders({

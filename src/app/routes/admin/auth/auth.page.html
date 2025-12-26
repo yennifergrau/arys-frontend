@@ -13,7 +13,7 @@
           @if(showSpinner){
           <app-spinner />
           }
-          <!-- <div class="account-section">
+          <div class="account-section">
             <div class="section-head">
               <h3 class="title">Estatus de la Cuenta</h3>
               <p>
@@ -23,7 +23,7 @@
             </div>
             <form class="ic-form-group" [formGroup]="FormVerify">
               <div
-                class="m-b15 input-group input-lg input-group-icon input-rounded"
+                class="m-b20 input-group input-lg input-group-icon input-rounded"
               >
                 <div class="input-group-text">
                   <div class="input-icon">
@@ -34,53 +34,50 @@
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
                     >
+                      <circle
+                        cx="14.0002"
+                        cy="9.33334"
+                        r="4.66667"
+                        fill="black"
+                      />
                       <path
-                        d="M7 2H17L23 8V24C23 25.1 22.1 26 21 26H7C5.9 26 5 25.1 5 24V4C5 2.9 5.9 2 7 2Z"
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M13.9998 15.1667C9.68555 15.1667 6.15265 18.0341 5.85362 21.6668C5.83096 21.942 6.05697 22.1667 6.33312 22.1667H21.6664C21.9426 22.1667 22.1686 21.942 22.1459 21.6668C21.8469 18.0341 18.314 15.1667 13.9998 15.1667Z"
                         fill="black"
                         fill-opacity="0.25"
-                      />
-                      <path
-                        d="M17 2V8H23"
-                        stroke="black"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M9 12H19"
-                        stroke="black"
-                        stroke-linecap="round"
-                      />
-                      <path
-                        d="M9 16H19"
-                        stroke="black"
-                        stroke-linecap="round"
-                      />
-                      <path
-                        d="M9 20H15"
-                        stroke="black"
-                        stroke-linecap="round"
                       />
                     </svg>
                   </div>
                 </div>
+                <div>
+                  <select id="prefix" name="prefix" formControlName="prefix">
+                    <option value="V">V</option>
+                    <option value="E">E</option>
+                    <option value="J">J</option>
+                  </select>
+                </div>
                 <input
-                type="text"
-                formControlName="placa"
-                (input)="formatPlaca($event)"
-                class="form-control"
-                placeholder="Placa del vehículo"
-              />
-              
+                  [ngClass]="{'invalid-input': rifControl.invalid && (rifControl.dirty || rifControl.touched)}"
+                  type="text"
+                  formControlName="rif"
+                  value=""
+                  inputmode="numeric"
+                  class="form-control"
+                  placeholder="Documento de identidad"
+                  mask="separator.2"
+                  thousandSeparator="."
+                />
               </div>
             </form>
-          </div> -->
-          <!-- <div class="bottom-btn mt-auto">
+          </div>
+          <div class="bottom-btn mt-auto">
             <a
               (click)="onSubmit()"
               class="btn btn-primary btn-thin btn-lg w-100 rounded-xl"
               >Verificar</a
             >
-          </div> -->
+          </div>
 
           <br /><br /><br /><br />
         </div>

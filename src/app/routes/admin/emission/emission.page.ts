@@ -18,6 +18,8 @@ import { forkJoin, Observable } from 'rxjs';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { EmissionDetailsService } from '../services/emission-details.service';
 import { DataArysService } from '../services/data-arys.service';
+import { formatearMatricula } from 'src/utils/match.validator';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-emission',
@@ -39,6 +41,17 @@ export class EmissionPage implements OnInit {
   private terminosAcept : boolean = false;
   public showTerminosError: boolean = false;
   public checkboxError: boolean = false;
+  idMarca: number | any;
+  idEstado: number | any;
+  idCiudad: number | any;
+  idModelo: number | any;
+  idVersion: number | any;
+  idTipoVersion: number | any;
+  idAnio: number | any;
+  capCarga: number | any;
+  pasajeros: number | any;
+  transmision: string |any;
+  isValid: boolean | any;
   activatedRoute = inject(ActivatedRoute);
   navCtrl = inject(NavController);
   fb = inject(FormBuilder);
@@ -84,7 +97,7 @@ export class EmissionPage implements OnInit {
       color: [null, Validators.required],
       placa: ['', [Validators.required, 
         Validators.pattern(/^[A-Z0-9]{3}-[A-Z0-9]{3,4}$/)]],
-      serial: ['', Validators.required],
+      serial: ['', [Validators.required, Validators.maxLength(20)]],
     }),
   });
 
@@ -301,7 +314,7 @@ export class EmissionPage implements OnInit {
     this.emissionForm.get('vehiculo')?.get('modelo')?.disable();
     this.emissionForm.get('vehiculo')?.get('version')?.disable();
     this.emissionForm.get('vehiculo')?.get('anio')?.disable();
-    // this.StorageDataFound();
+    this.StorageDataFound();
     forkJoin({
       estados: this.emission.getEstados(),
       estadoCivil: this.emission.getEstadoCivil(),
@@ -393,7 +406,7 @@ export class EmissionPage implements OnInit {
           '',
       },
       vehiculo: {
-        placa: CARNET.placa ?? '',
+        placa: formatearMatricula(CARNET.placa ?? ''),
         serial: CARNET.serial_de_motor ?? '',
         anio: CARNET.año ?? '',
       },
@@ -900,12 +913,24 @@ private resetFormDesdeModelo() {
         this.showSpinner = false;
         console.log(versiones)
         this.versionesOptions = versiones;
-        this.filteredVersionesOptions = [];
+         console.log('Log de filterModelos ', this.versionesOptions)
+            if (!this.versionesOptions || this.versionesOptions.length === 0) {
+              this.filteredVersionesOptions = [
+                { id_version: 0, version1: 'No hay versiones disponible'}
+              ];
+            
+              this.mostrarToast('vehículo no asegurable', 'toast-error');
+               this.emissionForm!.get('vehiculo')!.get('version')!.disable();
+            } else {
+              this.filteredVersionesOptions = [];
+            }
+        // this.filteredVersionesOptions = [];
         this.filteredAniosOptions = [];
       });
   }
 
   selectVersion(version: any) {
+    if (version.id_version === 0) return;
     this.currentVersion = version.version1;
 
     this.emissionForm
@@ -969,9 +994,105 @@ private resetFormDesdeModelo() {
     }
   }
 
-  public onValidateAndSubmit(): void {
-  // 1. Sincronizar datos SI la persona que paga es la misma titular
-  // Esto debe ocurrir ANTES de evaluar this.emissionForm.valid
+  async cargarDatos() {
+  try {
+    // 1. Resetear estados de validación y extraer valores del formulario
+    this.isValid = true;
+    
+    // Obtenemos los nombres (strings) que el usuario escribió o seleccionó
+    const marcaTexto = (document.getElementById('marca') as HTMLInputElement)?.value;
+    const modeloTexto = (document.getElementById('modelo') as HTMLInputElement)?.value;
+    const versionTexto = (document.getElementById('version') as HTMLInputElement)?.value;
+    
+    // Determinamos qué estado/ciudad usar basado en la propiedad del vehículo
+    const grupoUbicacion = this.vehicleOwnership ? 'pagador' : 'titular';
+    const estadoTexto = (document.getElementById(`estado_${grupoUbicacion}`) as HTMLInputElement)?.value;
+    const ciudadTexto = (document.getElementById(`ciudad_${grupoUbicacion}`) as HTMLInputElement)?.value;
+
+    // --- PASO 1: VALIDAR MARCA ---
+    const marcas = await firstValueFrom(this.emission.getMarcas());
+    const marcaEncontrada = marcas.find((m: any) => this.compararTextos(m.marca1, marcaTexto));
+    
+    if (!marcaEncontrada) return this.errorValidacion('La marca indicada no es válida');
+    this.idMarca = marcaEncontrada.id_marca;
+
+    // --- PASO 2: VALIDAR MODELO ---
+    const modelos = await firstValueFrom(this.emission.getModelos(this.idMarca));
+    const modeloEncontrado = modelos.find((m: any) => this.compararTextos(m.modelo1, modeloTexto));
+    
+    if (!modeloEncontrado) return this.errorValidacion('El modelo indicado no es válido');
+    this.idModelo = modeloEncontrado.id_modelo;
+
+    // --- PASO 3: VALIDAR VERSIÓN ---
+    const versiones = await firstValueFrom(this.emission.getVersiones(this.idMarca, this.idModelo));
+    const versionEncontrada = versiones.find((v: any) => 
+      v.id_version !== 0 && this.compararTextos(v.version1, versionTexto)
+    );
+
+    if (!versionEncontrada) return this.errorValidacion('La versión indicada no es válida');
+    
+    // Asignamos datos técnicos de la versión (importante para la póliza)
+    this.idVersion = versionEncontrada.id_version;
+    this.idTipoVersion = versionEncontrada.id_tipo_vehi;
+    this.capCarga = versionEncontrada.capcarga;
+    this.pasajeros = versionEncontrada.numpasaj;
+    this.transmision = versionEncontrada.trans?.trim();
+
+    // --- PASO 4: VALIDAR ESTADO Y CIUDAD ---
+    const estados = await firstValueFrom(this.emission.getEstados());
+    const estadoEncontrado = estados.find((e: any) => this.compararTextos(e.estado1, estadoTexto));
+    
+    if (!estadoEncontrado) return this.errorValidacion('El estado seleccionado no es válido');
+    this.idEstado = estadoEncontrado.id_estado;
+
+    const ciudadesResponse = await firstValueFrom(this.emission.getCiudades(this.idEstado));
+    const ciudadEncontrada = ciudadesResponse.result.find((c: any) => this.compararTextos(c.ciudad1, ciudadTexto));
+    
+    if (!ciudadEncontrada) return this.errorValidacion('La ciudad seleccionada no es válida');
+    this.idCiudad = ciudadEncontrada.id_ciudad;
+
+    // Si llegamos aquí, todo es válido
+    return {
+      isValid: true,
+      ids: {
+        marca: this.idMarca,
+        modelo: this.idModelo,
+        version: this.idVersion,
+        estado: this.idEstado,
+        ciudad: this.idCiudad
+      }
+    };
+
+  } catch (error) {
+    console.error('Error en cargarDatos:', error);
+    return { isValid: false };
+  }
+}
+
+// --- HELPERS DE APOYO ---
+
+private normalizarTexto(texto: string): string {
+  if (!texto) return '';
+  return texto
+    .trim()
+    .toLowerCase()
+    .normalize("NFD") // Quita tildes
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+private compararTextos(t1: string, t2: string): boolean {
+  return this.normalizarTexto(t1) === this.normalizarTexto(t2);
+}
+
+private errorValidacion(mensaje: string) {
+  console.warn('Validación fallida:', mensaje);
+  this.isValid = false;
+  this.mostrarToast(mensaje, 'toast-error');
+  return { isValid: false };
+}
+
+public async onValidateAndSubmit(): Promise<void> {
+  // 1. Sincronizar datos si es el mismo titular
   if (this.vehicleOwnership) {
     const datosPagador = this.emissionForm.get('pagador')?.value;
     if (datosPagador) {
@@ -979,78 +1100,70 @@ private resetFormDesdeModelo() {
     }
   }
 
-  // 2. Marcar como tocados para mostrar errores visuales
   this.emissionForm.markAllAsTouched();
-
-  // 3. Resetear estados de error de términos
   this.showTerminosError = false;
   this.checkboxError = false;
 
-  // 4. AHORA evaluar la validez (con los datos ya sincronizados)
   const formValido = this.emissionForm.valid;
   const terminosAceptados = this.terminosAcept;
 
-  // CASO A: TODO CORRECTO
   if (formValido && terminosAceptados) {
     this.showSpinner = true;
-    this.verifyPlate(); 
+    // Llamamos a verifyPlate que ahora es el encargado de orquestar la carga y validación
+    await this.verifyPlate(); 
     return;
   }
 
-  // CASO B: FORMULARIO VÁLIDO PERO SIN TÉRMINOS
-  if (formValido && !terminosAceptados) {
+  // Manejo de errores de UI (Casos B y C de tu código original)
+  if (!terminosAceptados) {
     this.showTerminosError = true;
     this.checkboxError = true;
-    this.mostrarToast('Debe aceptar los Términos y Condiciones para continuar.', 'toast-error');
-    return;
   }
-
-  // CASO C: FORMULARIO INVÁLIDO
-  if (!formValido) {
-    this.mostrarToast('Por favor, complete todos los campos requeridos correctamente.', 'toast-error');
+  
+  const mensaje = !formValido 
+    ? 'Por favor, complete todos los campos requeridos correctamente.' 
+    : 'Debe aceptar los Términos y Condiciones para continuar.';
     
-    if (!terminosAceptados) {
-      this.showTerminosError = true;
-      this.checkboxError = true;
-    }
-    return;
-  }
+  this.mostrarToast(mensaje, 'toast-error');
 }
 
-  public verifyPlate() {
-    const placa =
-      this.emissionForm
-        .get('vehiculo')
-        ?.get('placa')
-        ?.value?.replace('-', '') ?? '';
-    console.log(placa);
 
-    this.emission.userIsActive({ placa: placa }).subscribe({
-      next: (response: any) => {
-        console.log(response);
-        if (response.estatus_gene1 === 'ACTIVO') {
-          this.mostrarToast(
-            `El vehículo con placa ${placa} ya se encuentra con una subscripción activa`,
-            'toast-error'
-          );
-          this.emissionForm.markAllAsTouched();
-          this.showSpinner = false;
-        } else {
-          // this.showSpinner = false;
-          this.onSubmit();
-        }
-      },
-      error: (err: any) => {
-        console.log(err)
-        this.mostrarToast(
-          'No se pudo verificar la actividad del usuario',
-          'toast-error'
-        );
-        this.showSpinner = false;
-      },
-    });
+  public async verifyPlate() {
+  try {
+    // PASO A: VALIDAR INTEGRIDAD (¿Lo escrito existe en la DB?)
+    const datosCargados = await this.cargarDatos();
+
+    if (!datosCargados || !datosCargados.isValid) {
+      this.mostrarToast('El vehículo seleccionado no es asegurable', 'toast-error');
+      this.showSpinner = false;
+      this.emissionForm.markAllAsTouched();
+      return;
+    }
+
+    // PASO B: VERIFICAR PLACA ACTIVA
+    const placa = this.emissionForm.get('vehiculo.placa')?.value?.replace('-', '') ?? '';
+    
+    // Convertimos a promesa para no anidar subscribes
+    const response: any = await firstValueFrom(this.emission.userIsActive({ placa }));
+
+    if (response.estatus_gene1 === 'ACTIVO') {
+      this.mostrarToast(
+        `El vehículo con placa ${placa} ya se encuentra con una subscripción activa`,
+        'toast-error'
+      );
+      this.showSpinner = false;
+      this.emissionForm.markAllAsTouched();
+    } else {
+      // PASO C: PROCEDER AL REGISTRO
+      this.onSubmit();
+    }
+
+  } catch (error) {
+    console.error('Error en el flujo de verificación:', error);
+    this.mostrarToast('Error al verificar los datos. Intente de nuevo.', 'toast-error');
+    this.showSpinner = false;
   }
-
+}
 
   private saveData(){
     let data_person={
@@ -1081,15 +1194,7 @@ public onTerminosChange(): void {
     }
   }
 
-  onSubmit() {
-    // this.showSpinner = true;
-
-    // this.emissionForm.get('pagador')!.value;
-    // this.emissionForm
-    //   .get('titular')!
-    //   .patchValue(this.emissionForm.get('pagador')!.value);
-
-     
+  onSubmit() {     
     try {
       const dataProperty = {
         rif: this.emissionForm.get('titular.cedula')?.value,

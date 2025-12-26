@@ -26,6 +26,7 @@ import { jwtDecode } from 'jwt-decode';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    NgxMaskDirective,
     SpinnerComponent,
     HttpClientModule,
   ],
@@ -42,31 +43,35 @@ export class AuthPage implements OnInit {
     private renderer: Renderer2,
     private navCtrl: NavController
   ) {
-    // this.generateForm();
+    this.generateForm();
   }
 
-  // private generateForm(): void {
-  //   this.FormVerify = this.fb.group({
-  //     cedula: new FormControl(''),
-  //     placa: new FormControl('', [
-  //       Validators.required,
-  //       Validators.pattern(/^[A-Z0-9]{3}-[A-Z0-9]{3,4}$/),
-  //     ]),
-  //     prefijo: new FormControl(''),
-  //   });
-  // }
+  private generateForm(): void {
+    this.FormVerify = this.fb.group({
+      rif: new FormControl('', Validators.required),
+      // placa: new FormControl('', [
+      //   Validators.required,
+      //   Validators.pattern(/^[A-Z0-9]{3}-[A-Z0-9]{3,4}$/),
+      // ]),
+      prefix: new FormControl('V', Validators.required),
+    });
+  }
 
-  // get cedulaControl(): AbstractControl<any> {
-  //   return this.FormVerify.get('cedula')!;
-  // }
+  get cedulaControl(): AbstractControl<any> {
+    return this.FormVerify.get('cedula')!;
+  }
 
-  // get placaControl(): AbstractControl<any> {
-  //   return this.FormVerify.get('placa')!;
-  // }
+  get placaControl(): AbstractControl<any> {
+    return this.FormVerify.get('placa')!;
+  }
 
-  // get prefijoControl(): AbstractControl<any> {
-  //   return this.FormVerify.get('prefijo')!;
-  // }
+  get prefijoControl(): AbstractControl<any> {
+    return this.FormVerify.get('prefix')!;
+  }
+
+    get rifControl(): AbstractControl<string, string> {
+    return this.FormVerify.get('rif')!;
+  }
 
   private mostrarToast(mensaje: string, estilo: string) {
     const toastContainer = document.getElementById('toastContainer');
@@ -102,72 +107,73 @@ export class AuthPage implements OnInit {
     }, 6000);
   }
 
-  // public async onSubmit() {
-  //   this.showSpinner = true;
-  //   if (this.FormVerify.valid) {
-  //     const clientData = {
-  //       placa: this.FormVerify.get('placa')?.value.replace('-', ''),
-  //     };
-  //     // const creditVerify = this.emissionDetails.data_user.credit
-  //     const creditVerify: boolean = false 
+  public async onSubmit() {
+    this.showSpinner = true;
+    if (this.FormVerify.valid) {
+      const clientData = {
+        // placa: this.FormVerify.get('placa')?.value.replace('-', ''),
+        cedula: this.FormVerify.get('rif')?.value,
+      };
+      // const creditVerify = this.emissionDetails.data_user.credit
+      const creditVerify: boolean = false 
    
-  //     console.log(creditVerify)
+      console.log(creditVerify)
     
-  //     this.emission.userIsActive(clientData).subscribe({
-  //       next: (response: any) => {
+      this.emission.userIsActive(clientData).subscribe({
+        next: (response: any) => {
           
-  //         console.log(response)
+          console.log(response)
           
-  //         if (response.estatus_gene1 === 'ACTIVO' &&  creditVerify === false) {
-  //           console.log("///////Primer if //////")
-  //           this.emissionDetails.userData = response;
-  //           this.navCtrl.navigateRoot(['/admin/Customer/create/sarys/meritop']);
-  //         } else if(response.estatus_gene1 === 'ACTIVO' && creditVerify !== false){
-  //           console.log("///////segundo if //////")
-  //         this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
-  //         }else if (
-  //           response.estatus_gene1 === '' ||
-  //           response.estatus_gene1 === null
-  //         ) {
-  //           console.log("///////Tercer if //////")
-  //           this.navCtrl.navigateRoot(['/admin/planes/home/user']);
-  //         }
-  //       },
-  //       error: (err: any) => {
+          if (response.estatus_gene1 === 'ACTIVO' &&  creditVerify === false) {
+            console.log("///////Primer if //////")
+            this.emissionDetails.userData = response;
+            this.navCtrl.navigateRoot(['/admin/Customer/create/sarys/meritop']);
+          } else if(response.estatus_gene1 === 'ACTIVO' && creditVerify !== false){
+            console.log("///////segundo if //////")
+          this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
+          }else if (
+            response.estatus_gene1 === '' ||
+            response.estatus_gene1 === null
+          ) {
+            console.log("///////Tercer if //////")
+            this.navCtrl.navigateRoot(['/admin/planes/home/user']);
+          }
+        },
+        error: (err: any) => {
 
-  //         console.log(err)
+          console.log(err)
   
-  //         this.mostrarToast(
-  //           'No se pudo verificar la actividad del usuario',
-  //           'toast-error'
-  //         );
-  //         this.showSpinner = false;
-  //       },
-  //     });
-  //   } else {
-  //     this.FormVerify.markAllAsTouched();
-  //     this.mostrarToast(
-  //       'La placa es obligatoria con formato ( ABC-123 ó ABC-1234 )',
-  //       'toast-error'
-  //     );
-  //     this.showSpinner = false;
-  //   }
-  // }
+          this.mostrarToast(
+            'No se pudo verificar la actividad del usuario',
+            'toast-error'
+          );
+          this.showSpinner = false;
+        },
+      });
+    } else {
+      this.FormVerify.markAllAsTouched();
+      this.mostrarToast(
+        'La placa es obligatoria con formato ( ABC-123 ó ABC-1234 )',
+        'toast-error'
+      );
+      this.showSpinner = false;
+    }
+  }
 
-  // formatPlaca(event: any): void {
-  //   let value = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  formatPlaca(event: any): void {
+    let value = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-  //   if (value.length > 3) {
-  //     value = value.slice(0, 3) + '-' + value.slice(3);
-  //   }
+    if (value.length > 3) {
+      value = value.slice(0, 3) + '-' + value.slice(3);
+    }
 
-  //   if (value.length > 8) {
-  //     value = value.slice(0, 8);
-  //   }
+    if (value.length > 8) {
+      value = value.slice(0, 8);
+    }
 
-  //   event.target.value = value;
-  //   this.FormVerify.get('placa')?.setValue(value);
-  // }
+    event.target.value = value;
+    this.FormVerify.get('placa')?.setValue(value);
+  }
 
   
     private getAccessToken() {
@@ -208,8 +214,8 @@ export class AuthPage implements OnInit {
     }
 
   ngOnInit() {
-    this.showSpinner = true;
-    const user = this.getAccessToken()
-    this.UserVerifyMembership(user.id_user)
+    // this.showSpinner = true;
+    // const user = this.getAccessToken()
+    // this.UserVerifyMembership(user.id_user)
   }
 }

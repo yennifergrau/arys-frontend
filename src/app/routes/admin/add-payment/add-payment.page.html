@@ -123,16 +123,19 @@
                 </label>
                 <div class="ic-status">
                   <input
-                    type="text"
+                    type="tel"
                     class="partial-input"
                     placeholder="Monto"
-                    type="tel"
-                    inputmode="numeric"
                     mask="separator.2"
                     thousandSeparator="."
                     decimalMarker=","
                     suffix=" Bs"
                     [(ngModel)]="customAmount"
+                    [disabled]="selectedPaymentOption !== 3" 
+                    [style.opacity]="selectedPaymentOption === 3 ? '1' : '0.5'"
+                    [ngModelOptions]="{standalone: true}"
+                    (input)="amountError = false" 
+                    [ngClass]="{'invalid-input': amountError && selectedPaymentOption === 3}"
                   />
                 </div>
               </div>

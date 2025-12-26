@@ -4,7 +4,12 @@
     <app-spinner />
     }
     <!-- Header -->
-    <header class="header header-fixed style-1">
+    
+    <!-- Header -->
+   
+
+    <main class="page-content">
+		<header class="header header-fixed style-1">
       <div class="header-content">
         <div class="left-content">
           <a
@@ -17,59 +22,56 @@
         <div class="mid-content"><h5 class="title">Pagar servicio</h5></div>
       </div>
     </header>
-    <!-- Header -->
-    <main class="page-content">
-      <div class="container pt-0 overflow-hidden">
-        <div class="ic-authentication-area ic-flex-box">
-          <div class="logo-area">
-            <img src="../../../../assets/imagenes/icon/logo.png" alt="" />
-          </div>
-          <div class="account-section text-center">
-            <div class="section-head text-center">
-              <h3 class="title px-2">Ingresa el código enviado a</h3>
-              <p class="text-num">{{numberContact}}</p>
-            </div>
-            <form
-              [formGroup]="otpForm"
-              (ngSubmit)="onSubmit()"
-              class="ic-form-group"
-            >
-              <div id="otp" class="digit-group input-lg">
-                <input
-                  *ngFor="let control of otpForm.controls | keyvalue; let i = index"
-                  class="form-control"
-                  type="text"
-                  inputmode="numeric"
-                  [formControlName]="control.key"
-                  maxlength="1"
-                  (input)="onOtpInput($event, i)"
-                  #otpInput
-                />
+		<div class="container pt-0 overflow-hidden">
+			<div class="ic-authentication-area ic-flex-box">
+				<div class="logo-area">
+					<img src="../../../../assets/imagenes/icon/logo.png" alt="" />
+				</div>
+				<div class="account-section text-center">
+					<div class="section-head text-center">
+						<h3 class="title px-2">Por favor ingrese la OTP enviada</h3>
+						<p class="text-num"></p>
+					</div>
+          <div class="center-form">
+            <form  class="ic-form-group">
+              <div class="otp-inputs">
+                <input type="text" maxlength="1" inputmode="numeric" [(ngModel)]="otp[0]" (input)="moveFocus($event, 'otp2')" (keydown)="handleBackspace($event, 'otp1')" id="otp1" name="otp[1]" [disabled]="otpLocked" />
+                <input type="text" maxlength="1" inputmode="numeric" [(ngModel)]="otp[1]" (input)="moveFocus($event, 'otp3')" (keydown)="handleBackspace($event, 'otp2')" id="otp2" name="otp[2]" [disabled]="otpLocked"/>
+                <input type="text" maxlength="1" inputmode="numeric" [(ngModel)]="otp[2]" (input)="moveFocus($event, 'otp4')" (keydown)="handleBackspace($event, 'otp3')" id="otp3" name="otp[3]" [disabled]="otpLocked"/>
+                <input type="text" maxlength="1" inputmode="numeric" [(ngModel)]="otp[3]" (input)="moveFocus($event, 'otp5')" (keydown)="handleBackspace($event, 'otp4')" id="otp4" name="otp[4]" [disabled]="otpLocked"/>
+                <input type="text" maxlength="1" inputmode="numeric" [(ngModel)]="otp[4]" (input)="moveFocus($event, 'otp6')" (keydown)="handleBackspace($event, 'otp5')" id="otp5" name="otp[5]" [disabled]="otpLocked"/>
+                <input type="text" maxlength="1" inputmode="numeric" [(ngModel)]="otp[5]" (input)="moveFocus($event, 'otp7')" (keydown)="handleBackspace($event, 'otp6')" id="otp6" name="otp[6]" [disabled]="otpLocked"/>
+                <input type="text" maxlength="1" inputmode="numeric" [(ngModel)]="otp[6]" (input)="moveFocus($event, 'otp8')" (keydown)="handleBackspace($event, 'otp7')" id="otp7" name="otp[7]" [disabled]="otpLocked"/>
+                <input type="text" maxlength="1" inputmode="numeric" [(ngModel)]="otp[7]" (keydown)="handleBackspace($event, 'otp8')" id="otp8" name="otp[8]" [disabled]="otpLocked"/>
               </div>
-
-              <!-- <div class="section-head text-center" *ngIf="!otpLocked">
-        	  <P class="t px-1">Solicitar código nuevo <a (click)="resendOtp()" style="color: var(--primary);">Reenviar</a></P>
-        	</div> -->
+						   <div class="account-section text-center">
+        
+               </div>
+					  </form>
+          </div>
+					
+			<div class="section-head text-center">
+              <h3 class="t px-1">Ingresa el código enviado a</h3>
+              <p class="text-num num">{{numberContact}}</p>
+            </div>
+			<div class="section-head text-center" *ngIf="!otpLocked">
+        	  <P class="t px-1">Solicitar código nuevo <a  style="color: var(--primary);">Reenviar</a></P>
+        	</div>
         	<div class="section-head text-center" *ngIf="otpLocked">
         	  <p class="t px-1 text-muted">
-        	    Operación en proceso.
+        	    Operación en proceso. No se puede solicitar un nuevo código.
         	  </p>
         	</div>
-  
-              <div class="bottom-btn mt-auto">
-                <button
-                  type="submit"
-                  class="btn btn-secondary text-primary btn-thin btn-lg w-100 rounded-xl"
-                  [disabled]="!otpForm.valid"
-                >
-                  Verificar y proceder
-                </button>
-              </div>
-            </form>
-          </div>
+				</div>
+				<div class="footer-btn mt-4">
+					<button  class="btn btn-primary btn-thin btn-lg w-100 rounded-xl text-color-light"
+					[disabled]="!isOtpComplete()"
+					(click)="onSubmit()"
+					>Verificar y proceder</button>
+				</div>
+			</div>
         </div>
-      </div>
-    </main>
+	</main>	
   </div>
 </div>
 

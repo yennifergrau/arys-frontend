@@ -123,6 +123,7 @@ export class SubscriptionPaymentPage implements OnInit {
       this.paymentForm.get('phone')?.disable();
     }
     if (this.paymentForm.valid) {
+      const amountInVES = Number((this.dollarRate * this.planDetails.priceI).toFixed(2));
       const countOption = this.isPagoMovil ? 'CELE' : 'CNTA';
       const paymentData = {
         creditor_account: {
@@ -142,7 +143,7 @@ export class SubscriptionPaymentPage implements OnInit {
             : this.paymentForm.get('account_number')?.value,
         },
         amount: {
-          amt: Number((this.dollarRate * this.planDetails.priceI).toFixed(2)),
+          amt: amountInVES,
           currency: 'VES',
         },
       };
@@ -155,7 +156,11 @@ export class SubscriptionPaymentPage implements OnInit {
                 'Código enviado con éxito',
                 'toast-success'
               );
+              if (this.data.length > 1) {
+                this.data = [this.data[0]];
+              }
               this.data.push(paymentData);
+              
               this.emission.planDetails = this.data;
               this.nav.navigateForward('admin/subscription-payment-verify');
               this.showSpinner = false;

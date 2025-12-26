@@ -54,6 +54,10 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   nav = inject(NavController);
   renderer = inject(Renderer2);
   public otpLocked: boolean = false;
+  public otp: string[] = [];
+  public otpLength: number = 8;
+  public isProcessing: boolean = false;
+  private idTransaction!: string;
   activatedRoute = inject(ActivatedRoute);
   payment = inject(PaymentService);
   emission_details = inject(EmissionDetailsService);
@@ -73,16 +77,16 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   constructor(private formBuilder: FormBuilder) {}
 
   ngOnInit() {
-    this.otpForm = this.formBuilder.group({
-      digit1: ['', [Validators.required, Validators.maxLength(1)]],
-      digit2: ['', [Validators.required, Validators.maxLength(1)]],
-      digit3: ['', [Validators.required, Validators.maxLength(1)]],
-      digit4: ['', [Validators.required, Validators.maxLength(1)]],
-      digit5: ['', [Validators.required, Validators.maxLength(1)]],
-      digit6: ['', [Validators.required, Validators.maxLength(1)]],
-      digit7: ['', [Validators.required, Validators.maxLength(1)]],
-      digit8: ['', [Validators.required, Validators.maxLength(1)]],
-    });
+    // this.otpForm = this.formBuilder.group({
+    //   digit1: ['', [Validators.required, Validators.maxLength(1)]],
+    //   digit2: ['', [Validators.required, Validators.maxLength(1)]],
+    //   digit3: ['', [Validators.required, Validators.maxLength(1)]],
+    //   digit4: ['', [Validators.required, Validators.maxLength(1)]],
+    //   digit5: ['', [Validators.required, Validators.maxLength(1)]],
+    //   digit6: ['', [Validators.required, Validators.maxLength(1)]],
+    //   digit7: ['', [Validators.required, Validators.maxLength(1)]],
+    //   digit8: ['', [Validators.required, Validators.maxLength(1)]],
+    // });
 
     this.planDetails = this.emission_details.planDetails[0];
     this.paymentData = this.emission_details.planDetails[1];
@@ -98,6 +102,50 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
     // Eliminar el "0" solo si está al principio y agregar el prefijo +58
     return '+58 ' + number.replace(/^0/, '');
   }
+
+   public moveFocus(event: any, nextInputId: string) {
+    if (this.otpLocked) {
+      event.preventDefault();
+      return;
+    }
+    const currentInput = event.target as HTMLInputElement;
+    const value = currentInput.value;
+    if (value.length === 1) {
+      const nextInput = document.querySelector(`#${nextInputId}`) as HTMLInputElement;
+      if (nextInput) {
+        nextInput.focus();
+      }
+    }
+  }
+
+  public handleBackspace(event: any, currentInputId: string) {
+    if (this.otpLocked) {
+      event.preventDefault();
+      return;
+    }
+    const currentInput = event.target as HTMLInputElement;
+    if (event.key === 'Backspace' && currentInput.value.length === 0) {
+      const currentIndex = parseInt(currentInputId.replace('otp', ''), 10) - 1;
+      if (currentIndex > 0) {
+        const prevInputId = 'otp' + currentIndex;
+        const prevInput = document.querySelector(`#${prevInputId}`) as HTMLInputElement;
+        if (prevInput) {
+          prevInput.focus();
+          this.otp[currentIndex - 1] = '';
+        }
+      }
+    }
+  }
+
+  public isOtpComplete(): boolean {
+    return this.otp.length === this.otpLength && this.otp.every(value => value !== '');
+  }
+
+    private handleError(message: string) {
+    this.mostrarToast(message, 'toast-error');
+    this.showSpinner = false;
+  }
+
 
   private generateSubscriptions(): void {
     try {
@@ -145,26 +193,26 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
     }
   }
 
-  onOtpInput(event: any, index: number) {
-    const input = event.target;
-    const value = input.value;
+  // onOtpInput(event: any, index: number) {
+  //   const input = event.target;
+  //   const value = input.value;
 
-    if (value.length > 1) {
-      input.value = value.charAt(0);
-    }
+  //   if (value.length > 1) {
+  //     input.value = value.charAt(0);
+  //   }
 
-    if (value && index < this.otpInputs.length - 1) {
-      const nextInput = this.otpInputs.get(index + 1);
-      if (nextInput) {
-        nextInput.nativeElement.focus();
-      }
-    } else if (!value && index > 0) {
-      const prevInput = this.otpInputs.get(index - 1);
-      if (prevInput) {
-        prevInput.nativeElement.focus();
-      }
-    }
-  }
+  //   if (value && index < this.otpInputs.length - 1) {
+  //     const nextInput = this.otpInputs.get(index + 1);
+  //     if (nextInput) {
+  //       nextInput.nativeElement.focus();
+  //     }
+  //   } else if (!value && index > 0) {
+  //     const prevInput = this.otpInputs.get(index - 1);
+  //     if (prevInput) {
+  //       prevInput.nativeElement.focus();
+  //     }
+  //   }
+  // }
 
   private paymentDataArys(transaction_id: any) {
     try {
@@ -193,28 +241,28 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
     }
   }
 
-  private sendDocument(
-    id_persona: number,
-    documento1: string,
-    id_documento_proceso: number,
-    img_documento: string,
-    fec_vencimiento: string
-  ) {
-    const data = {
-      documento1,
-      id_documento_proceso,
-      id_persona,
-      img_documento,
-      fec_vencimiento,
-      fec_entrega: new Date().toString(),
-      tipo_ext: '',
-      observacion: '',
-    };
-    this.emission.sendDocumentUser(data).subscribe({
-      next: (res) => console.log(res),
-      error: (e) => console.error(e),
-    });
-  }
+  // private sendDocument(
+  //   id_persona: number,
+  //   documento1: string,
+  //   id_documento_proceso: number,
+  //   img_documento: string,
+  //   fec_vencimiento: string
+  // ) {
+  //   const data = {
+  //     documento1,
+  //     id_documento_proceso,
+  //     id_persona,
+  //     img_documento,
+  //     fec_vencimiento,
+  //     fec_entrega: new Date().toString(),
+  //     tipo_ext: '',
+  //     observacion: '',
+  //   };
+  //   this.emission.sendDocumentUser(data).subscribe({
+  //     next: (res) => console.log(res),
+  //     error: (e) => console.error(e),
+  //   });
+  // }
 
   private membership(certificate: any, urlPDF: any) {
     const decode: any = sessionStorage.getItem('accessToken');
@@ -253,11 +301,26 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   }
 
   onSubmit() {
-    if (this.otpForm.valid) {
+
+
+      if (this.isProcessing) {
+        console.log('entro aca')
+        this.showSpinner = true;
+        this.getNotificationPayment();
+      return;
+    }
       this.showSpinner = true;
+
+      const otpCode = this.otp.join('').trim();
+      if(otpCode.length  !== this.otpLength){
+        console.log(`El código OTP debe tener exactamente ${this.otpLength} dígitos.`)
+        alert(`El código OTP debe tener exactamente ${this.otpLength} dígitos.`);
+        this.showSpinner = false;
+        return;
+      }
       
       
-      const otp = Object.values(this.otpForm.value).join('');
+    
       const datos = {
         internal_id: '0000001800',
         group_id: '',
@@ -276,7 +339,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
             'https://syPagoMundial.polizaqui.com/getNotifications',
         },
         receiving_user: {
-          otp: otp,
+          otp: otpCode,
           document_info: {
             type: this.paymentData.debitor_document_info.type,
             number: this.paymentData.debitor_document_info.number,
@@ -288,56 +351,13 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
           },
         },
       };
-
+      // const token = "x8HZtVt2cv89o-qfeWCGbucQMONbC03GAOg0VI0ivag"
       this.payment.verifyCodeOTP(datos).subscribe({
-        next: ({ transaction_id }) => {
-          sessionStorage.setItem('transactionId', transaction_id);
-          console.log('OTP verification response:', transaction_id);
-          const datos = {
-            id_transaction: transaction_id,
-          };
-          const interval = setInterval(() => {
-            this.payment.getNotification(datos).subscribe((data) => {
-              console.log(data.data.status)
-              switch (data.data.status) {
-                case 'ACCP':
-                  console.log('entro aca')
-                  this.mostrarToast('Pago confirmado', 'toast-success');
-                  this.paymentDataArys(transaction_id);
-                  this.generateSubscriptions();
-                  clearInterval(interval);
-                  break;
-                case 'RJCT':
-                  const code = data?.data?.rejected_code || 'Código desconocido';
-                  console.log(`La operación fue rechazada: ${this.getDescription(code)}`)
-                  this.mostrarToast(`La operación fue rechazada: ${this.getDescription(code)}`, 'toast-error');
-                  // this.mostrarToast(
-                  //   'Operación rechazada. Por favor, revisa los detalles e inténtalo de nuevo.',
-                  //   'toast-error'
-                  // );
-                  this.showSpinner = false;
-                  clearInterval(interval);
-                  break;
-                case 'PEND':
-                case 'PROC':
-                  const codePend = data?.data || 'Código desconocido';
-                  console.log(codePend)
-                  console.log(`La operación aún está en proceso: ${this.getDescription(codePend)}`);
-                  this.mostrarToast('La operación está en proceso. Intento nuevamente con el mismo otp', 'toast-success');
-                  this.showSpinner = false;
-                  clearInterval(interval);
-                  break;
-                default:
-                  this.showSpinner = false;
-                  this.mostrarToast(
-                    'Estado de la operación desconocido. Contacte soporte.',
-                    'toast-error'
-                  );
-                  clearInterval(interval);
-                  break;
-              }
-            });
-          }, 10000);
+        next: (response: any) => {
+          sessionStorage.setItem('transactionId', response.transaction_id);
+          this.idTransaction = response.transaction_id
+          console.log('OTP verification response:', this.idTransaction);
+          this.getNotificationPayment()
         },
         error: (error) => {
           console.error('Error recibido del backend SyPago:', error);
@@ -356,7 +376,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
           this.otpForm.reset();
         },
       });
-    }
+    
   }
 
   navigateBack() {
@@ -370,6 +390,75 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
     return nuevaFecha;
   }
 
+  public getNotificationPayment(){
+    const id = { id_transaction: this.idTransaction };
+    const interval = setInterval(() => {
+      this.payment.getNotification(id).subscribe({
+         next: async (data:any) => {
+          console.log(data)
+          // const status = data?.data?.status;
+          const status: any = 'ACCP';
+
+          if (!status) {
+            this.handleError('Estado no definido en la respuesta');
+            clearInterval(interval);
+            return;
+          }
+
+          switch (status) {
+            case 'ACCP':
+              this.paymentDataArys(this.idTransaction);
+              this.generateSubscriptions();
+              this.mostrarToast('Pago confirmado', 'toast-success');
+              clearInterval(interval);
+              break;
+            case 'RJCT':
+              const code = data?.data?.rejected_code || 'Código desconocido';
+              console.log(`La operación fue rechazada: ${this.getDescription(code)}`)
+              this.mostrarToast(`La operación fue rechazada: ${this.getDescription(code)}`, 'toast-error');
+              this.showSpinner = false;
+              this.isProcessing = false;
+              this.otpLocked = false;
+              sessionStorage.removeItem('transactionId');
+              clearInterval(interval);
+              break;
+            case 'PEND':
+            case 'PROC':
+              const codePend = data?.data || 'Código desconocido';
+              console.log(codePend)
+              console.log(`La operación aún está en proceso: ${this.getDescription(codePend)}`);
+              this.mostrarToast('⚠️ El pago está diferido. Vuelva a dar clic en "Verificar y procesar', 'toast-success');
+              this.isProcessing = true;
+              this.otpLocked = true;
+              console.log("ID de la transaccion con status PEND o PROC", this.idTransaction)
+              this.showSpinner = false;
+              clearInterval(interval);
+              break;
+            default:
+              this.showSpinner = false;
+              this.mostrarToast(
+                'Estado de la operación desconocido. Contacte soporte.',
+                'toast-error'
+              );
+              clearInterval(interval);
+              break;
+                }
+         },
+        error: (err) => {
+          console.error('Error en la petición de notificación:', err);
+
+            // ✅ Mostrar mensaje real del backend si existe
+            const backendMessage =
+              err?.error?.message || 'Error al consultar la notificación de pago.';
+            const backendCode = err?.error?.code
+              ? ` (Código ${err.error.code})`
+              : '';
+
+            this.mostrarToast(`${backendMessage}${backendCode}`, 'toast-error');
+        },
+      });
+    }, 3000);
+  }
   
 
   private mostrarToast(mensaje: string, estilo: string) {

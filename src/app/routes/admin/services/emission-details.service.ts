@@ -59,7 +59,7 @@ export class EmissionDetailsService {
   }
 
   get data_user(): string | any {
-    return JSON.parse(localStorage.getItem('data_user') || '')
+    return JSON.parse(localStorage.getItem('userData') || '')
   }
 
   get commerceData(): string | any {

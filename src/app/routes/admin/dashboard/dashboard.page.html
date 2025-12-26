@@ -24,83 +24,99 @@
                     alt="profile-image"
                   />
                 </div>
-                <div>
+                <div class="contenedor-header">
                   <h4 class="name mb-0">¡Hola, {{username}}!</h4>
                   <!-- <small>Miembro de: <strong>{{membershipName}}</strong></small> -->
+                   <i class="fa-solid text-muted" 
+                      [ngClass]="isHidden ? 'fa-eye-slash' : 'fa-eye'" 
+                      (click)="toggleVisibility($event)" 
+                      style="cursor: pointer;">
+                   </i>
                 </div>
+                
               </div>
             </div>
             <!-- <h6 class="title">{{ m.vehicle_brand + " " + m.vehicle_model + " " + m.vehicle_year }}</h6> -->
 
             <div class="ic-list m-b20">
-  <h6 class="mb-3">Mis Membresías y Créditos</h6>
-  <ul class="ic-list-group p-0">
-    @for(m of mockMemberships; track m.id_membership) {
-      <li class="list-group-items mb-3 border rounded-3 p-3 shadow-sm" style="list-style: none; background: #ffffff;">
-        
-        <div class="d-flex align-items-center">
-          <div class="ic-icon me-3 mt-1">
-            <i class="fa-solid fa-dollar-sign fs-4 text-dark"></i>
-          </div>
+              <h6 class="mb-3">Mis Membresías y Créditos</h6>
+              <ul class="ic-list-group p-0">
+                @for(m of mockMemberships; track m.id_membership) {
+                  <li class="list-group-items mb-3 border rounded-3 p-3 shadow-sm" style="list-style: none; background: #ffffff;">
 
-          <div class="flex-grow-1">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h6 class="title mb-0 fw-bold text-dark">{{ m.name }}</h6>
-              @if(m.has_credit) {
-                <i class="fa-solid text-muted" 
-                   [ngClass]="isHidden ? 'fa-eye-slash' : 'fa-eye'" 
-                   (click)="toggleVisibility($event)" 
-                   style="cursor: pointer;">
-                </i>
-              }
-            </div>
-
-            @if(m.has_credit) {
-              <div class="row gx-2 mb-3">
-                <div class="col-6">
-                  <small class="text-muted d-block lh-1">Disponible</small>
-                  <span class="fw-bold text-warning fs-5">
-                    {{ isHidden ? '********' : (m.available_amount | formatCurrency) }} <small>Bs</small>
-                  </span>
-                </div>
-                <div class="col-6 text-end text-sm-start">
-                  <small class="text-muted d-block lh-1">Límite total</small>
-                  <span class="fw-bold text-dark fs-5">
-                    {{ isHidden ? '********' : (m.credit_limit | formatCurrency) }} <small>Bs</small>
-                  </span>
-                </div>
-              </div>
-
-              <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                @if(m.available_amount < m.credit_limit) {
-                  <div>
-                    <small class="text-danger d-block fw-bold" style="font-size: 11px;">DEUDA ACTUAL</small>
-                    <span class="text-danger fw-bold fs-5">
-                      {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }} <small>Bs</small>
-                    </span>
-                  </div>
-                  <button class="btn btn-success px-4 py-2 fw-bold shadow-sm" (click)="pagarCredito(m)">
-                    Pagar
-                  </button>
-                } @else {
-                  <span class="badge bg-light text-success border px-3 py-2">
-                    <i class="fa-solid fa-check-circle me-1"></i> Al día
-                  </span>
+                    <div class="d-flex align-items-center">
+                      <div class="ic-icon me-3 mt-1">
+                        <i class="fa-solid fa-dollar-sign fs-4 text-dark"></i>
+                      </div>
+                    
+                      <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <h6 class="title mb-0 fw-bold text-dark">{{ m.name }}</h6>
+                          <!-- @if(m.has_credit) {
+                            <i class="fa-solid text-muted" 
+                               [ngClass]="isHidden ? 'fa-eye-slash' : 'fa-eye'" 
+                               (click)="toggleVisibility($event)" 
+                               style="cursor: pointer;">
+                            </i>
+                          } -->
+                        </div>
+                      
+                        @if(m.has_credit) {
+                          <div class="row gx-2 mb-3">
+                            <div class="col-6">
+                              <small class="text-muted d-block lh-1">Disponible</small>
+                              <span class="fw-bold text-warning fs-5">
+                                {{ isHidden ? '********' : (m.available_amount | formatCurrency) }} <small>Bs</small>
+                              </span>
+                            </div>
+                            <div class="col-6 text-end text-sm-start">
+                              <small class="text-muted d-block lh-1">Límite total</small>
+                              <span class="fw-bold text-dark fs-5">
+                                {{ isHidden ? '********' : (m.credit_limit | formatCurrency) }} <small>Bs</small>
+                              </span>
+                            </div>
+                          </div>
+                        
+                          <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            @if(m.available_amount < m.credit_limit) {
+                              <div>
+                                <small class="text-danger d-block fw-bold" style="font-size: 11px;">DEUDA ACTUAL</small>
+                                <span class="text-danger fw-bold fs-5">
+                                  {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }} <small>Bs</small>
+                                </span>
+                              </div>
+                              <div class="contenedor-fecha-corte">
+                                <div>
+                                  <small class="text-muted d-block lh-1" style="font-size: 11px;">Fecha de corte</small>
+                                  <span class="fw-bold text-dark fs-5">
+                                    {{ '12/12/2025' }} 
+                                  </span>
+                                </div>
+                                
+                                <button class="btn btn-success px-4 py-2 fw-bold shadow-sm" (click)="pagarCredito(m)">
+                                Pagar
+                              </button>
+                              </div>
+                              
+                            } @else {
+                              <span class="badge bg-light text-success border px-3 py-2">
+                                <i class="fa-solid fa-check-circle me-1"></i> Al día
+                              </span>
+                            }
+                          </div>
+                        } @else {
+                          <div class="mt-2">
+                            <button class="btn btn-outline-primary btn-sm w-100" (click)="solicitarCredito(m)">
+                              <i class="fa-solid fa-plus me-1"></i> Solicitar Crédito
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </li>
                 }
-              </div>
-            } @else {
-              <div class="mt-2">
-                <button class="btn btn-outline-primary btn-sm w-100" (click)="solicitarCredito(m)">
-                  <i class="fa-solid fa-plus me-1"></i> Solicitar Crédito
-                </button>
-              </div>
-            }
-          </div>
-        </div>
-      </li>
-    }
-  </ul>
-</div>
+              </ul>
+            </div>
             <!-- <div class="ic-list m-b20">
               <ul class="ic-list-group">
                 <li class="list-group-items">

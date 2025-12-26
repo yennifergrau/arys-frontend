@@ -8,6 +8,7 @@ import { EmissionDetailsService } from '../services/emission-details.service';
 import { MeritopService } from '../services/meritop.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { DataArysService } from '../services/data-arys.service';
+import { jwtDecode } from 'jwt-decode';
 
 
 @Component({
@@ -80,26 +81,48 @@ export class CreateCustomerPage implements OnInit {
     return this.emissionForm.get('account_number')!
   }
 
+  private getAccessToken() {
+        const dataToken : any = sessionStorage.getItem('accessToken')
+        const decodeToken : any = jwtDecode(dataToken)
+        return decodeToken
+      }
 
 
 
   ngOnInit() {
     this.showLoading = true
+    const token = this.getAccessToken()
+    console.log(token)
     if (this._emisionService?.data_user) {
       this.emissionForm.patchValue({
         clientId: {
-          doctype: this._emisionService.data_user?.prefix || '',
-          docid: +this._emisionService.data_user.rif
+          doctype: token?.prefix || '',
+          docid: token.rif
         },
-        name: this._emisionService.data_user?.name || '',
-        last_name: this._emisionService.data_user?.sub_ape || '',
-        email: this._emisionService.data_user?.email || '',
-        phone_number: this._emisionService.data_user.phone?.replace(/[^0-9]/g, '') || '',
+        name: token.name || '',
+        last_name: token.sup_ape || '',
+        email: token.email || '',
+        phone_number: token.phone?.replace(/[^0-9]/g, '') || '',
         account_number: '',
         segment : '1'
         // segment: (this._emisionService.planDetails?.[0]?.id || '').toString()
       });
     }
+    // if (this._emisionService?.data_user) {
+    //   this.emissionForm.patchValue({
+    //     clientId: {
+    //       doctype: this._emisionService.data_user?.letra_rif || '',
+    //       docid: this._emisionService.data_user.rif
+    //     },
+    //     name: this._emisionService.data_user?.nombre || '',
+    //     last_name: this._emisionService.data_user?.apellido || '',
+    //     email: this._emisionService.data_user?.email || '',
+    //     phone_number: this._emisionService.data_user.phone?.replace(/[^0-9]/g, '') || '',
+    //     account_number: '',
+    //     segment : '1'
+    //     // segment: (this._emisionService.planDetails?.[0]?.id || '').toString()
+    //   });
+    // }
     //  try {
     //   this._meritopService.getAccessToken().subscribe({
     //     next: async (result) => {

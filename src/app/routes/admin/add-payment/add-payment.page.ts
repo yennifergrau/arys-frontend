@@ -45,6 +45,7 @@ export class AddPaymentPage implements AfterViewInit {
   public showLoading: boolean = false;
   private json_bank: listBank[] | any;
   // public data_bank!: string | any;
+  public amountError: boolean = false;
   public data_bank = [
   { accountPrefix: '0102', name: 'Banco de Venezuela' },
   { accountPrefix: '0105', name: 'Mercantil Banco' },
@@ -160,6 +161,7 @@ export class AddPaymentPage implements AfterViewInit {
   onRadioChange(event: Event): void {
     const inputElement = event.target as HTMLInputElement;
     this.selectedPaymentOption = +inputElement.value;
+    this.amountError = false;
   }
 
   private getBankList(): void {
@@ -186,65 +188,131 @@ getFechaActualISO(): string {
 }
 
 
+  // onSubmit() {
+  //   this.showLoading = false;
+  //   try {
+  //     if (this.paymentForm.valid) {
+  //       switch (this.selectedPaymentOption) {
+  //         case 1:
+  //           this.paymentForm.patchValue({ amount: 10 });
+  //           break;
+  //         case 2:
+  //           this.paymentForm.patchValue({ amount: 5 });
+  //           break;
+  //         case 3:
+  //           console.log(this.customAmount)
+  //           this.paymentForm.patchValue({ amount: this.customAmount });
+  //           break;
+  //       }
+  //       const amount = this.paymentForm.get('amount')?.value
+  //       if ( !amount || amount < 0 ){
+  //         this.paymentForm.markAllAsTouched();
+  //         this.showLoading = false;
+  //         this.mostrarToast('El monto a cancelar debe ser mayor que el monto minimo', 'toast-error');
+  //       }
+  //       const data = {
+  //         ip: "10.1.1.1",
+  //         channel: "APP",
+  //         client: {
+  //           doctype: this._emisionService.data_user.prefix || '',
+  //           docid: +this._emisionService.data_user.rif || '',
+  //         },
+  //         cardnumber: this._emisionService.CardNumber,
+  //         amount: this.paymentForm.get('amount')?.value,
+  //         payphone: this.paymentForm.get('phone_provider')?.value + '' + this.paymentForm.get('phone')?.value,
+  //         paidon: this.getFechaActualISO(),
+  //         bankcode: this.paymentForm.get('bank')?.value,
+  //         concept: "pago",
+  //       };
+  
+  //       localStorage.setItem('data-payment', JSON.stringify(data));
+  //       // this.router.navigate(['/admin/report/credit/payment']);
+  //       // this.meritopService.addPayment(data)
+  //       // .subscribe({
+  //       //   next: (result) => {
+  //       //     if (result) {
+  //       //       console.log('Pago exitoso:', result);
+  //       //       this.mostrarToast('Pago realizado con éxito', 'toast-success');
+  //       //       setTimeout(() => {
+  //       //         this.router.navigate(['/admin/report/credit/payment']);
+  //       //       }, 2000);
+  //       //     }
+  //       //   },
+  //       //   error: (error) => {
+  //       //     console.log('Error en el pago:', error);
+  //       //     this.mostrarToast('El pago no pudo ser verificado', 'toast-error');
+  //       //     this.showLoading = false;
+  //       //   }
+  //       // });
+  //     } else {
+  //       this.paymentForm.markAllAsTouched();
+  //       this.showLoading = false;
+  //       this.mostrarToast('Debes completar los campos', 'toast-error');
+  //     }
+  //   } catch (e) {
+  //     console.error(e);
+  //   }
+  // }
+
   onSubmit() {
-    this.showLoading = true;
-    try {
-      if (this.paymentForm.valid) {
-        switch (this.selectedPaymentOption) {
-          case 1:
-            this.paymentForm.patchValue({ amount: 10 });
-            break;
-          case 2:
-            this.paymentForm.patchValue({ amount: 5 });
-            break;
-          case 3:
-            this.paymentForm.patchValue({ amount: this.customAmount });
-            break;
-        }
-  
-        const data = {
-          ip: "10.1.1.1",
-          channel: "APP",
-          client: {
-            doctype: this._emisionService.data_user.prefix || '',
-            docid: +this._emisionService.data_user.rif || '',
-          },
-          cardnumber: this._emisionService.CardNumber,
-          amount: this.paymentForm.get('amount')?.value,
-          payphone: this.paymentForm.get('phone_provider')?.value + '' + this.paymentForm.get('phone')?.value,
-          paidon: this.getFechaActualISO(),
-          bankcode: this.paymentForm.get('bank')?.value,
-          concept: "pago",
-        };
-  
-        localStorage.setItem('data-payment', JSON.stringify(data));
-        this.router.navigate(['/admin/report/credit/payment']);
-        // this.meritopService.addPayment(data)
-        // .subscribe({
-        //   next: (result) => {
-        //     if (result) {
-        //       console.log('Pago exitoso:', result);
-        //       this.mostrarToast('Pago realizado con éxito', 'toast-success');
-        //       setTimeout(() => {
-        //         this.router.navigate(['/admin/report/credit/payment']);
-        //       }, 2000);
-        //     }
-        //   },
-        //   error: (error) => {
-        //     console.log('Error en el pago:', error);
-        //     this.mostrarToast('El pago no pudo ser verificado', 'toast-error');
-        //     this.showLoading = false;
-        //   }
-        // });
-      } else {
-        this.paymentForm.markAllAsTouched();
-        this.showLoading = false;
-        this.mostrarToast('Debes completar los campos', 'toast-error');
-      }
-    } catch (e) {
-      console.error(e);
-    }
+  this.amountError = false;
+  this.showLoading = false;
+
+  // 1. Validar primero que los campos básicos del formulario (banco, teléfono) estén llenos
+  if (this.paymentForm.invalid) {
+    this.paymentForm.markAllAsTouched();
+    this.mostrarToast('Debes completar los campos de origen', 'toast-error');
+    return;
   }
+
+  // 2. Determinar y validar el monto según la opción seleccionada
+  let finalAmount: number | null = 0;
+
+  switch (this.selectedPaymentOption) {
+    case 1: // Pago Total
+      // Aquí podrías tomar el valor de this.amount_use si viene del servicio
+      finalAmount = parseFloat(this.amount_use) || 500; 
+      break;
+    case 2: // Pago Mínimo
+      finalAmount = 5; // O el valor que definas como mínimo
+      break;
+    case 3: // Pago Parcial (EL QUE TE INTERESA)
+      if (this.customAmount === null || this.customAmount === undefined || this.customAmount <= 0) {
+        this.mostrarToast('Para un pago parcial, el monto debe ser mayor a 0', 'toast-error');
+        this.amountError = true;
+        this.showLoading = false;
+        return; // Detenemos la ejecución aquí
+      }
+      finalAmount = this.customAmount;
+      break;
+  }
+
+  // 3. Actualizar el valor en el formulario reactivo
+  this.paymentForm.patchValue({ amount: finalAmount });
+
+  // 4. Preparar la data para el envío
+  const data = {
+    ip: "10.1.1.1",
+    channel: "APP",
+    client: {
+      doctype: this._emisionService.data_user?.prefix || '',
+      docid: +this._emisionService.data_user?.rif || '',
+    },
+    cardnumber: this._emisionService.CardNumber,
+    amount: finalAmount,
+    payphone: this.paymentForm.get('phone_provider')?.value + '' + this.paymentForm.get('phone')?.value,
+    paidon: this.getFechaActualISO(),
+    bankcode: this.paymentForm.get('bank')?.value,
+    concept: "pago",
+  };
+
+  console.log('Datos listos para enviar:', data);
+  localStorage.setItem('data-payment', JSON.stringify(data));
+  
+  // Aquí puedes proceder con la navegación o el servicio
+  this.mostrarToast('Procesando pago...', 'toast-success');
+  this.router.navigate(['/admin/report/credit/payment']);
+}
 
 
   private mostrarToast(mensaje: string, estilo: string) {

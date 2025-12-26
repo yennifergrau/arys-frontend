@@ -6,3 +6,14 @@
 .full-height .page-content .container {
   height: 100vh;
 }
+select#prefix {
+  height: 100%;
+  background: white;
+  border-radius: 0 !important;
+  border-left: 0px !important;
+  border-right: 0px !important;
+  transition: 0.5s;
+  .input-group:focus-within & {
+    border-color: #ffb000 !important;
+  }
+}

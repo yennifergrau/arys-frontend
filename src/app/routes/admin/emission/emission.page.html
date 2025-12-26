@@ -551,9 +551,13 @@
                   <ul class="dropdown-menu w-100">
                     @for(version of filteredVersionesOptions; track
                     version.id_version) {
-                    <li>
-                      <a class="dropdown-item" (click)="selectVersion(version)"
-                        >{{version.version1}}</a
+                    <li >
+                      <a class="dropdown-item" 
+                      [class.disabled]="version.id_version === 0"
+                      (click)="version.id_version !== 0 ? selectVersion(version) : $event.preventDefault()"
+                      [style.cursor]="version.id_version === 0 ? 'not-allowed' : 'pointer'"
+                      >
+                        {{version.version1}}</a
                       >
                     </li>
                     } @if(filteredVersionesOptions.length === 0) {
@@ -651,6 +655,7 @@
                   class="form-control"
                   placeholder="Serial"
                   name="serial"
+                  maxlength="20"
                   formControlName="serial"
                 />
               </div>

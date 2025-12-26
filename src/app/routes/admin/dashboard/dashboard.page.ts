@@ -179,9 +179,9 @@ public pagarCredito(membership: any) {
   //   }
   // }
 
-  private UserVerifyMembership(id_user: number){
+  private UserVerifyMembership(rif: string){
       const data = {
-        id_user: id_user
+        cedula: rif
       }
 
       this.emission.userIsActive(data).subscribe({
@@ -216,7 +216,7 @@ public pagarCredito(membership: any) {
     console.log(decodeData)
     this.username = decodeData?.name + ' ' + decodeData?.sub_ape
     this.id_user = decodeData?.id_user
-    this.UserVerifyMembership(decodeData.id_user)
+    this.UserVerifyMembership(decodeData.rif)
     this.getMembership(this.id_user)
   }
 
