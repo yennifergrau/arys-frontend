@@ -55,7 +55,7 @@
               <p class="text-num num">{{numberContact}}</p>
             </div>
 			<div class="section-head text-center" *ngIf="!otpLocked">
-        	  <P class="t px-1">Solicitar código nuevo <a  style="color: var(--primary);">Reenviar</a></P>
+        	  <P class="t px-1">Solicitar código nuevo <a (click)="resendOtp()"  style="color: var(--primary);">Reenviar</a></P>
         	</div>
         	<div class="section-head text-center" *ngIf="otpLocked">
         	  <p class="t px-1 text-muted">

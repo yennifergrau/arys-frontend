@@ -101,7 +101,7 @@ export class SubscriptionPaymentPage implements OnInit {
       next: (results) => {
         this.banks = results.banks.filter(({ IsDebitOTP }: any) => IsDebitOTP);
         this.dollarRate = results.dollarRate.find(({ code }: any) => {
-          return code === 'EUR';
+          return code === 'USD';
         }).rate;
         this.showSpinner = false;
       },

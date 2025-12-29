@@ -240,6 +240,31 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
       console.error(e);
     }
   }
+    public async resendOtp() {
+  try {
+    this.showSpinner = true;
+    // Reutilizamos los datos de pago que ya tenemos almacenados
+    console.log(this.paymentData)
+    const paymentData = this.paymentData;
+
+    console.log(paymentData)
+    // Generamos un nuevo token y solicitamos un nuevo OTP
+    const authToken = await this.payment.authToken().toPromise();
+    const response = await this.payment.realizarPago(paymentData).toPromise();
+    
+    this.mostrarToast('Nuevo código enviado con éxito', 'toast-success');
+    this.clearOtp(); // Limpiamos los campos OTP
+    this.showSpinner = false;
+  } catch (error) {
+    console.log('Error al enviar nuevo codigo', error)
+    this.mostrarToast('Error al enviar nuevo código. Intente nuevamente.', 'toast-error');
+    this.showSpinner = false;
+  }
+}
+
+  public clearOtp() {
+    this.otp = Array(this.otpLength).fill('');
+  }
 
   // private sendDocument(
   //   id_persona: number,
@@ -396,8 +421,8 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
       this.payment.getNotification(id).subscribe({
          next: async (data:any) => {
           console.log(data)
-          // const status = data?.data?.status;
-          const status: any = 'ACCP';
+          const status = data?.data?.status;
+          // const status: any = 'ACCP';
 
           if (!status) {
             this.handleError('Estado no definido en la respuesta');
