@@ -93,6 +93,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    if (!this.paymentData?.debitor_account?.number) return;
     const storedNumber = this.paymentData.debitor_account.number;
     this.numberContact = this.formatNumber(storedNumber);
   }
@@ -303,6 +304,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
         pdf_url: urlPDF,
         id_user: decodeToken.id_user,
         name: this.emission_details.planDetails[0].title,
+        membership_type: this.emission_details.planDetails[0].id === 'moto' ? 'moto' : 'auto',
       };
       console.log(data)
       this.arys_service.add_membership(data).subscribe({

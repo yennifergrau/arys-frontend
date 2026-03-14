@@ -20,6 +20,7 @@ import { SharedMembershipPage } from './shared-membership/shared-membership.page
 import { RecipePurchasePage } from './recipe-purchase/recipe-purchase.page';
 import { EditUserPage } from './edit-user/edit-user.page';
 import { CreateCustomerPage } from './create-customer/create-customer.page';
+import { ServiceOrderPage } from './service-order/service-order.page';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -117,6 +118,10 @@ export const ADMIN_ROUTES: Routes = [
   {
     path:'Customer/create/sarys/meritop',
     component:CreateCustomerPage
+  },
+  {
+    path: 'service-orders/pending',
+    component: ServiceOrderPage,
   },
   {
     path: '**',

@@ -94,23 +94,13 @@ export class SubscriptionPaymentPage implements OnInit {
     this.planDetails = this.emission.planDetails[0];
     this.data = this.emission.planDetails;
     this.showSpinner = true;
-    forkJoin({
-      banks: this.payment.bankOptions(),
-      dollarRate: this.payment.getTasaBank(),
-    }).subscribe({
-      next: (results) => {
-        this.banks = results.banks.filter(({ IsDebitOTP }: any) => IsDebitOTP);
-        this.dollarRate = results.dollarRate.find(({ code }: any) => {
-          return code === 'USD';
-        }).rate;
+    forkJoin([this.payment.bankOptions(), this.payment.getTasaBank()]).subscribe({
+      next: ([banks, tasaBank]: [any, any]) => {
+        this.banks = banks;
+        this.dollarRate = tasaBank?.rate ?? tasaBank;
         this.showSpinner = false;
       },
-      error: (error) => {
-        console.log(error)
-        this.mostrarToast(
-          'No se pudo recuperar la información del servidor',
-          'toast-error'
-        );
+      error: () => {
         this.showSpinner = false;
       },
     });

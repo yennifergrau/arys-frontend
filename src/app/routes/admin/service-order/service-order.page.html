@@ -1,0 +1,208 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+
+    @if(showLoading){
+      <app-spinner />
+    }
+
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a [routerLink]="['/admin/dashboard/sarys']" class="back-btn ic-icon icon-sm">
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content">
+          <h5 class="title">Ordenes de Servicio</h5>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content space-top">
+      <div class="container p-2">
+
+        @for(order of pendingOrders; track order.order_id){
+          <div class="ic-box style-2 rounded-md mt-auto border-rounded mrg">
+            <div class="view-cart">
+              <ul>
+                <li>
+                  <span class="title font-20">Orden N° {{order.order_number}}</span>
+                </li>
+                <li>
+                  <span class="name">Proveedor</span>
+                  <span class="about">{{order.provider_name}}</span>
+                </li>
+                <li>
+                  <span class="name">Servicio</span>
+                  <span class="about">{{order.service_name}}</span>
+                </li>
+                <li>
+                  <span class="name">Monto</span>
+                  <span class="about amount-text">$ {{ formatBs(order.amount) }} USD</span>
+                </li>
+                <li>
+                  <span class="name">Estado</span>
+                  <span class="about">
+                    <span class="badge" [ngClass]="getStatusClass(order.status)">
+                      {{ getStatusLabel(order.status) }}
+                    </span>
+                  </span>
+                </li>
+                <li>
+                  <span class="name">Fecha</span>
+                  <span class="about font-12">{{order.created_at | date:'dd/MM/yyyy HH:mm'}}</span>
+                </li>
+              </ul>
+
+              <!-- Panel de crédito expandible -->
+              @if(activeOrderId === order.order_id){
+                <div class="credit-panel">
+
+                  @if(creditInfo === null){
+                    <p class="font-12 text-muted credit-loading">Cargando crédito disponible...</p>
+                  }
+
+                  @if(creditInfo !== null){
+                    <p class="credit-title">Usar mi crédito ARYS</p>
+
+                    <div class="credit-summary">
+                      <div class="credit-row">
+                        <span class="credit-label">Línea total</span>
+                        <span class="credit-value">$ {{ formatBs(creditInfo.limit) }}</span>
+                      </div>
+                      <div class="credit-row">
+                        <span class="credit-label">Disponible</span>
+                        <span class="credit-value credit-available">$ {{ formatBs(creditInfo.available) }}</span>
+                      </div>
+                    </div>
+
+                    @if(creditInfo.available > 0){
+                      <div class="slider-section">
+                        <div class="slider-labels">
+                          <span class="font-12">$0</span>
+                          <span class="font-12 credit-used-label">Usar: $ {{ formatBs(selectedCredit) }}</span>
+                          <span class="font-12">$ {{ formatBs(maxCredit) }}</span>
+                        </div>
+                        <input
+                          type="range"
+                          class="credit-slider"
+                          [min]="0"
+                          [max]="maxCredit"
+                          [step]="0.01"
+                          [value]="selectedCredit"
+                          (input)="onSliderChange($event, order.amount)"
+                        />
+                      </div>
+
+                      <div class="credit-result">
+                        <div class="credit-row">
+                          <span class="credit-label">Crédito a usar</span>
+                          <span class="credit-value text-success">$ {{ formatBs(selectedCredit) }}</span>
+                        </div>
+                        <div class="credit-row">
+                          <span class="credit-label">Diferencia a pagar</span>
+                          <span class="credit-value" [class.text-danger]="remainingPayment > 0">
+                            $ {{ formatBs(remainingPayment) }}
+                          </span>
+                        </div>
+                      </div>
+
+                      @if(remainingPayment > 0 && order.payment_mobile_data){
+                        <div class="payment-info">
+                          <p class="payment-title">Pago Móvil al Proveedor: $ {{ formatBs(remainingPayment) }}</p>
+                          <ul>
+                            <li>
+                              <span class="name">Banco</span>
+                              <span class="about font-12">{{order.payment_mobile_data.bank}}</span>
+                            </li>
+                            <li>
+                              <span class="name">Teléfono</span>
+                              <span class="about font-12">{{order.payment_mobile_data.phone}}</span>
+                            </li>
+                            <li>
+                              <span class="name">Documento</span>
+                              <span class="about font-12">{{order.payment_mobile_data.document}}</span>
+                            </li>
+                            <li>
+                              <span class="name">Titular</span>
+                              <span class="about font-12">{{order.payment_mobile_data.account_holder}}</span>
+                            </li>
+                          </ul>
+                        </div>
+                      }
+
+                      @if(applyResult){
+                        <div class="apply-result" [class.result-success]="applyResult.status" [class.result-error]="!applyResult.status">
+                          <p class="font-12">{{ applyResult.message }}</p>
+                          @if(applyResult.status && applyResult.remaining_payment && applyResult.remaining_payment > 0){
+                            <p class="font-12 mt-1">
+                              Recuerda pagar <strong>$ {{ formatBs(applyResult.remaining_payment) }}</strong> al proveedor por pago móvil.
+                            </p>
+                          }
+                        </div>
+                      }
+
+                      <button
+                        class="btn px-3 btn-thin rounded btn-primary w-100 mt-2"
+                        [disabled]="isApplyingCredit || selectedCredit <= 0 || !!applyResult?.status"
+                        (click)="applyCredit(order.order_id)">
+                        @if(isApplyingCredit){
+                          Procesando...
+                        } @else {
+                          <i class="fa-sharp fa-solid fa-credit-card font-15"></i>
+                          Usar $ {{ formatBs(selectedCredit) }} de crédito
+                        }
+                      </button>
+                    } @else {
+                      <p class="no-credit-msg">No tienes crédito disponible en este momento.</p>
+                    }
+                  }
+                </div>
+              }
+
+              <!-- Datos de pago cuando la orden ya fue procesada -->
+              @if(order.status !== 'pending' && order.payment_mobile_data){
+                <div class="payment-info mt-2">
+                  <p class="payment-title">Datos de Pago Móvil del Proveedor</p>
+                  <ul>
+                    <li>
+                      <span class="name">Banco</span>
+                      <span class="about font-12">{{order.payment_mobile_data.bank}}</span>
+                    </li>
+                    <li>
+                      <span class="name">Teléfono</span>
+                      <span class="about font-12">{{order.payment_mobile_data.phone}}</span>
+                    </li>
+                    <li>
+                      <span class="name">Documento</span>
+                      <span class="about font-12">{{order.payment_mobile_data.document}}</span>
+                    </li>
+                    <li>
+                      <span class="name">Titular</span>
+                      <span class="about font-12">{{order.payment_mobile_data.account_holder}}</span>
+                    </li>
+                  </ul>
+                </div>
+              }
+
+              @if(order.status === 'pending'){
+                <button
+                  class="btn px-3 btn-thin rounded btn-primary w-100 mt-2"
+                  (click)="toggleCreditPanel(order)">
+                  <i class="fa-sharp fa-solid fa-credit-card font-15"></i>
+                  {{ activeOrderId === order.order_id ? 'Cerrar' : 'Pagar con Crédito' }}
+                </button>
+              }
+
+            </div>
+          </div>
+        } @empty {
+          <p class="empty-msg">No tienes ordenes de servicio pendientes</p>
+        }
+
+      </div>
+      <br /><br /><br /><br />
+    </main>
+    <app-tab />
+  </div>
+</div>

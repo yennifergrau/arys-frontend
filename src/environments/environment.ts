@@ -38,14 +38,18 @@ export const environment = {
   },
 
   arys:{
-    url:'https://demo-services-arys.polizaqui.com',
+    url:'http://localhost:3304',
     OtherApis:{
       add_person: 'data/fecht/user/property',
       add_vehicle:'data/fecht/vehicle/user',
       add_payment: 'data/fecht/payment/user',
       add_membership: 'data/fecht/membership/user',
       get_membership: 'data/get/fecht/membership/user',
-      update_credit: 'update/credit/data'
+      update_credit: 'update/credit/data',
+      get_pending_orders: 'api/service-orders/pending',
+      get_order_details: 'api/service-order',
+      pay_order_credit: 'api/service-order',
+      apply_credit: 'api/service-order'
     }
   },
 
@@ -83,6 +87,9 @@ export const environment = {
 
   awsConfig: {
     region: 'us-east-1',
-    credentials: {},
+    credentials: {
+      accessKeyId: '',
+      secretAccessKey: '',
+    },
   },
 };
