@@ -84,8 +84,8 @@ export const environment = {
   awsConfig: {
     region: 'us-east-1',
     credentials: {
-      accessKeyId: 'AKIAQE43KII3EVRCZDDA',
-      secretAccessKey: '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',
+      accessKeyId: 'AKIAXSGIZOBMISXPNAGU',
+      secretAccessKey: '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',
     },
   },
 };
