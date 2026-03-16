@@ -58,6 +58,11 @@ export class EmissionDetailsService {
     return JSON.parse(localStorage.getItem('lineaCustomer') || '')
   }
 
+  get creditLine(): any {
+    const val = localStorage.getItem('creditLine');
+    return val ? JSON.parse(val) : null;
+  }
+
   get data_user(): string | any {
     return JSON.parse(localStorage.getItem('userData') || '')
   }
@@ -140,5 +145,9 @@ export class EmissionDetailsService {
 
   set data_user(value:any) {
     localStorage.setItem('data_user',JSON.stringify(value))
+  }
+
+  set creditLine(value: any) {
+    localStorage.setItem('creditLine', JSON.stringify(value));
   }
 }

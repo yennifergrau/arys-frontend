@@ -66,6 +66,34 @@
               </div>
           </div>
         </div>
+
+        <!-- Línea de crédito Meritop -->
+        <div class="ic-product-preview mt-3" *ngIf="creditLineActive">
+          <div class="ic-box style-2 rounded-md">
+            <div class="title-head">
+              <h6 class="font-title">Línea de crédito activa</h6>
+            </div>
+            <div class="ic-box style-2 rounded-md">
+              <div class="view-cart">
+                <ul>
+                  <li>
+                    <span class="name">Estado:</span>
+                    <span class="about status">Activa</span>
+                  </li>
+                  <li>
+                    <span class="name">Monto disponible:</span>
+                    <span class="about status">${{creditAmount}} USD</span>
+                  </li>
+                  <li>
+                    <span class="name">ID línea:</span>
+                    <span class="about">{{creditLine?.credit_line_id}}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <a [routerLink]="['/admin/Customer/create/sarys/meritop']" class="btn px-3 btn-thin rounded btn-secondary w-100">
           <i class="fa-sharp text-primary fa-solid fa-share font-15 m-1"></i>
         Abrir Financiamiento

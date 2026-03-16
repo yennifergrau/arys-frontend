@@ -310,8 +310,11 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
       this.arys_service.add_membership(data).subscribe({
         next: (result) => {
           console.log(result);
-          sessionStorage.setItem('resultMembership', JSON.stringify(result))
-          sessionStorage.setItem('dataMembership', JSON.stringify(data))
+          sessionStorage.setItem('resultMembership', JSON.stringify(result));
+          sessionStorage.setItem('dataMembership', JSON.stringify(data));
+          if (result.credit_line) {
+            this.emission_details.creditLine = result.credit_line;
+          }
         },
         error: (error) => {
           console.log(error);

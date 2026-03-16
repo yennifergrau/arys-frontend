@@ -56,6 +56,18 @@ export class SharedMembershipPage implements OnInit {
     return this.emission_details.data_vehicle.color
   }
 
+  get creditLine(): any {
+    return this.emission_details.creditLine;
+  }
+
+  get creditLineActive(): boolean {
+    return this.emission_details.creditLine?.status === 'active';
+  }
+
+  get creditAmount(): number {
+    return this.emission_details.creditLine?.credit_amount ?? 0;
+  }
+
   sumarUnAno(): Date {
     const fechaActual = new Date();
     const nuevaFecha = new Date(fechaActual);
@@ -122,6 +134,11 @@ export class SharedMembershipPage implements OnInit {
     setTimeout(() => {
       this.SendDataEmail()
     }, 3000);
+    if (this.creditLineActive) {
+      setTimeout(() => {
+        this.mostrarToast(`Línea de crédito activada: $${this.creditAmount} USD`, 'toast-success');
+      }, 2000);
+    }
   }
 
   public shareByWhatsapp(): void {
