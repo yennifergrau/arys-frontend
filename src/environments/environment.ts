@@ -1,10 +1,10 @@
 export const environment = {
-  production: false,
+  production: true,
 
   authentication: 'https://demo-auth-arys.polizaqui.com',
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',
   ocrFileService: 'https://adjuntar-documento-qa.polizaqui.com',
-  paymentSypago: 'https://pago-arys-qa.polizaqui.com',
+  paymentSypago: 'https://pagos-qa.arys.polizaqui.com',
 
   sarys: {
     url: 'https://demo-services-arys.polizaqui.com',
