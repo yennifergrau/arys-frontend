@@ -1,10 +1,10 @@
 export const environment = {
-  production: true,
+  production: false,
 
   authentication: 'https://demo-auth-arys.polizaqui.com',
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',
   ocrFileService: 'https://adjuntar-documento-qa.polizaqui.com',
-  paymentSypago: 'https://pagos-qa.arys.polizaqui.com',
+  paymentSypago: 'https://pago-arys-qa.polizaqui.com',
 
   sarys: {
     url: 'https://demo-services-arys.polizaqui.com',
@@ -45,7 +45,11 @@ export const environment = {
       add_payment: 'data/fecht/payment/user',
       add_membership: 'data/fecht/membership/user',
       get_membership: 'data/get/fecht/membership/user',
-      update_credit: 'update/credit/data'
+      update_credit: 'update/credit/data',
+      get_pending_orders: 'api/service-orders/pending',
+      get_order_details: 'api/service-order',
+      pay_order_credit: 'api/service-order',
+      apply_credit: 'api/service-order'
     }
   },
 
