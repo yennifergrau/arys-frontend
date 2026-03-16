@@ -1,5 +1,5 @@
 export const environment = {
-  production: true,
+  production: false,
 
   authentication: 'https://demo-auth-arys.polizaqui.com',
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',
@@ -45,7 +45,11 @@ export const environment = {
       add_payment: 'data/fecht/payment/user',
       add_membership: 'data/fecht/membership/user',
       get_membership: 'data/get/fecht/membership/user',
-      update_credit: 'update/credit/data'
+      update_credit: 'update/credit/data',
+      get_pending_orders: 'api/service-orders/pending',
+      get_order_details: 'api/service-order',
+      pay_order_credit: 'api/service-order',
+      apply_credit: 'api/service-order'
     }
   },
 
@@ -84,8 +88,8 @@ export const environment = {
   awsConfig: {
     region: 'us-east-1',
     credentials: {
-      accessKeyId: 'AKIAQE43KII3EVRCZDDA',
-      secretAccessKey: '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',
+      accessKeyId: 'AKIAXSGIZOBMISXPNAGU',
+      secretAccessKey: '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',
     },
   },
 };

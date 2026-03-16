@@ -1,10 +1,10 @@
 export const environment = {
-  production: false,
+  production: true,
 
   authentication: 'https://demo-auth-arys.polizaqui.com',
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',
   ocrFileService: 'https://adjuntar-documento-qa.polizaqui.com',
-  paymentSypago: 'https://pago-arys-qa.polizaqui.com',
+  paymentSypago: 'https://pagos-qa.arys.polizaqui.com',
 
   sarys: {
     url: 'https://demo-services-arys.polizaqui.com',
@@ -38,7 +38,7 @@ export const environment = {
   },
 
   arys:{
-    url:'http://localhost:3304',
+    url:'https://demo-services-arys.polizaqui.com',
     OtherApis:{
       add_person: 'data/fecht/user/property',
       add_vehicle:'data/fecht/vehicle/user',
@@ -88,8 +88,8 @@ export const environment = {
   awsConfig: {
     region: 'us-east-1',
     credentials: {
-      accessKeyId: '',
-      secretAccessKey: '',
+      accessKeyId: 'AKIAXSGIZOBMISXPNAGU',
+      secretAccessKey: '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',
     },
   },
 };

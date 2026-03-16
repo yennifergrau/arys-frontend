@@ -97,7 +97,8 @@ export class SubscriptionPaymentPage implements OnInit {
     forkJoin([this.payment.bankOptions(), this.payment.getTasaBank()]).subscribe({
       next: ([banks, tasaBank]: [any, any]) => {
         this.banks = banks;
-        this.dollarRate = tasaBank?.rate ?? tasaBank;
+        this.dollarRate = tasaBank[0]?.rate ?? tasaBank;
+        console.log('Tasa del dólar obtenida:', this.dollarRate);
         this.showSpinner = false;
       },
       error: () => {
@@ -113,7 +114,9 @@ export class SubscriptionPaymentPage implements OnInit {
       this.paymentForm.get('phone')?.disable();
     }
     if (this.paymentForm.valid) {
-      const amountInVES = Number((this.dollarRate * this.planDetails.priceI).toFixed(2));
+      const price = parseFloat(this.planDetails.priceI);
+      const rate = this.dollarRate;
+      const amountInVES = Number((rate * price).toFixed(2));
       const countOption = this.isPagoMovil ? 'CELE' : 'CNTA';
       const paymentData = {
         creditor_account: {

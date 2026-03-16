@@ -170,7 +170,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
       console.log(res)
                   console.log(res);
                   this.emission_details.numberContract = res;
-                  this.membership(res.certificado, res.urlPDF);
+                  this.membership(res.certificado, res.pdfUrl);
                   this.mostrarToast('Subscripcion con exito', 'toast-success');
                   setTimeout(() => {
                     this.nav.navigateRoot(
