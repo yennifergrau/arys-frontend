@@ -8,6 +8,7 @@ export const environment = {
 
   sarys: {
     url: 'https://demo-services-arys.polizaqui.com',
+    // url: 'http://localhost:3304',
     usuario: {
       estatus: 'sarys/post/fechetd/status',
     },
@@ -39,8 +40,9 @@ export const environment = {
 
   arys:{
     url:'https://demo-services-arys.polizaqui.com',
+    // url: 'http://localhost:3304',
     OtherApis:{
-      add_person: 'data/fecht/user/property',
+      add_person: 'data/fecht/user/property', 
       add_vehicle:'data/fecht/vehicle/user',
       add_payment: 'data/fecht/payment/user',
       add_membership: 'data/fecht/membership/user',
@@ -55,6 +57,7 @@ export const environment = {
 
   meritop:{
     url:'https://demo-services-arys.polizaqui.com',
+    // url:'http://localhost:3304',
     access:{
       tokenAccess:'sarys/get/meritop/token/access',
     },

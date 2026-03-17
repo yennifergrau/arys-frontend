@@ -215,31 +215,36 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   //   }
   // }
 
-  private paymentDataArys(transaction_id: any) {
-    try {
-      const data = {
-        bank_code:
-          this.emission_details.planDetails[1].creditor_account.bank_code,
-        amount: this.emission_details.planDetails[1].amount.amt,
-        prefix: this.emission_details.planDetails[1].debitor_document_info.type,
-        rif: this.emission_details.planDetails[1].debitor_document_info.number,
-        phone_bank: this.emission_details.planDetails[1].debitor_account.number,
-        bank_acc: this.emission_details.planDetails[1].debitor_account.number,
-        reference: transaction_id,
-      };
-      console.log(data)
-      this.arys_service.add_payment(data).subscribe({
-        next: (result) => {
-          console.log(result);
-          this.id_pay = result.id_pay;
-        },
-        error: (error) => {
-          console.log(error);
-        },
-      });
-    } catch (e) {
-      console.error(e);
-    }
+  private paymentDataArys(transaction_id: any): Promise<void> {
+    return new Promise((resolve) => {
+      try {
+        const data = {
+          bank_code:
+            this.emission_details.planDetails[1].creditor_account.bank_code,
+          amount: this.emission_details.planDetails[1].amount.amt,
+          prefix: this.emission_details.planDetails[1].debitor_document_info.type,
+          rif: this.emission_details.planDetails[1].debitor_document_info.number,
+          phone_bank: this.emission_details.planDetails[1].debitor_account.number,
+          bank_acc: this.emission_details.planDetails[1].debitor_account.number,
+          reference: transaction_id,
+        };
+        console.log(data)
+        this.arys_service.add_payment(data).subscribe({
+          next: (result) => {
+            console.log(result);
+            this.id_pay = result.id_pay;
+            resolve();
+          },
+          error: (error) => {
+            console.log(error);
+            resolve();
+          },
+        });
+      } catch (e) {
+        console.error(e);
+        resolve();
+      }
+    });
   }
     public async resendOtp() {
   try {
@@ -309,11 +314,14 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
       console.log(data)
       this.arys_service.add_membership(data).subscribe({
         next: (result) => {
-          console.log(result);
+          console.log('[membership] Respuesta de add_membership:', result);
           sessionStorage.setItem('resultMembership', JSON.stringify(result));
           sessionStorage.setItem('dataMembership', JSON.stringify(data));
           if (result.credit_line) {
+            console.log('[Meritop] Línea de crédito abierta exitosamente:', result.credit_line);
             this.emission_details.creditLine = result.credit_line;
+          } else {
+            console.warn('[Meritop] No se obtuvo línea de crédito en esta membresía:', result);
           }
         },
         error: (error) => {
@@ -437,7 +445,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
 
           switch (status) {
             case 'ACCP':
-              this.paymentDataArys(this.idTransaction);
+              await this.paymentDataArys(this.idTransaction);
               this.generateSubscriptions();
               this.mostrarToast('Pago confirmado', 'toast-success');
               clearInterval(interval);
