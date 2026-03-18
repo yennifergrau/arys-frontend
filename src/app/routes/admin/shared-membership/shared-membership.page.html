@@ -67,7 +67,7 @@
           </div>
         </div>
 
-        <!-- Línea de crédito Meritop -->
+        <!-- Línea de crédito Meritop — activa -->
         <div class="ic-product-preview mt-3" *ngIf="creditLineActive">
           <div class="ic-box style-2 rounded-md">
             <div class="title-head">
@@ -87,6 +87,50 @@
                   <li>
                     <span class="name">ID línea:</span>
                     <span class="about">{{creditLine?.credit_line_id}}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Línea de crédito Meritop — cédula no registrada -->
+        <div class="ic-product-preview mt-3" *ngIf="!creditLineActive && creditLineReason === 'missing_rif'">
+          <div class="ic-box style-2 rounded-md">
+            <div class="title-head">
+              <h6 class="font-title">Línea de crédito no disponible</h6>
+            </div>
+            <div class="ic-box style-2 rounded-md">
+              <div class="view-cart">
+                <ul>
+                  <li>
+                    <span class="name">Estado:</span>
+                    <span class="about" style="color: var(--bs-danger);">Sin cédula registrada</span>
+                  </li>
+                  <li>
+                    <span class="name" style="white-space: normal;">Para activar tu línea de crédito contacta a soporte con tu número de cédula.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Línea de crédito Meritop — error de procesamiento -->
+        <div class="ic-product-preview mt-3" *ngIf="!creditLineActive && creditLineReason === 'meritop_error'">
+          <div class="ic-box style-2 rounded-md">
+            <div class="title-head">
+              <h6 class="font-title">Línea de crédito en proceso</h6>
+            </div>
+            <div class="ic-box style-2 rounded-md">
+              <div class="view-cart">
+                <ul>
+                  <li>
+                    <span class="name">Estado:</span>
+                    <span class="about" style="color: var(--bs-warning);">Procesando</span>
+                  </li>
+                  <li>
+                    <span class="name" style="white-space: normal;">Tu línea de crédito está siendo procesada. Recibirás una notificación cuando esté disponible.</span>
                   </li>
                 </ul>
               </div>

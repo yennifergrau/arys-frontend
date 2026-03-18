@@ -68,6 +68,10 @@ export class SharedMembershipPage implements OnInit {
     return this.emission_details.creditLine?.credit_amount ?? 0;
   }
 
+  get creditLineReason(): string | null {
+    return this.emission_details.creditLineReason;
+  }
+
   sumarUnAno(): Date {
     const fechaActual = new Date();
     const nuevaFecha = new Date(fechaActual);
@@ -134,9 +138,18 @@ export class SharedMembershipPage implements OnInit {
     setTimeout(() => {
       this.SendDataEmail()
     }, 3000);
+
     if (this.creditLineActive) {
       setTimeout(() => {
         this.mostrarToast(`Línea de crédito activada: $${this.creditAmount} USD`, 'toast-success');
+      }, 2000);
+    } else if (this.creditLineReason === 'missing_rif') {
+      setTimeout(() => {
+        this.mostrarToast('No se pudo activar la línea de crédito: cédula no registrada. Contacta soporte.', 'toast-error');
+      }, 2000);
+    } else if (this.creditLineReason === 'meritop_error') {
+      setTimeout(() => {
+        this.mostrarToast('Tu línea de crédito está siendo procesada. Recibirás una notificación pronto.', 'toast-success');
       }, 2000);
     }
   }

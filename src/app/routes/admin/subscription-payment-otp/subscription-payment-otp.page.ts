@@ -320,8 +320,10 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
           if (result.credit_line) {
             console.log('[Meritop] Línea de crédito abierta exitosamente:', result.credit_line);
             this.emission_details.creditLine = result.credit_line;
+            this.emission_details.creditLineReason = null;
           } else {
-            console.warn('[Meritop] No se obtuvo línea de crédito en esta membresía:', result);
+            console.warn('[Meritop] No se obtuvo línea de crédito:', result.credit_line_reason, result);
+            this.emission_details.creditLineReason = result.credit_line_reason ?? 'meritop_error';
           }
         },
         error: (error) => {

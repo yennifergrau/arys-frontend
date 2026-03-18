@@ -63,6 +63,10 @@ export class EmissionDetailsService {
     return val ? JSON.parse(val) : null;
   }
 
+  get creditLineReason(): string | null {
+    return localStorage.getItem('creditLineReason');
+  }
+
   get data_user(): string | any {
     return JSON.parse(localStorage.getItem('userData') || '')
   }
@@ -149,5 +153,13 @@ export class EmissionDetailsService {
 
   set creditLine(value: any) {
     localStorage.setItem('creditLine', JSON.stringify(value));
+  }
+
+  set creditLineReason(value: string | null) {
+    if (value) {
+      localStorage.setItem('creditLineReason', value);
+    } else {
+      localStorage.removeItem('creditLineReason');
+    }
   }
 }
