@@ -220,7 +220,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
       try {
         const data = {
           bank_code:
-            this.emission_details.planDetails[1].creditor_account.bank_code,
+            this.emission_details.planDetails[1].debitor_account.bank_code,
           amount: this.emission_details.planDetails[1].amount.amt,
           prefix: this.emission_details.planDetails[1].debitor_document_info.type,
           rif: this.emission_details.planDetails[1].debitor_document_info.number,
