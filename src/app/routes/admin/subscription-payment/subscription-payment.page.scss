@@ -34,6 +34,53 @@
   background-color: #f8d7da;
   }
 
+.account-input-wrapper {
+  display: flex;
+  align-items: center;
+  height: 55px;
+  border: 2px solid #e2e2e2;
+  border-radius: 50px;
+  background: var(--bg-white, #fff);
+  padding: 10px 15px;
+  gap: 4px;
+  transition: all 0.3s ease-in-out;
+
+  &:focus-within {
+    border-color: #ffb000;
+  }
+
+  &.invalid-input {
+    border: 2px solid red !important;
+    background-color: #f8d7da;
+  }
+
+  .account-prefix {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--title, #222222);
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .account-input {
+    flex: 1;
+    border: none !important;
+    outline: none !important;
+    border-radius: 0 !important;
+    background: transparent;
+    padding: 0;
+    height: 100%;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--title, #222222);
+
+    &::placeholder {
+      color: #aaa;
+      font-weight: 300;
+    }
+  }
+}
+
 .warning-container {
   display: flex;
   justify-content: center;

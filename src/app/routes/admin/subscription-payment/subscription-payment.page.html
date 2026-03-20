@@ -79,6 +79,7 @@
                   name="bank_code"
                   title="Seleccione Banco Emisor"
                   formControlName="bank_code"
+                  (change)="onBankChange($event)"
                 >
                   <option [value]="''">Seleccione el Banco Emisor</option>
                   @for(bank of banks; track $index) {
@@ -186,7 +187,21 @@
                   mask="(000) 000-0000"
                 />
               </div>
-              }@else {
+              }
+              @if (isPagoMovil && selectedBankPrefix) {
+              <div class="m-b20 account-input-wrapper input-lg input-rounded"
+                [class.invalid-input]="account_numberControl.invalid && (account_numberControl.dirty || account_numberControl.touched)">
+                <span class="account-prefix">{{ selectedBankPrefix }}</span>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  class="account-input"
+                  placeholder="Número de cuenta"
+                  autocomplete="off"
+                  formControlName="account_number"
+                />
+              </div>
+              }@else if (!isPagoMovil) {
               <div class="form-item mb-2 input-rounded input-lg">
                 <input
                   [ngClass]="{'invalid-input': account_numberControl.invalid && (account_numberControl.dirty || account_numberControl.touched)}"

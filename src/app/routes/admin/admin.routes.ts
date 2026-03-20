@@ -27,10 +27,10 @@ export const ADMIN_ROUTES: Routes = [
     path: 'planes/home/user',
     component: HomePage,
   },
-  {
-    path: 'dashboard/sarys',
-    component: DashboardPage,
-  },
+  // {
+  //   path: 'dashboard/sarys',
+  //   component: DashboardPage,
+  // },
   {
     path: 'auth-veirify-sarys',
     component: AuthPage,

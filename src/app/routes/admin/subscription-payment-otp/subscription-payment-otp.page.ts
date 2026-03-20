@@ -225,7 +225,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
           prefix: this.emission_details.planDetails[1].debitor_document_info.type,
           rif: this.emission_details.planDetails[1].debitor_document_info.number,
           phone_bank: this.emission_details.planDetails[1].debitor_account.number,
-          bank_acc: this.emission_details.planDetails[1].debitor_account.number,
+          bank_acc: this.emission_details.planDetails[1].debitor_account.account_number,
           reference: transaction_id,
         };
         console.log(data)

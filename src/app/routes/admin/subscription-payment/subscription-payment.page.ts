@@ -51,6 +51,7 @@ export class SubscriptionPaymentPage implements OnInit {
   data: any;
   dollarRate: number = 1;
   isPagoMovil: boolean = true;
+  selectedBankPrefix: string = '';
   private countBank: string = '01740126281264340652';
   private codeBank: string = '0174';
   paymentForm = new FormGroup({
@@ -80,12 +81,17 @@ export class SubscriptionPaymentPage implements OnInit {
   SetIsPagoMovil(isPagoMovil: any) {
     this.isPagoMovil = isPagoMovil.value === 'true';
     if (this.isPagoMovil) {
-      this.paymentForm.get('account_number')?.disable();
       this.paymentForm.get('phone')?.enable();
     } else {
-      this.paymentForm.get('account_number')?.enable();
       this.paymentForm.get('phone')?.disable();
+      this.selectedBankPrefix = '';
     }
+    this.paymentForm.get('account_number')?.setValue('');
+  }
+
+  onBankChange(event: any) {
+    this.selectedBankPrefix = event.target.value || '';
+    this.paymentForm.get('account_number')?.setValue('');
   }
 
   constructor() {}
@@ -118,6 +124,9 @@ export class SubscriptionPaymentPage implements OnInit {
       const rate = this.dollarRate;
       const amountInVES = Number((rate * price).toFixed(2));
       const countOption = this.isPagoMovil ? 'CELE' : 'CNTA';
+      const fullAccountNumber = this.isPagoMovil
+        ? this.selectedBankPrefix + this.paymentForm.get('account_number')?.value
+        : this.paymentForm.get('account_number')?.value;
       const paymentData = {
         creditor_account: {
           bank_code: this.codeBank,
@@ -133,7 +142,8 @@ export class SubscriptionPaymentPage implements OnInit {
           type: countOption,
           number: this.isPagoMovil
             ? '0' + this.paymentForm.get('phone')?.value
-            : this.paymentForm.get('account_number')?.value,
+            : fullAccountNumber,
+          account_number: fullAccountNumber,
         },
         amount: {
           amt: amountInVES,

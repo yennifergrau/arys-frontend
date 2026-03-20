@@ -130,7 +130,7 @@ export class AuthPage implements OnInit {
             this.navCtrl.navigateRoot(['/admin/Customer/create/sarys/meritop']);
           } else if(response.estatus_gene1 === 'ACTIVO' && creditVerify !== false){
             console.log("///////segundo if //////")
-          this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
+          this.navCtrl.navigateRoot(['/admin/service-orders/pending']);
           }else if (
             response.estatus_gene1 === '' ||
             response.estatus_gene1 === null
@@ -197,7 +197,7 @@ export class AuthPage implements OnInit {
             this.showSpinner = false;
           } else {
             // Si el usuario ya tiene una membresia lo enviamos al home para el financiamiento
-            this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
+            this.navCtrl.navigateRoot(['/admin/service-orders/pending']);
             this.showSpinner = false;
           }
         },
