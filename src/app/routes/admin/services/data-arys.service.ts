@@ -15,6 +15,7 @@ export class DataArysService {
   private readonly add_payment_url = environment.arys.OtherApis.add_payment
   private readonly add_membership_url = environment.arys.OtherApis.add_membership
   private readonly get_membership_url = environment.arys.OtherApis.get_membership
+  private readonly retry_credit_line_url = environment.arys.OtherApis.retry_credit_line
   private readonly updateCredit = environment.arys.OtherApis.update_credit
   private readonly getPurchased = environment.meritop.addData.get_purchase
 
@@ -71,10 +72,18 @@ export class DataArysService {
 
   public get_membership(id_user: any) {
     console.log(id_user);
-    
+
     return this.http.get<any>(`${this.baseUrl}/${this.get_membership_url}/${id_user}`).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error obtener membresía'));
+      })
+    )
+  }
+
+  public retry_credit_line(id_user: any) {
+    return this.http.post<any>(`${this.baseUrl}/${this.retry_credit_line_url}/${id_user}`, {}).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error('Error al reintentar línea de crédito'));
       })
     )
   }
