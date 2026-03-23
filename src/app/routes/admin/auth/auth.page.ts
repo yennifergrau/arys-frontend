@@ -15,7 +15,9 @@ import { NavController } from '@ionic/angular';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { EmissionService } from '../services/emission.service';
 import { EmissionDetailsService } from '../services/emission-details.service';
+import { DataArysService } from '../services/data-arys.service';
 import { jwtDecode } from 'jwt-decode';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-auth',
@@ -37,6 +39,7 @@ export class AuthPage implements OnInit {
   public showSpinner: boolean = false;
   private emission = inject(EmissionService);
   private emissionDetails = inject(EmissionDetailsService);
+  private arysService = inject(DataArysService);
 
   constructor(
     private fb: FormBuilder,
@@ -111,38 +114,44 @@ export class AuthPage implements OnInit {
     this.showSpinner = true;
     if (this.FormVerify.valid) {
       const clientData = {
-        // placa: this.FormVerify.get('placa')?.value.replace('-', ''),
         cedula: this.FormVerify.get('rif')?.value,
       };
-      // const creditVerify = this.emissionDetails.data_user.credit
-      const creditVerify: boolean = false 
-   
-      console.log(creditVerify)
-    
+
       this.emission.userIsActive(clientData).subscribe({
-        next: (response: any) => {
-          
-          console.log(response)
-          
-          if (response.estatus_gene1 === 'ACTIVO' &&  creditVerify === false) {
-            console.log("///////Primer if //////")
+        next: async (response: any) => {
+          console.log(response);
+
+          if (response.estatus_gene1 === 'ACTIVO') {
             this.emissionDetails.userData = response;
-            this.navCtrl.navigateRoot(['/admin/Customer/create/sarys/meritop']);
-          } else if(response.estatus_gene1 === 'ACTIVO' && creditVerify !== false){
-            console.log("///////segundo if //////")
-          this.navCtrl.navigateRoot(['/admin/service-orders/pending']);
-          }else if (
+            const user = this.getAccessToken();
+
+            try {
+              const membershipResult = await firstValueFrom(
+                this.arysService.get_membership(user.id_user)
+              );
+              const hasCreditLine =
+                membershipResult?.data?.length > 0 &&
+                !!membershipResult.data[0].credit_line_id;
+
+              if (hasCreditLine) {
+                this.navCtrl.navigateRoot(['/admin/service-orders/pending']);
+              } else {
+                this.navCtrl.navigateRoot(['/admin/Customer/create/sarys/meritop']);
+              }
+            } catch {
+              this.navCtrl.navigateRoot(['/admin/Customer/create/sarys/meritop']);
+            }
+          } else if (
             response.estatus_gene1 === '' ||
             response.estatus_gene1 === null
           ) {
-            console.log("///////Tercer if //////")
             this.navCtrl.navigateRoot(['/admin/planes/home/user']);
           }
+
+          this.showSpinner = false;
         },
         error: (err: any) => {
-
-          console.log(err)
-  
+          console.log(err);
           this.mostrarToast(
             'No se pudo verificar la actividad del usuario',
             'toast-error'
@@ -153,7 +162,7 @@ export class AuthPage implements OnInit {
     } else {
       this.FormVerify.markAllAsTouched();
       this.mostrarToast(
-        'La placa es obligatoria con formato ( ABC-123 ó ABC-1234 )',
+        'La cédula es obligatoria',
         'toast-error'
       );
       this.showSpinner = false;

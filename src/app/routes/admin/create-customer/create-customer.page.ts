@@ -178,41 +178,41 @@ export class CreateCustomerPage implements OnInit {
 
   public async onSubmit(){
     this.showLoading = true;
-    try{
-      if(this.emissionForm.valid){
-        console.log(this.emissionForm.value);
-        const data = this.emissionForm.value
-        this.mostrarToast('¡Línea activada con éxito!','toast-success')
-        this.nav.navigate(['/admin/dashboard/sarys'])
-        this.showLoading = false
-        this.emissionForm.reset
-        //  this._meritopService.createCustomer(data).subscribe({
-        //   next:(result) => {
-        //     this.updateCredit()
-        //     console.log(result);
-        //     this._emisionService.lineaCustomer = result
-        //     this.mostrarToast('¡Línea activada con éxito!','toast-success')
-        //     if(result){
-        //       this.nav.navigate(['/admin/dashboard/sarys'])
-        //     }
-        //   },error : async(e:HttpErrorResponse) => {
-        //     this.showLoading = false
-        //     console.log('//// error//////')
-        //     // console.log(error)
-        //     console.log('///// E //////7')
-        //     console.log(e)
-        //      await this.mostrarToast(`El prefijo del banco no es válido`,'toast-error')
-        //   }
-        //  })
-      }else{
-        this.emissionForm.markAllAsTouched();
-        this.showLoading = false,
-        this.mostrarToast('  ¡El número de cuenta es obligatorio!','toast-error')
-      }
-    }catch(e){
-      this.showLoading = false
-console.error(e);
+    try {
+      if (this.emissionForm.valid) {
+        const token = this.getAccessToken();
 
+        this._arysService.retry_credit_line(token.id_user).subscribe({
+          next: (result: any) => {
+            if (result.status === true) {
+              this._emisionService.creditLine    = result.credit_line;
+              this._emisionService.creditLineReason = null;
+              this.mostrarToast('¡Línea de crédito activada con éxito!', 'toast-success');
+              setTimeout(() => {
+                this.nav.navigate(['/admin/service-orders/pending']);
+              }, 1500);
+            } else if (result.credit_line_reason === 'missing_rif') {
+              this.mostrarToast('No tienes un RIF registrado. Actualiza tus datos.', 'toast-error');
+            } else {
+              this.mostrarToast('No se pudo abrir la línea de crédito. Intenta más tarde.', 'toast-error');
+            }
+            this.showLoading = false;
+          },
+          error: (e: HttpErrorResponse) => {
+            console.error(e);
+            this.mostrarToast('Error de conexión. Intenta más tarde.', 'toast-error');
+            this.showLoading = false;
+          }
+        });
+
+      } else {
+        this.emissionForm.markAllAsTouched();
+        this.showLoading = false;
+        this.mostrarToast('¡El número de cuenta es obligatorio!', 'toast-error');
+      }
+    } catch (e) {
+      this.showLoading = false;
+      console.error(e);
     }
   }
 
