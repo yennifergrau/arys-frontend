@@ -21,6 +21,8 @@ import { RecipePurchasePage } from './recipe-purchase/recipe-purchase.page';
 import { EditUserPage } from './edit-user/edit-user.page';
 import { CreateCustomerPage } from './create-customer/create-customer.page';
 import { ServiceOrderPage } from './service-order/service-order.page';
+import { MovimientosPage } from './movimientos/movimientos.page';
+import { PagarDeudaPage } from './pagar-deuda/pagar-deuda.page';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -114,6 +116,14 @@ export const ADMIN_ROUTES: Routes = [
   {
     path:'edit/user/information/data',
     component:EditUserPage
+  },
+  {
+    path:'movimientos',
+    component: MovimientosPage
+  },
+  {
+    path:'pagar-deuda',
+    component: PagarDeudaPage
   },
   {
     path:'Customer/create/sarys/meritop',

@@ -1,0 +1,137 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    <!-- Header -->
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a (click)="goBack()" class="back-btn ic-icon icon-sm">
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content"><h5 class="title">Movimientos</h5></div>
+        <div class="right-content">
+          <!-- Optional: Refresh button or similar -->
+        </div>
+      </div>
+    </header>
+    <!-- Header End -->
+
+    <!-- Main Content Start -->
+    <main class="page-content space-top">
+      <div class="container p-2">
+
+        <!-- Membership/Credit Card (Dashboard Style) -->
+        <div class="list-group-items mb-3 border rounded-3 p-3 shadow-sm mt-3" style="list-style: none; background: #ffffff;">
+          <div class="d-flex align-items-center">
+            <div class="ic-icon me-3 mt-1">
+              <i class="fa-solid fa-dollar-sign fs-4 text-dark"></i>
+            </div>
+          
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="title mb-0 fw-bold text-dark">Línea de Crédito ARYS</h6>
+                <span class="card-brand fw-bold" style="color: #ff6b35;">xtracash</span>
+              </div>
+            
+              <div class="row gx-2 mb-3">
+                <div class="col-6">
+                  <small class="text-muted d-block lh-1">Disponible</small>
+                  <span class="fw-bold text-warning fs-5">
+                    {{ (limitAmount - debtAmount) | number:'1.2-2' }} <small>Bs</small>
+                  </span>
+                </div>
+                <div class="col-6 text-end text-sm-start">
+                  <small class="text-muted d-block lh-1">Límite total</small>
+                  <span class="fw-bold text-dark fs-5">
+                    {{ limitAmount | number:'1.2-2' }} <small>Bs</small>
+                  </span>
+                </div>
+              </div>
+            
+              <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                <div>
+                  <small class="text-danger d-block fw-bold" style="font-size: 11px;">DEUDA ACTUAL</small>
+                  <span class="text-danger fw-bold fs-5">
+                    {{ debtAmount | number:'1.2-2' }} <small>Bs</small>
+                  </span>
+                </div>
+                <div class="text-end d-flex flex-column align-items-end">
+                   <button class="btn btn-success btn-sm px-3 py-1 fw-bold mb-1" routerLink="/admin/pagar-deuda">
+                     Pagar
+                   </button>
+                   <small class="text-muted d-block lh-1" style="font-size: 11px;">•••• {{ cardNumber.slice(-4) }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Segment Controls (Styled as tabs like my-shopping) -->
+        <div class="tabs-container mt-4">
+          <p 
+            (click)="selectedSegment = 'ultimos'; fetchTransactions()" 
+            [class.active]="selectedSegment === 'ultimos'"
+            class="tab">
+            Últimos
+          </p>
+          <p 
+            (click)="selectedSegment = 'fecha'; fetchTransactions()" 
+            [class.active]="selectedSegment === 'fecha'"
+            class="tab">
+            Por fecha
+          </p>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box mt-3" *ngIf="selectedSegment === 'ultimos'">
+          <div class="info-content">
+            <p><strong>Modo rápido:</strong> últimos 30 días.</p>
+            <p class="subtitle">Sincronizado con Meritop para tu control.</p>
+          </div>
+        </div>
+
+        <div class="loading-container" *ngIf="showLoading">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+
+        <!-- Transactions List -->
+        <div class="chat-list mt-4">
+          <div class="transactions-group" *ngFor="let group of groupedTransactions">
+            <h6 class="date-header mb-3">{{ group.date }}</h6>
+            
+            <div class="transaction-item border rounded-lg p-3 mb-3 shadow-sm bg-white" *ngFor="let tx of group.items">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <div class="icon-container me-3" [class]="tx.type">
+                    <i class="feather" [ngClass]="tx.type === 'purchase' ? 'icon-shopping-cart' : 'icon-dollar-sign'"></i>
+                  </div>
+                  <div class="list-content">
+                    <h6 class="mb-0 font-semibold">{{ tx.merchantName || tx.description }}</h6>
+                    <small class="text-muted">{{ tx.description }}</small>
+                    <div class="tx-time-small mt-1">
+                      <small class="text-muted">{{ tx.date | date:'dd/MM/yyyy, hh:mm a' }}</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <span class="tx-amount font-bold" [ngClass]="{'text-danger': tx.amount < 0, 'text-success': tx.amount >= 0}">
+                    {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number:'1.2-2' }} Bs
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state text-center p-5" *ngIf="!showLoading && groupedTransactions.length === 0">
+           <i class="feather icon-file-text size-md text-muted mb-2"></i>
+           <p class="text-muted">No se encontraron movimientos.</p>
+        </div>
+
+      </div>
+    </main>
+    <!-- Main Content End -->
+
+    <app-tab />
+  </div>
+</div>

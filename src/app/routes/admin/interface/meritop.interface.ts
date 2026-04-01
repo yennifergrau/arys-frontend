@@ -126,24 +126,44 @@ export interface addPayment {
     channel: string,
     client: {
         doctype: string,
-        docid: number
+        docid: number | string
     },
     cardnumber: string,
     amount:number,
     payphone: string,
     paidon: string,
-    bankcode: string
+    bankcode: string,
+    concept: string
 }
 
 export interface userCreateCustomer {
-clientid: {
-doctype: string,
-docid:number
-},
-name: string,
-last_name: string,
-email:string,
-phone_number:string,
-account_number:string,
-product_code:number
+    clientid: {
+        doctype: string,
+        docid:number
+    },
+    name: string,
+    last_name: string,
+    email:string,
+    phone_number:string,
+    account_number:string,
+    product_code:number
 }
+
+export interface Transaction {
+    transactionId: string;
+    amount: number;
+    description: string;
+    merchantName?: string;
+    date: string;
+    type: 'purchase' | 'payment' | string;
+    status?: string;
+}
+
+export interface TransactionListRequest {
+    ip: string;
+    bank: string;
+    channel: string;
+    terminal: string;
+    productId: string;
+}
+

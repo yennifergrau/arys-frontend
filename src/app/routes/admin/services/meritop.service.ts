@@ -21,6 +21,8 @@ export class MeritopService {
   private readonly customer_user_create = environment.meritop.globalMeritop.createcustomeruser
   private readonly list_provider = environment.meritop.globalMeritop.listProvider
   private readonly add_purchased = environment.meritop.addData.add_purchase
+  private readonly meritop_transactionList = environment.meritop.globalMeritop.transactionList
+  private readonly meritop_transactionListByMonth = environment.meritop.globalMeritop.transactionListByMonth
 
   constructor() { }
 
@@ -62,6 +64,22 @@ export class MeritopService {
     return this.http.post<any>(`${this.url_meritop}/${this.meritop_transactionC}`,data).pipe(
       catchError((error:HttpErrorResponse) => {
         return throwError(() => new Error ('Error al obtener las transacciones del cliente'))
+      })
+    )
+  }
+
+  public getTransactionList(data: any) {
+    return this.http.post<any>(`${this.url_meritop}/${this.meritop_transactionList}`, data).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error('Error al obtener la lista de transacciones'))
+      })
+    )
+  }
+
+  public getTransactionListByMonth(data: any) {
+    return this.http.post<any>(`${this.url_meritop}/${this.meritop_transactionListByMonth}`, data).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error('Error al obtener la lista de transacciones por mes'))
       })
     )
   }
