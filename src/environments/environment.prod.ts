@@ -65,6 +65,8 @@ export const environment = {
       addPurchased:'sarys/post/meritop/add/purchased',
       addPayment:'sarys/post/meritop/add/payment',
       transactionC:'sarys/post/meritop/transaction/customer',
+      transactionList:'sarys/post/meritop/transaction/customer/list',
+      transactionListByMonth:'sarys/post/meritop/transaction/customer/listByMonth',
       detailTransaction:'sarys/post/meritop/transaction/details',
       createcustomeruser:'sarys/post/meritop/customer/create/user',
       listProvider: 'sarys/get/fechetd/list/provider'
