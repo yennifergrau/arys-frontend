@@ -110,10 +110,25 @@ export class ServiceOrderPage implements OnInit {
     })
   }
 
-  onSliderChange(event: Event, orderAmount: number) {
-    const input = event.target as HTMLInputElement
-    this.selectedCredit = parseFloat(parseFloat(input.value).toFixed(2))
-    this.remainingPayment = parseFloat((orderAmount - this.selectedCredit).toFixed(2))
+  onAmountChange(value: number, orderAmount: number) {
+    if (value > this.maxCredit) {
+      this.selectedCredit = this.maxCredit;
+    }
+    this.selectedCredit = parseFloat(this.selectedCredit.toFixed(2));
+    this.remainingPayment = parseFloat((orderAmount - this.selectedCredit).toFixed(2));
+  }
+
+  useFullOrder(orderAmount: number) {
+    this.selectedCredit = Math.min(orderAmount, this.maxCredit);
+    this.remainingPayment = parseFloat((orderAmount - this.selectedCredit).toFixed(2));
+  }
+
+  useMaxAvailable() {
+    this.selectedCredit = this.maxCredit;
+    const order = this.pendingOrders.find(o => o.order_id === this.activeOrderId);
+    if (order) {
+      this.remainingPayment = parseFloat((order.amount - this.selectedCredit).toFixed(2));
+    }
   }
 
   applyCredit(orderId: string) {

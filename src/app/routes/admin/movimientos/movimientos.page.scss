@@ -1,0 +1,117 @@
+.page-wrapper {
+  background-color: #f7f7f7;
+  min-height: 100vh;
+}
+
+.back-btn {
+  cursor: pointer;
+}
+
+/* Tabs Styling (Matching my-shopping) */
+.tabs-container {
+  display: flex;
+  gap: 10px;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 5px;
+  justify-content: center;
+  align-items: center;
+}
+
+.tab {
+  cursor: pointer;
+  padding: 8px 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #555;
+  border-radius: 5px 5px 0 0;
+  transition: all 0.3s ease;
+  margin: 0;
+}
+
+.tab:hover {
+  color: #000;
+}
+
+.tab.active {
+  color: #fff;
+  background: var(--primary);
+  border: 2px solid #070707;
+  border-radius: 10px;
+}
+
+/* Info Box */
+.info-box {
+  background: #f9f9f9;
+  border: 1px dashed #dcdcdc;
+  border-radius: 12px;
+  padding: 16px;
+  p {
+    margin: 2px 0;
+    font-size: 14px;
+    color: #4a4a4a;
+  }
+  .subtitle {
+    font-size: 12px;
+    color: #8a8a8a;
+  }
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+/* Transaction List Group */
+.date-header {
+  font-size: 14px;
+  font-weight: 700;
+  color: #8a8a8a;
+  text-transform: uppercase;
+}
+
+.transaction-item {
+  transition: transform 0.2s;
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  .icon-container {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    
+    &.purchase {
+      background: #fff5f2;
+      color: #ff6b35;
+    }
+    &.payment {
+      background: #f0fff4;
+      color: #28a745;
+    }
+  }
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.tx-time-small {
+  line-height: 1;
+}
+
+.empty-state {
+  i {
+    font-size: 40px;
+    display: block;
+  }
+}

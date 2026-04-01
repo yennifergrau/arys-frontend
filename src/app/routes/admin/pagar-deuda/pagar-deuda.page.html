@@ -1,0 +1,141 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    <!-- Header -->
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a (click)="goBack()" class="back-btn ic-icon icon-sm">
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content"><h5 class="title">Pagar deuda</h5></div>
+        <div class="right-content"></div>
+      </div>
+    </header>
+    <!-- Header End -->
+
+    <!-- Main Content Start -->
+    <main class="page-content space-top">
+      <div class="container p-2" *ngIf="!showSuccess">
+        <p class="section-sub text-muted px-2 mb-3">Simulación de addPayment</p>
+
+        <!-- Membership/Credit Card (Dashboard Style) -->
+        <div class="list-group-items mb-3 border rounded-3 p-3 shadow-sm" style="list-style: none; background: #ffffff;">
+          <div class="d-flex align-items-center">
+            <div class="ic-icon me-3 mt-1">
+              <i class="fa-solid fa-dollar-sign fs-4 text-dark"></i>
+            </div>
+          
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="title mb-0 fw-bold text-dark">Línea de Crédito ARYS</h6>
+                <span class="card-brand fw-bold" style="color: #ff6b35;">xtracash</span>
+              </div>
+            
+              <div class="row gx-2 mb-3">
+                <div class="col-6">
+                  <small class="text-muted d-block lh-1">Disponible</small>
+                  <span class="fw-bold text-warning fs-5">
+                    {{ (limitAmount - debtAmount) | number:'1.2-2' }} <small>Bs</small>
+                  </span>
+                </div>
+                <div class="col-6 text-end text-sm-start">
+                   <small class="text-muted d-block lh-1">Tarjeta ARYS</small>
+                   <span class="fw-bold text-dark">•••• {{ cardNumber.slice(-4) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Form -->
+        <div class="payment-form mt-4 p-3 bg-white rounded-4 border shadow-sm">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Deuda actual</span>
+            <span class="fw-bold text-dark">{{ debtAmount | number:'1.2-2' }} Bs</span>
+          </div>
+          <div class="d-flex justify-content-between mb-4 pb-2 border-bottom">
+            <span class="text-muted">Pago mínimo</span>
+            <span class="fw-bold text-dark">{{ minPayAmount | number:'1.2-2' }} Bs</span>
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="form-label fw-bold text-muted small">Monto a pagar</label>
+            <input type="number" class="form-control custom-input" [(ngModel)]="payAmount" placeholder="Ej. 50">
+          </div>
+
+          <div class="row gx-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-bold text-muted small">Banco origen</label>
+              <input type="text" class="form-control custom-input" [(ngModel)]="bankCode" maxlength="4">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold text-muted small">Teléfono pago móvil</label>
+              <input type="text" class="form-control custom-input" [(ngModel)]="payPhone">
+            </div>
+          </div>
+
+          <div class="row gx-2 mb-3">
+            <div class="col-7">
+              <label class="form-label fw-bold text-muted small">Fecha y hora del pago</label>
+              <input type="datetime-local" class="form-control custom-input" [(ngModel)]="paidOn">
+            </div>
+            <div class="col-5">
+              <label class="form-label fw-bold text-muted small">Concepto</label>
+              <input type="text" class="form-control custom-input" [(ngModel)]="concept">
+            </div>
+          </div>
+
+          <button class="btn btn-primary w-100 mt-4 py-3 fw-bold" [disabled]="showLoading" (click)="confirmPayment()">
+            <ion-spinner name="crescent" *ngIf="showLoading" class="me-2"></ion-spinner>
+            Confirmar pago
+          </button>
+        </div>
+
+        <!-- API Info Note -->
+        <div class="api-note mt-4 p-3 rounded-4" style="background-color: #fffdf4; border: 1px solid #f1e0a3;">
+          <small class="text-warning-emphasis lh-sm">
+            <strong>Datos que pide addPayment:</strong> client.doctype, client.docid, cardnumber, amount, bankcode, payphone, paidon, concept, channel e ip.
+          </small>
+        </div>
+      </div>
+
+      <!-- Success Screen -->
+      <div class="container p-2 h-100" *ngIf="showSuccess">
+        <div class="success-box text-center p-4 h-100 d-flex flex-column justify-content-center align-items-center">
+          <div class="check-container mb-4">
+            <div class="check-circle pulse-animation">
+              <i class="feather icon-check"></i>
+            </div>
+          </div>
+          
+          <h2 class="fw-bold mb-2">Pago aplicado</h2>
+          <p class="text-muted mb-5">Se procesó el addPayment y el abono redujo tu deuda e incrementó el disponible.</p>
+
+          <div class="summary-details w-100 mb-5 p-3 rounded-4 border bg-white">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Monto pagado</span>
+              <span class="fw-bold">{{ payAmount | number:'1.2-2' }} Bs</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Operación</span>
+              <span class="fw-bold">Abono ARYS</span>
+            </div>
+            <div class="d-flex justify-content-between border-top pt-2 mt-2">
+              <span class="text-muted">Nueva deuda</span>
+              <span class="fw-bold text-danger">{{ debtAmount | number:'1.2-2' }} Bs</span>
+            </div>
+          </div>
+
+          <div class="btn-group w-100 flex-column gap-3">
+            <button class="btn btn-primary w-100 py-3 fw-bold" (click)="goBack()">Volver al inicio</button>
+            <button class="btn btn-outline-secondary w-100 py-3 fw-bold border-0" (click)="goToMovements()">Ver movimientos</button>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- Main Content End -->
+
+    <app-tab />
+  </div>
+</div>
