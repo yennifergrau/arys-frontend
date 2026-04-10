@@ -40,14 +40,22 @@ export class ServiceOrderPage implements OnInit {
   public creditInfo: CreditInfo | null = null
   public selectedCredit: number | null = null
   public maxCredit: number = 0
-  public remainingPayment: number = 0
   public isApplyingCredit: boolean = false
   public applyResult: ApplyCreditResponse | null = null
+  private orderDetails: any = null
 
   private toNumber(value: any): number {
     if (typeof value === 'number') return Number.isFinite(value) ? value : 0
     if (typeof value === 'string') {
-      const normalized = value.replace(/\./g, '').replace(',', '.').trim()
+      const trimmed = value.trim()
+      let normalized: string
+      if (trimmed.includes(',')) {
+        // Formato venezolano: punto=miles, coma=decimal → "1.500,00" → "1500.00"
+        normalized = trimmed.replace(/\./g, '').replace(',', '.')
+      } else {
+        // Formato estándar (API): punto=decimal → "150.00" se conserva tal cual
+        normalized = trimmed
+      }
       const parsed = Number(normalized)
       return Number.isFinite(parsed) ? parsed : 0
     }
@@ -88,6 +96,7 @@ export class ServiceOrderPage implements OnInit {
 
   get cardMask(): string {
     const card = this.customerProduct?.cardnumber?.trim()
+    console.log('card',card)
     if (!card) return '----'
     const last4 = card.slice(-4)
     return `**** ${last4}`
@@ -145,12 +154,11 @@ export class ServiceOrderPage implements OnInit {
             ...result.credit,
             available: resolvedAvailable
           }
-
+          this.orderDetails = result
           const available = resolvedAvailable
           const orderAmount = this.toNumber(order.amount)
           this.maxCredit = parseFloat(Math.min(available, orderAmount).toFixed(2))
           this.selectedCredit = this.maxCredit > 0 ? this.maxCredit : null
-          this.remainingPayment = parseFloat((orderAmount - (this.selectedCredit || 0)).toFixed(2))
         } else {
           this.creditInfo = null
         }
@@ -171,14 +179,12 @@ export class ServiceOrderPage implements OnInit {
     const safeOrderAmount = this.toNumber(orderAmount)
     if (value === null || value === '') {
       this.selectedCredit = null
-      this.remainingPayment = parseFloat(safeOrderAmount.toFixed(2))
       return
     }
 
-    const parsed = Number(value)
+    const parsed = this.toNumber(value)
     if (Number.isNaN(parsed)) {
       this.selectedCredit = null
-      this.remainingPayment = parseFloat(safeOrderAmount.toFixed(2))
       return
     }
 
@@ -188,48 +194,74 @@ export class ServiceOrderPage implements OnInit {
     }
 
     this.selectedCredit = parseFloat(normalized.toFixed(2))
-    this.remainingPayment = parseFloat((safeOrderAmount - this.selectedCredit).toFixed(2))
   }
 
   useFullOrder(orderAmount: number | string) {
     const safeOrderAmount = this.toNumber(orderAmount)
     this.selectedCredit = Math.min(safeOrderAmount, this.maxCredit);
-    this.remainingPayment = parseFloat((safeOrderAmount - this.selectedCredit).toFixed(2));
   }
 
   useMaxAvailable() {
     this.selectedCredit = this.maxCredit;
-    const order = this.pendingOrders.find(o => o.order_id === this.activeOrderId);
-    if (order) {
-      const safeOrderAmount = this.toNumber(order.amount)
-      this.remainingPayment = parseFloat((safeOrderAmount - this.selectedCredit).toFixed(2));
-    }
   }
 
   confirmarConsumo(orderId: string) {
-    const amountToApply = Number(this.selectedCredit ?? 0)
+    const amountToApply = Number(this.selectedCredit ?? 0);
     if (!orderId || amountToApply <= 0) return;
 
+
+    const order = this.orderDetails;
+    if (!order) return;
+
+    const identity = this.getCustomerIdentity();
+    if (!identity) return;
+
     this.isApplyingCredit = true;
-    // Construir el payload según lo que espera el endpoint add/purchased
+
+
+    // Usamos los datos de provider_payment_mobile que vienen del endpoint de la orden
+    const providerPayment = order.order.provider_payment_mobile;
+    const rawDoc = providerPayment?.id_number || '';
+    const benefitDoctype = rawDoc.match(/^[a-zA-Z]/) ? rawDoc.charAt(0).toUpperCase() : 'V';
+    const benefitDocid = rawDoc.replace(/^[a-zA-Z]/, '').trim();
+    const bankcode = providerPayment?.bank_code || '';
+    const phonenumber = providerPayment?.mobile_number || '';
+
+    // Payload según doc.md para /transaction/addPurchase
     const payload = {
-      order_id: orderId,
+      client: {
+        doctype: identity.doctype,
+        docid: identity.docid
+      },
+      cardnumber: this.customerProduct?.cardnumber || '',
       amount: amountToApply,
-      // Agrega aquí los demás campos requeridos por el backend
+      concept: `Orden N° ${order.order.order_number} - ${order.order.service_name}`,
+      channel: 'APP',
+      payment: {
+        bankcode: bankcode,
+        doctype: benefitDoctype,
+        docid: benefitDocid,
+        name: order.order.provider_name,
+        phonenumber: phonenumber,
+        account: null
+      },
+      reference: order.order.order_id,
+      ip: '127.0.0.1'
     };
+
     this.meritopService.addPurchased(payload).subscribe({
       next: (result) => {
         this.isApplyingCredit = false;
         this.applyResult = result;
         // Actualiza el estado de la orden si es necesario
-        const order = this.pendingOrders.find(o => o.order_id === orderId);
-        if (order && result.status) {
-          order.status = (result.order_status as any) || 'consumo_confirmado';
+        if (order.order && result.status) {
+          order.order.status = (result.order_status as any) || 'credit_applied';
         }
       },
       error: (err) => {
         this.isApplyingCredit = false;
-        this.applyResult = { status: false, message: err.message || 'Error al confirmar consumo' };
+        // El mensaje ya viene extraído correctamente desde el CatchError del servicio (MeritopService)
+        this.applyResult = { status: false, message: err.message };
       }
     });
   }

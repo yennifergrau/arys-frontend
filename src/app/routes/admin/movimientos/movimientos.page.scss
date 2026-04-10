@@ -1,6 +1,30 @@
+.mov-root,
 .page-wrapper {
-  background-color: #f6f6f7;
+  min-height: 100%;
+}
+
+.mov-root {
   min-height: 100vh;
+  background: #f6f6f7;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.page-wrapper {
+  padding-bottom: 30px;
+}
+
+.mov-main {
+  overflow: visible;
+}
+
+.mov-fixed-top {
+  flex-shrink: 0;
+}
+
+.mov-scroll-area {
+  overflow: visible;
+  padding-bottom: 80px; /* margen para el tab bar */
 }
 
 .back-btn {
@@ -300,16 +324,16 @@
 }
 
 .chat-list {
-  max-height: 54vh;
-  overflow-y: auto;
-  padding-right: 4px;
+  /* El scroll lo maneja .mov-scroll-area */
 }
 
-.chat-list::-webkit-scrollbar {
+.chat-list::-webkit-scrollbar,
+.mov-scroll-area::-webkit-scrollbar {
   width: 6px;
 }
 
-.chat-list::-webkit-scrollbar-thumb {
+.chat-list::-webkit-scrollbar-thumb,
+.mov-scroll-area::-webkit-scrollbar-thumb {
   background: #d1d1d6;
   border-radius: 999px;
 }

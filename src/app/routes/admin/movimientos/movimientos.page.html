@@ -1,4 +1,4 @@
-<div class="overflow-auto">
+<div class="mov-root">
   <div class="page-wrapper">
     <header class="header header-fixed style-1">
       <div class="header-content">
@@ -12,8 +12,8 @@
       </div>
     </header>
 
-    <main class="page-content space-top">
-      <div class="container p-2">
+    <main class="page-content space-top mov-main">
+      <div class="container p-2 mov-fixed-top">
 
         <div class="top-logo">ARYS</div>
 
@@ -110,6 +110,10 @@
             Filtrar
           </button>
         </div>
+      </div>
+
+      <div class="mov-scroll-area">
+        <div class="container p-2">
 
         <div class="loading-container" *ngIf="showLoading">
           <ion-spinner name="crescent"></ion-spinner>
@@ -148,6 +152,7 @@
           <p class="text-muted">No se encontraron movimientos.</p>
         </div>
 
+        </div>
       </div>
     </main>
 

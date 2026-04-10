@@ -1,8 +1,16 @@
 export interface PaymentMobileData {
-  bank: string;
-  phone: string;
-  document: string;
-  account_holder: string;
+  method?: string;
+  status?: string;
+  bank?: string;
+  phone?: string;
+  document?: string;
+  account_holder?: string;
+}
+
+export interface ProviderPaymentMobile {
+  bank_code: string;
+  id_number: string;
+  mobile_number: string;
 }
 
 export interface ServiceOrder {
@@ -16,6 +24,7 @@ export interface ServiceOrder {
   amount: number;
   customer_id: number;
   payment_mobile_data: PaymentMobileData;
+  provider_payment_mobile?: ProviderPaymentMobile;
   status: 'pending' | 'credit_applied' | 'payment_pending' | 'completed' | 'cancelled' | 'approved' | 'rejected';
   credit_used?: number;
   remaining_payment?: number;

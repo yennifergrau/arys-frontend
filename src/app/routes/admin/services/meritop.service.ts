@@ -27,102 +27,111 @@ export class MeritopService {
   constructor() { }
 
 
+  private getErrorMessage(error: HttpErrorResponse): string {
+    if (error.error?.error?.message) {
+      return error.error.error.message;
+    }
+    if (error.error?.message) {
+      return error.error.message;
+    }
+    return error.message || 'Error en la operación';
+  }
+
   public listProvider() {
     return this.http.get<string>(`${this.url_meritop}/${this.list_provider}`).pipe(
-      catchError((error:HttpErrorResponse) => {
-        return throwError(() => new Error ('Error al obtener los comercios'))
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 
   public getAccessToken() {
     return this.http.get<any>(`${this.url_meritop}/${this.meritop_access_token}`).pipe(
-      catchError((error:HttpErrorResponse) => {
-        return throwError(() => new Error ('Error al generar el token'))
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 
-  public listCommerce(data:any) {
-    return this.http.post<any>(`${this.url_meritop}/${this.meritop_commerce}`,data).pipe(
-      catchError((error:HttpErrorResponse) => {
-        return throwError(() => new Error ('Error al obtener los comercios'))
+  public listCommerce(data: any) {
+    return this.http.post<any>(`${this.url_meritop}/${this.meritop_commerce}`, data).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 
-
-  public customerProduct(data:any) {
-    return this.http.post<any>(`${this.url_meritop}/${this.meritop_customer}`,data).pipe(
-      catchError((error:HttpErrorResponse) => {
-        return throwError(() => new Error ('Error al obtener los productos del cliente'))
+  public customerProduct(data: any) {
+    return this.http.post<any>(`${this.url_meritop}/${this.meritop_customer}`, data).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 
-  public transactionCustomer(data:any){
-    return this.http.post<any>(`${this.url_meritop}/${this.meritop_transactionC}`,data).pipe(
-      catchError((error:HttpErrorResponse) => {
-        return throwError(() => new Error ('Error al obtener las transacciones del cliente'))
+  public transactionCustomer(data: any) {
+    return this.http.post<any>(`${this.url_meritop}/${this.meritop_transactionC}`, data).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 
   public getTransactionList(data: any) {
     return this.http.post<any>(`${this.url_meritop}/${this.meritop_transactionList}`, data).pipe(
       catchError((error: HttpErrorResponse) => {
-        return throwError(() => new Error('Error al obtener la lista de transacciones'))
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 
   public getTransactionListByMonth(data: any) {
     return this.http.post<any>(`${this.url_meritop}/${this.meritop_transactionListByMonth}`, data).pipe(
       catchError((error: HttpErrorResponse) => {
-        return throwError(() => new Error('Error al obtener la lista de transacciones por mes'))
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 
-  public listBankOption (data:any) {
-    return this.http.post<any>(`${this.url_meritop}/${this.meritop_list_bank}`,data).pipe(
-      catchError((error:HttpErrorResponse) => {
-        return throwError(() => new Error ('Error al obtener las opciones de bancos'))
+  public listBankOption(data: any) {
+    return this.http.post<any>(`${this.url_meritop}/${this.meritop_list_bank}`, data).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 
-  public addPurchased(data:any) {
-    return this.http.post<any>(`${this.url_meritop}/${this.meritop_addPurchased}`,data).pipe(
-      catchError((error:HttpErrorResponse) => {
-        return throwError(() => new Error ('Error al agregar la compra'))
+  public addPurchased(data: any) {
+    return this.http.post<any>(`${this.url_meritop}/${this.meritop_addPurchased}`, data).pipe(
+      catchError((error: HttpErrorResponse) => {
+        // En lugar de devolver el HttpErrorResponse completo, devolvemos un Error con el mensaje extraído
+        // para mantener la compatibilidad con el código previo del componente.
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 
-  public addPayment(data:any) {
-    return this.http.post<any>(`${this.url_meritop}/${this.meritop_addPayment}`,data).pipe(
-      catchError((error:HttpErrorResponse) => {
-        return throwError(() => new Error ('Error al agregar el pago'))
+  public addPayment(data: any) {
+    return this.http.post<any>(`${this.url_meritop}/${this.meritop_addPayment}`, data).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 
-  public addPurchasedUser(data:
-    string | any
-  ) {
-    return this.http.post<any>(`${this.url_meritop}/${this.add_purchased}`,data).pipe(
-      catchError((error:HttpErrorResponse) => {
-        return throwError(() => new Error ('Error al agregar el pago'))
+  public addPurchasedUser(data: string | any) {
+    return this.http.post<any>(`${this.url_meritop}/${this.add_purchased}`, data).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 
-  public createCustomer(data:any){
-    return this.http.post<any>(`${this.url_meritop}/${this.customer_user_create}`,data).pipe(
-      catchError((error:HttpErrorResponse | any) => {
-        return throwError(() => new Error (``))
+  public createCustomer(data: any) {
+    return this.http.post<any>(`${this.url_meritop}/${this.customer_user_create}`, data).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error(this.getErrorMessage(error)));
       })
-    )
+    );
   }
 }

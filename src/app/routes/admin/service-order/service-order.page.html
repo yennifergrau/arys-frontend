@@ -86,16 +86,9 @@
         </div>
 
         <div class="link-action">
-          Ordenes de servicio recibidas
-          @if(customerProduct?.id){
-            · Producto {{ customerProduct?.id }}
-          }
+          Ordenes de servicio recibidas ({{ pendingOrders.length }})
         </div>
-        @if(customerProductFetchReason){
-          <div class="api-mini">
-            <strong>customer/products:</strong> {{ customerProductFetchReason }}
-          </div>
-        }
+
 
         @for(order of pendingOrders; track order.order_id){
           <div class="section-card so-order-card">
@@ -155,11 +148,10 @@
                   @if(maxCredit > 0){
 
                     <div class="field">
-                      <label>Monto a consumir</label>
+                      <label>Monto a consumir (Bs)</label>
                       <input
-                        type="number"
-                        [min]="0"
-                        [max]="maxCredit"
+                        type="text"
+                        inputmode="decimal"
                         [(ngModel)]="selectedCredit"
                         (focus)="clearLeadingZero()"
                         (ngModelChange)="onAmountChange($event, order.amount)"
@@ -192,26 +184,14 @@
                       </button>
                     </div>
 
-                    @if(remainingPayment > 0){
-                      <div class="so-remaining">
-                        Diferencia a pagar al proveedor por pago movil:
-                        <strong>{{formatBs(remainingPayment)}} Bs</strong>
-                      </div>
-                    }
 
-                    <div class="api-mini">
-                      <strong>Datos que pide addPurchase:</strong>
-                      client.doctype, client.docid, cardnumber, amount, concept, channel,
-                      payment.bankcode, payment.doctype, payment.docid, payment.name,
-                      payment.phonenumber, payment.account opcional, ip.
-                    </div>
+
+
 
                     @if(applyResult){
                       <div class="so-result" [class.so-result--ok]="applyResult.status" [class.so-result--err]="!applyResult.status">
+                        <i class="feather" [class.icon-check-circle]="applyResult.status" [class.icon-alert-circle]="!applyResult.status"></i>
                         <p>{{ applyResult.message }}</p>
-                        @if(applyResult.status && applyResult.remaining_payment && applyResult.remaining_payment > 0){
-                          <p>Recuerda pagar <strong>{{ formatBs(applyResult.remaining_payment) }} Bs</strong> al proveedor por pago movil.</p>
-                        }
                       </div>
                     }
 
