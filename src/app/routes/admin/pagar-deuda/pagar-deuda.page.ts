@@ -28,19 +28,18 @@ export class PagarDeudaPage implements OnInit {
   public minPayAmount = 0;
   public creditPayBefore = '';
 
-  public payAmount = 50;
-  public bankCode = '0102';
-  public payPhone = '04121234567';
+  public payAmount: number | null = null;
+  public bankCode = '';
+  public payPhone = '';
   public paidOn = '';
-  public concept = 'Pago deuda ARYS';
+  public concept = '';
 
   public cardNumber = '';
   public docId: string | number = '';
   public docType = '';
 
   constructor() {
-    const now = new Date();
-    this.paidOn = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    // Inicializaciones pasadas al HTML/usuario
   }
 
   ngOnInit() {
@@ -139,13 +138,18 @@ export class PagarDeudaPage implements OnInit {
   }
 
   public async confirmPayment() {
-    if (this.payAmount <= 0) {
+    if (!this.payAmount || this.payAmount <= 0) {
       this.showToast('El monto debe ser mayor a 0', 'warning');
       return;
     }
 
     if (!this.docType || !this.docId || !this.cardNumber) {
       this.showToast('Faltan datos del cliente o de la tarjeta.', 'warning');
+      return;
+    }
+
+    if (!this.bankCode || !this.payPhone || !this.paidOn || !this.concept) {
+      this.showToast('Por favor, complete todos los campos obligatorios.', 'warning');
       return;
     }
 
@@ -182,7 +186,7 @@ export class PagarDeudaPage implements OnInit {
   }
 
   private updateLocalBalance() {
-    this.debtAmount = Math.max(0, this.debtAmount - this.payAmount);
+    this.debtAmount = Math.max(0, this.debtAmount - Number(this.payAmount));
   }
 
   public goBack() {
