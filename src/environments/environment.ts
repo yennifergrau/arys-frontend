@@ -7,7 +7,8 @@ export const environment = {
   paymentSypago: 'https://pagos-qa.arys.polizaqui.com',
 
   sarys: {
-    url: 'https://demo-services-arys.polizaqui.com',
+    //url: 'https://demo-services-arys.polizaqui.com',
+    url: 'http://localhost:15633',
     usuario: {
       estatus: 'sarys/post/fechetd/status',
     },
@@ -38,7 +39,8 @@ export const environment = {
   },
 
   arys:{
-    url:'https://demo-services-arys.polizaqui.com',
+    //url:'https://demo-services-arys.polizaqui.com',
+    url: 'http://localhost:15633',
     OtherApis:{
       add_person: 'data/fecht/user/property',
       add_vehicle:'data/fecht/vehicle/user',
@@ -55,7 +57,8 @@ export const environment = {
   },
 
   meritop:{
-    url:'https://demo-services-arys.polizaqui.com',
+    //url:'https://demo-services-arys.polizaqui.com',
+    url: 'http://localhost:15633',
     access:{
       tokenAccess:'sarys/get/meritop/token/access',
     },

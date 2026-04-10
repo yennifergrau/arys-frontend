@@ -21,102 +21,169 @@
     <main class="page-content space-top">
       <div class="container p-2">
 
-        @for(order of pendingOrders; track order.order_id){
-          <div class="so-card">
+        <div class="top-logo">ARYS</div>
 
-            <!-- Cabecera de la orden -->
-            <div class="so-card__head">
+        <div class="top-row">
+          <div class="hello">
+            <h1>Ordenes de servicio</h1>
+            <p>Gestiona los pagos de tus proveedores con credito ARYS.</p>
+          </div>
+          <div class="chip">{{ pendingOrders.length }} pendientes</div>
+        </div>
+
+        <div class="credit-card">
+          <div class="card-graphic"></div>
+          <div class="card-inner">
+            <div class="card-head">
+              <div class="card-brand">ARYS</div>
+              <div class="card-mini">Club ARYS</div>
+            </div>
+
+            <div class="card-center">
+              <div class="logo-a"></div>
+              <div class="card-title-center">Ordenes y pagos</div>
+            </div>
+
+            <div class="card-footer">
+              <span>Ordenes: {{ pendingOrders.length }}</span>
+              <span>
+                @if(customerProduct){
+                  {{ cardMask }}
+                } @else {
+                  Disponible --
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-col">
+            <div class="metric-box">
+              <div class="label">Disponible</div>
+              <div class="value big">{{ formatBs(customerProduct?.available || 0) }} Bs</div>
+              <div class="label" style="margin-top:10px">Deuda actual</div>
+              <div class="value big">{{ formatBs(customerProduct?.amount_used || 0) }} Bs</div>
+            </div>
+
+            <div class="metric-box">
+              <div class="label">Pago minimo</div>
+              <div class="value big">{{ formatBs(customerProduct?.amount_share_to_pay || 0) }} Bs</div>
+            </div>
+          </div>
+
+          <div class="summary-col">
+            <div class="metric-box pay-box">
               <div>
-                <div class="so-card__title">Orden N° {{order.order_number}}</div>
-                <div class="so-card__sub">{{order.service_name}}</div>
+                <div class="label">Pague antes de</div>
+                <div class="value">{{ formattedPayBefore }}</div>
+              </div>
+              <div class="so-pay-hint">
+                Limite: <strong>{{ formatBs(customerProduct?.limit || 0) }} Bs</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="link-action">
+          Ordenes de servicio recibidas
+          @if(customerProduct?.id){
+            · Producto {{ customerProduct?.id }}
+          }
+        </div>
+        @if(customerProductFetchReason){
+          <div class="api-mini">
+            <strong>customer/products:</strong> {{ customerProductFetchReason }}
+          </div>
+        }
+
+        @for(order of pendingOrders; track order.order_id){
+          <div class="section-card so-order-card">
+
+            <div class="order-head">
+              <div>
+                <div class="section-title">Orden N&deg; {{order.order_number}}</div>
+                <p class="section-sub">{{order.service_name}}</p>
               </div>
               <span class="badge" [ngClass]="getStatusClass(order.status)">
                 {{ getStatusLabel(order.status) }}
               </span>
             </div>
 
-            <!-- Monto grande -->
-            <div class="so-card__amount">{{formatBs(order.amount)}} Bs</div>
+            <div class="amount-preview">{{formatBs(order.amount)}} Bs</div>
 
-            <!-- Detalle del proveedor -->
-            <div class="so-detail-list">
-              <div class="so-detail">
+            <div class="detail-list">
+              <div class="detail">
                 <span>Proveedor</span>
                 <strong>{{order.provider_name}}</strong>
               </div>
-              <div class="so-detail">
+              <div class="detail">
                 <span>Fecha</span>
                 <strong>{{order.created_at | date:'dd/MM/yyyy HH:mm'}}</strong>
               </div>
               @if(order.payment_mobile_data){
-                <div class="so-detail">
+                <div class="detail">
                   <span>Banco destino</span>
                   <strong>{{order.payment_mobile_data.bank}}</strong>
                 </div>
-                <div class="so-detail">
+                <div class="detail">
                   <span>Documento comercio</span>
                   <strong>{{order.payment_mobile_data.document}}</strong>
                 </div>
-                <div class="so-detail">
-                  <span>Teléfono pago móvil</span>
+                <div class="detail">
+                  <span>Telefono pago movil</span>
                   <strong>{{order.payment_mobile_data.phone}}</strong>
                 </div>
               }
             </div>
 
-            <!-- ─── PANEL DE PAGO ─── -->
             @if(activeOrderId === order.order_id){
 
               @if(creditInfo === null){
-                <div class="so-loading">
-                  <span></span><span></span><span></span>
-                </div>
+                <div class="loader"><span></span><span></span><span></span></div>
               }
 
               @if(creditInfo !== null){
                 <div class="so-purchase-panel">
 
-                  <!-- Encabezado -->
-                  <div class="so-purchase-panel__title">¿Cuánto deseas pagar con ARYS?</div>
-                  <div class="so-purchase-panel__sub">
+                  <div class="section-title">Cuanto deseas pagar con ARYS?</div>
+                  <p class="section-sub">
                     Puede ser total o parcial, sin exceder el disponible.
                     <br>Disponible: <strong>{{formatBs(creditInfo.available)}} Bs</strong>
-                  </div>
+                  </p>
 
-                  @if(creditInfo.available > 0){
+                  @if(maxCredit > 0){
 
-                    <!-- Input monto -->
-                    <div class="so-field">
-                      <label class="so-field__label">Monto a consumir</label>
+                    <div class="field">
+                      <label>Monto a consumir</label>
                       <input
-                        class="so-field__input"
                         type="number"
                         [min]="0"
                         [max]="maxCredit"
                         [(ngModel)]="selectedCredit"
+                        (focus)="clearLeadingZero()"
                         (ngModelChange)="onAmountChange($event, order.amount)"
                         [disabled]="isApplyingCredit || !!applyResult?.status"
                       />
                     </div>
 
-                    <!-- Botones de acceso rápido -->
-                    <div class="so-btn-stack">
+                    <div class="btn-row">
                       <button
-                        class="so-btn so-btn--secondary"
+                        class="btn btn-secondary"
                         (click)="useFullOrder(order.amount)"
                         [disabled]="isApplyingCredit || !!applyResult?.status">
                         Usar total de la orden
                       </button>
                       <button
-                        class="so-btn so-btn--secondary"
+                        class="btn btn-secondary"
                         (click)="useMaxAvailable()"
                         [disabled]="isApplyingCredit || !!applyResult?.status">
-                        Usar máximo disponible
+                        Usar maximo disponible
                       </button>
                       <button
-                        class="so-btn so-btn--primary"
-                        (click)="applyCredit(order.order_id)"
-                        [disabled]="isApplyingCredit || selectedCredit <= 0 || !!applyResult?.status">
+                        class="btn btn-primary"
+                        (click)="confirmarConsumo(order.order_id)"
+                        [disabled]="isApplyingCredit || !selectedCredit || selectedCredit <= 0 || !!applyResult?.status">
                         @if(isApplyingCredit){
                           Procesando...
                         } @else {
@@ -125,69 +192,66 @@
                       </button>
                     </div>
 
-                    <!-- Resumen de lo que falta por pagar -->
                     @if(remainingPayment > 0){
                       <div class="so-remaining">
-                        Diferencia a pagar al proveedor por pago móvil:
+                        Diferencia a pagar al proveedor por pago movil:
                         <strong>{{formatBs(remainingPayment)}} Bs</strong>
                       </div>
                     }
 
-                    <!-- Nota API addPurchase -->
-                    <div class="so-api-note">
+                    <div class="api-mini">
                       <strong>Datos que pide addPurchase:</strong>
                       client.doctype, client.docid, cardnumber, amount, concept, channel,
                       payment.bankcode, payment.doctype, payment.docid, payment.name,
                       payment.phonenumber, payment.account opcional, ip.
                     </div>
 
-                    <!-- Resultado de la operación -->
                     @if(applyResult){
                       <div class="so-result" [class.so-result--ok]="applyResult.status" [class.so-result--err]="!applyResult.status">
                         <p>{{ applyResult.message }}</p>
                         @if(applyResult.status && applyResult.remaining_payment && applyResult.remaining_payment > 0){
-                          <p>Recuerda pagar <strong>$ {{ formatBs(applyResult.remaining_payment) }}</strong> al proveedor por pago móvil.</p>
+                          <p>Recuerda pagar <strong>{{ formatBs(applyResult.remaining_payment) }} Bs</strong> al proveedor por pago movil.</p>
                         }
                       </div>
                     }
 
                   } @else {
-                    <p class="so-no-credit">No tienes crédito disponible en este momento.</p>
+                    <p class="so-no-credit">No tienes credito disponible en este momento.</p>
                   }
 
                 </div>
               }
             }
 
-            <!-- Datos de pago cuando la orden ya fue procesada -->
             @if(order.status !== 'pending' && order.payment_mobile_data){
-              <div class="so-payment-info">
-                <p class="so-payment-info__title">Datos de Pago Móvil del Proveedor</p>
-                <div class="so-detail-list">
-                  <div class="so-detail">
+              <div class="metric-box so-payment-info">
+                <p class="section-title">Datos de pago movil del proveedor</p>
+                <div class="detail-list">
+                  <div class="detail">
                     <span>Banco</span><strong>{{order.payment_mobile_data.bank}}</strong>
                   </div>
-                  <div class="so-detail">
-                    <span>Teléfono</span><strong>{{order.payment_mobile_data.phone}}</strong>
+                  <div class="detail">
+                    <span>Telefono</span><strong>{{order.payment_mobile_data.phone}}</strong>
                   </div>
-                  <div class="so-detail">
+                  <div class="detail">
                     <span>Documento</span><strong>{{order.payment_mobile_data.document}}</strong>
                   </div>
-                  <div class="so-detail">
+                  <div class="detail">
                     <span>Titular</span><strong>{{order.payment_mobile_data.account_holder}}</strong>
                   </div>
                 </div>
               </div>
             }
 
-            <!-- Botón principal -->
             @if(order.status === 'pending'){
-              <button
-                class="so-btn so-btn--outline w-100 mt-2"
-                (click)="toggleCreditPanel(order)">
-                <i class="fa-sharp fa-solid fa-credit-card font-15"></i>
-                {{ activeOrderId === order.order_id ? 'Cerrar panel' : 'Pagar con Crédito ARYS' }}
-              </button>
+              <div class="btn-row">
+                <button
+                  class="btn btn-primary"
+                  (click)="toggleCreditPanel(order)">
+                  <i class="fa-sharp fa-solid fa-credit-card font-15"></i>
+                  {{ activeOrderId === order.order_id ? 'Cerrar panel' : 'Pagar con credito ARYS' }}
+                </button>
+              </div>
             }
 
           </div>

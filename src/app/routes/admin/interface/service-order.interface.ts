@@ -64,3 +64,13 @@ export interface PaymentResponse {
   transaction_id?: string;
   new_balance?: number;
 }
+
+export interface CustomerProductSummary {
+  id: string;
+  cardnumber: string;
+  limit: number;
+  available: number;
+  amount_used: number;
+  amount_share_to_pay: number;
+  credit_pay_before: string;
+}

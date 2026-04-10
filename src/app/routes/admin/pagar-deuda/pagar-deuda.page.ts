@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { MeritopService } from '../services/meritop.service';
-import { DataArysService } from '../services/data-arys.service';
 import { addPayment } from '../interface/meritop.interface';
 import { TabComponent } from 'src/app/shared/components/tab/tab.component';
 import { RouterLink } from '@angular/router';
@@ -19,7 +18,6 @@ import { finalize } from 'rxjs';
 })
 export class PagarDeudaPage implements OnInit {
   private meritopService = inject(MeritopService);
-  private arysService = inject(DataArysService);
   private navCtrl = inject(NavController);
   private toastCtrl = inject(ToastController);
 
@@ -28,59 +26,126 @@ export class PagarDeudaPage implements OnInit {
   public debtAmount = 0;
   public limitAmount = 0;
   public minPayAmount = 0;
-  
-  // Form fields
-  public payAmount: number = 50;
-  public bankCode: string = '0102';
-  public payPhone: string = '04121234567';
-  public paidOn: string = '';
-  public concept: string = 'Pago deuda ARYS';
+  public creditPayBefore = '';
 
-  private userId: number | null = null;
-  public cardNumber: string = '0171000000001234';
+  public payAmount = 50;
+  public bankCode = '0102';
+  public payPhone = '04121234567';
+  public paidOn = '';
+  public concept = 'Pago deuda ARYS';
+
+  public cardNumber = '';
   public docId: string | number = '';
-  public docType: string = '';
+  public docType = '';
 
   constructor() {
     const now = new Date();
-    // Format to yyyy-MM-ddThh:mm for datetime-local
     this.paidOn = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   }
 
   ngOnInit() {
-    this.loadUserData();
-    this.loadMembershipData();
+    this.loadCustomerProduct();
   }
 
-  private loadUserData() {
+  private getIdentity(): { doctype: string; docid: number } | null {
     const token = sessionStorage.getItem('accessToken');
     if (token) {
       const decoded: any = jwtDecode(token);
-      this.userId = decoded.id_user;
-      this.docId = decoded.docid || '';
-      this.docType = decoded.doctype || 'V';
+      const tokenDocType = String(decoded?.doctype || decoded?.prefix || '').trim();
+      const tokenDocId = Number(decoded?.docid || decoded?.rif || 0);
+
+      if (tokenDocType && tokenDocId > 0) {
+        return { doctype: tokenDocType, docid: tokenDocId };
+      }
     }
+
+    try {
+      const raw = localStorage.getItem('userData');
+      const userData = raw ? JSON.parse(raw) : null;
+      const docType = String(userData?.doctype || userData?.prefix || '').trim();
+      const docId = Number(userData?.docid || userData?.rif || 0);
+      if (docType && docId > 0) {
+        return { doctype: docType, docid: docId };
+      }
+    } catch {
+      // noop
+    }
+
+    return null;
   }
 
-  private loadMembershipData() {
-    if (!this.userId) return;
-    
-    this.arysService.get_membership(this.userId).subscribe({
-      next: (res) => {
-        if (res.data && res.data.length > 0) {
-          const membership = res.data[0];
-          this.debtAmount = membership.credit_used || 0;
-          this.limitAmount = membership.credit_limit || 0;
-          this.cardNumber = membership.card_number || this.cardNumber;
-          this.minPayAmount = membership.amount_share_to_pay || (this.debtAmount * 0.15);
-        }
+  private loadCustomerProduct() {
+    const identity = this.getIdentity();
+    if (!identity) return;
+
+    this.docType = identity.doctype;
+    this.docId = identity.docid;
+
+    const payload = {
+      bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
+      channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
+      terminal: '0',
+      ip: '127.0.0.1',
+      clientid: identity
+    };
+
+    this.showLoading = true;
+    this.meritopService.getAccessToken().subscribe({
+      next: () => {
+        this.meritopService.customerProduct(payload)
+          .pipe(finalize(() => this.showLoading = false))
+          .subscribe({
+            next: (result: any) => {
+              const product = result?.products?.[0];
+              if (!product) return;
+
+              this.debtAmount = Number(product.amount_used ?? product.present_debt_amt ?? 0);
+              this.limitAmount = Number(product.limit ?? 0);
+              this.cardNumber = String(product.cardnumber ?? '');
+              this.minPayAmount = Number(product.amount_share_to_pay ?? (this.debtAmount * 0.15));
+              this.creditPayBefore = String(product.credit_pay_before ?? '');
+            },
+            error: () => {
+              this.showToast('No se pudo cargar la informacion de tu tarjeta.', 'warning');
+            }
+          });
+      },
+      error: () => {
+        this.showLoading = false;
+        this.showToast('No se pudo obtener token de Meritop.', 'warning');
       }
     });
+  }
+
+  get availableAmount(): number {
+    return Math.max(0, this.limitAmount - this.debtAmount);
+  }
+
+  get cardMask(): string {
+    const card = (this.cardNumber || '').trim();
+    if (!card) return '----';
+    return `**** ${card.slice(-4)}`;
+  }
+
+  get formattedPayBefore(): string {
+    if (!this.creditPayBefore) return '--';
+    const date = new Date(this.creditPayBefore);
+    if (Number.isNaN(date.getTime())) return this.creditPayBefore;
+    return new Intl.DateTimeFormat('es-VE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
   }
 
   public async confirmPayment() {
     if (this.payAmount <= 0) {
       this.showToast('El monto debe ser mayor a 0', 'warning');
+      return;
+    }
+
+    if (!this.docType || !this.docId || !this.cardNumber) {
+      this.showToast('Faltan datos del cliente o de la tarjeta.', 'warning');
       return;
     }
 
@@ -117,7 +182,6 @@ export class PagarDeudaPage implements OnInit {
   }
 
   private updateLocalBalance() {
-    // Optional: Sync local state
     this.debtAmount = Math.max(0, this.debtAmount - this.payAmount);
   }
 
