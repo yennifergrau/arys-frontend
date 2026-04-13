@@ -6,6 +6,11 @@
 .full-height .page-content .container {
   height: 100vh;
 }
+
+/* Espacio para el FAB de WhatsApp (fijo abajo a la derecha) sin tapar "Verificar" */
+.ic-authentication-area .bottom-btn.mt-auto {
+  padding-bottom: calc(30px + 56px + 20px);
+}
 select#prefix {
   height: 100%;
   background: white;

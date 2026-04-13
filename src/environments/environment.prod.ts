@@ -1,6 +1,12 @@
 export const environment = {
   production: false,
 
+  /** Atención por WhatsApp (solo dígitos, con código de país; ej. 584121234567) */
+  contact: {
+    whatsappPhone: '584142427299',
+    whatsappServiceMessage: 'Hola, buen día. Quisiera solicitar un servicio; ¿me pueden indicar cómo hacerlo o qué información necesitan?',
+  },
+
   authentication: 'https://demo-auth-arys.polizaqui.com',
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',
   ocrFileService: 'https://adjuntar-documento-qa.polizaqui.com',
