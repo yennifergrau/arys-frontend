@@ -7,7 +7,8 @@ import { ServiceOrderService } from '../services/service-order.service';
 import { HttpClientModule } from '@angular/common/http';
 import { jwtDecode } from 'jwt-decode';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
-import { ServiceOrder, CreditInfo, ApplyCreditResponse } from '../interface/service-order.interface';
+import { ServiceOrder, CreditInfo, ApplyCreditResponse, CustomerProductSummary } from '../interface/service-order.interface';
+import { MeritopService } from '../services/meritop.service';
 
 @Component({
   selector: 'app-service-order',
@@ -27,24 +28,52 @@ import { ServiceOrder, CreditInfo, ApplyCreditResponse } from '../interface/serv
 export class ServiceOrderPage implements OnInit {
 
   private serviceOrderService = inject(ServiceOrderService)
+  private meritopService = inject(MeritopService)
   id_user!: number
   public pendingOrders: ServiceOrder[] = []
   public showLoading: boolean = false
+  public customerProduct: CustomerProductSummary | null = null
+  public customerProductFetchReason: string = ''
+  private accessTokenData: any = null
 
-  // Estado del panel de crédito
   public activeOrderId: string | null = null
   public creditInfo: CreditInfo | null = null
-  public selectedCredit: number = 0
+  public selectedCredit: number | null = null
   public maxCredit: number = 0
-  public remainingPayment: number = 0
   public isApplyingCredit: boolean = false
   public applyResult: ApplyCreditResponse | null = null
+  private orderDetails: any = null
+
+  private toNumber(value: any): number {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+    if (typeof value === 'string') {
+      const trimmed = value.trim()
+      let normalized: string
+      if (trimmed.includes(',')) {
+        // Formato venezolano: punto=miles, coma=decimal → "1.500,00" → "1500.00"
+        normalized = trimmed.replace(/\./g, '').replace(',', '.')
+      } else {
+        // Formato estándar (API): punto=decimal → "150.00" se conserva tal cual
+        normalized = trimmed
+      }
+      const parsed = Number(normalized)
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
 
   constructor() {
     this.showLoading = true
-    const decode: any = sessionStorage.getItem('accessToken')
-    const decodeToken: any = jwtDecode(decode)
-    this.id_user = decodeToken.id_user
+    const token = sessionStorage.getItem('accessToken')
+    if (!token) return
+
+    try {
+      this.accessTokenData = jwtDecode(token)
+      this.id_user = Number(this.accessTokenData?.id_user || 0)
+    } catch (e) {
+      console.error('Token invalido en service-order', e)
+    }
   }
 
   formatBs(amount: number): string {
@@ -52,6 +81,25 @@ export class ServiceOrderPage implements OnInit {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
+  }
+
+  get formattedPayBefore(): string {
+    if (!this.customerProduct?.credit_pay_before) return '--'
+    const date = new Date(this.customerProduct.credit_pay_before)
+    if (Number.isNaN(date.getTime())) return this.customerProduct.credit_pay_before
+    return new Intl.DateTimeFormat('es-VE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date)
+  }
+
+  get cardMask(): string {
+    const card = this.customerProduct?.cardnumber?.trim()
+    console.log('card',card)
+    if (!card) return '----'
+    const last4 = card.slice(-4)
+    return `**** ${last4}`
   }
 
   getStatusLabel(status: string): string {
@@ -96,10 +144,21 @@ export class ServiceOrderPage implements OnInit {
     this.serviceOrderService.getOrderDetails(order.order_id).subscribe({
       next: (result) => {
         if (result.status && result.credit) {
-          this.creditInfo = result.credit
-          this.maxCredit = parseFloat(Math.min(result.credit.available, order.amount).toFixed(2))
-          this.selectedCredit = this.maxCredit
-          this.remainingPayment = parseFloat((order.amount - this.selectedCredit).toFixed(2))
+          const availableFromCustomerProduct = this.toNumber(this.customerProduct?.available)
+          const availableFromOrderDetails = this.toNumber(result.credit.available)
+          const resolvedAvailable = availableFromCustomerProduct > 0
+            ? availableFromCustomerProduct
+            : availableFromOrderDetails
+
+          this.creditInfo = {
+            ...result.credit,
+            available: resolvedAvailable
+          }
+          this.orderDetails = result
+          const available = resolvedAvailable
+          const orderAmount = this.toNumber(order.amount)
+          this.maxCredit = parseFloat(Math.min(available, orderAmount).toFixed(2))
+          this.selectedCredit = this.maxCredit > 0 ? this.maxCredit : null
         } else {
           this.creditInfo = null
         }
@@ -110,52 +169,101 @@ export class ServiceOrderPage implements OnInit {
     })
   }
 
-  onAmountChange(value: number, orderAmount: number) {
-    if (value > this.maxCredit) {
-      this.selectedCredit = this.maxCredit;
+  clearLeadingZero() {
+    if (this.selectedCredit === 0) {
+      this.selectedCredit = null
     }
-    this.selectedCredit = parseFloat(this.selectedCredit.toFixed(2));
-    this.remainingPayment = parseFloat((orderAmount - this.selectedCredit).toFixed(2));
   }
 
-  useFullOrder(orderAmount: number) {
-    this.selectedCredit = Math.min(orderAmount, this.maxCredit);
-    this.remainingPayment = parseFloat((orderAmount - this.selectedCredit).toFixed(2));
+  onAmountChange(value: number | string | null, orderAmount: number | string) {
+    const safeOrderAmount = this.toNumber(orderAmount)
+    if (value === null || value === '') {
+      this.selectedCredit = null
+      return
+    }
+
+    const parsed = this.toNumber(value)
+    if (Number.isNaN(parsed)) {
+      this.selectedCredit = null
+      return
+    }
+
+    let normalized = Math.max(0, parsed)
+    if (normalized > this.maxCredit) {
+      normalized = this.maxCredit
+    }
+
+    this.selectedCredit = parseFloat(normalized.toFixed(2))
+  }
+
+  useFullOrder(orderAmount: number | string) {
+    const safeOrderAmount = this.toNumber(orderAmount)
+    this.selectedCredit = Math.min(safeOrderAmount, this.maxCredit);
   }
 
   useMaxAvailable() {
     this.selectedCredit = this.maxCredit;
-    const order = this.pendingOrders.find(o => o.order_id === this.activeOrderId);
-    if (order) {
-      this.remainingPayment = parseFloat((order.amount - this.selectedCredit).toFixed(2));
-    }
   }
 
-  applyCredit(orderId: string) {
-    if (!orderId || this.selectedCredit <= 0) return
+  confirmarConsumo(orderId: string) {
+    const amountToApply = Number(this.selectedCredit ?? 0);
+    if (!orderId || amountToApply <= 0) return;
 
-    this.isApplyingCredit = true
-    this.serviceOrderService.applyCredit(orderId, this.selectedCredit).subscribe({
+
+    const order = this.orderDetails;
+    if (!order) return;
+
+    const identity = this.getCustomerIdentity();
+    if (!identity) return;
+
+    this.isApplyingCredit = true;
+
+
+    // Usamos los datos de provider_payment_mobile que vienen del endpoint de la orden
+    const providerPayment = order.order.provider_payment_mobile;
+    const rawDoc = providerPayment?.id_number || '';
+    const benefitDoctype = rawDoc.match(/^[a-zA-Z]/) ? rawDoc.charAt(0).toUpperCase() : 'V';
+    const benefitDocid = rawDoc.replace(/^[a-zA-Z]/, '').trim();
+    const bankcode = providerPayment?.bank_code || '';
+    const phonenumber = providerPayment?.mobile_number || '';
+
+    // Payload según doc.md para /transaction/addPurchase
+    const payload = {
+      client: {
+        doctype: identity.doctype,
+        docid: identity.docid
+      },
+      cardnumber: this.customerProduct?.cardnumber || '',
+      amount: amountToApply,
+      concept: `Orden N° ${order.order.order_number} - ${order.order.service_name}`,
+      channel: 'APP',
+      payment: {
+        bankcode: bankcode,
+        doctype: benefitDoctype,
+        docid: benefitDocid,
+        name: order.order.provider_name,
+        phonenumber: phonenumber,
+        account: null
+      },
+      reference: order.order.order_id,
+      ip: '127.0.0.1'
+    };
+
+    this.meritopService.addPurchased(payload).subscribe({
       next: (result) => {
-        this.isApplyingCredit = false
-        this.applyResult = result
-        if (result.status) {
-          const order = this.pendingOrders.find(o => o.order_id === orderId)
-          if (order) {
-            order.status = (result.order_status as any) || 'credit_applied'
-            order.credit_used = result.credit_used
-            order.remaining_payment = result.remaining_payment
-          }
-          if (this.creditInfo) {
-            this.creditInfo.available = result.new_credit_balance ?? 0
-          }
+        this.isApplyingCredit = false;
+        this.applyResult = result;
+        // Actualiza el estado de la orden si es necesario
+        if (order.order && result.status) {
+          order.order.status = (result.order_status as any) || 'credit_applied';
         }
       },
       error: (err) => {
-        this.isApplyingCredit = false
-        this.applyResult = { status: false, message: err.message || 'Error al aplicar credito' }
+        this.isApplyingCredit = false;
+        // El mensaje ya viene extraído correctamente desde el CatchError del servicio (MeritopService)
+        this.applyResult = { status: false, message: err.message };
       }
-    })
+    });
   }
 
   private getPendingOrders() {
@@ -175,7 +283,99 @@ export class ServiceOrderPage implements OnInit {
     }
   }
 
+  private loadCustomerProduct() {
+    try {
+      const identity = this.getCustomerIdentity()
+      const doctype = identity?.doctype || ''
+      const docid = Number(identity?.docid || 0)
+
+      if (!doctype || !docid) {
+        this.customerProductFetchReason = 'Faltan datos de identidad (doctype/docid) para consultar customer/products'
+        return
+      }
+
+      const payload = {
+        bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
+        channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
+        terminal: '0',
+        ip: '127.0.0.1',
+        clientid: {
+          doctype,
+          docid
+        }
+      }
+
+      this.meritopService.getAccessToken().subscribe({
+        next: () => {
+          this.meritopService.customerProduct(payload).subscribe({
+            next: (result: any) => {
+              const product = result?.products?.[0]
+              if (!product) {
+                this.customerProductFetchReason = 'customer/products respondio sin products[0]'
+                return
+              }
+
+              this.customerProduct = {
+                id: String(product.id ?? ''),
+                cardnumber: String(product.cardnumber ?? ''),
+                limit: Number(product.limit ?? 0),
+                available: Number(product.available ?? 0),
+                amount_used: Number(product.amount_used ?? 0),
+                amount_share_to_pay: Number(product.amount_share_to_pay ?? 0),
+                credit_pay_before: String(product.credit_pay_before ?? '')
+              }
+              this.customerProductFetchReason = ''
+            },
+            error: (error) => {
+              this.customerProduct = null
+              this.customerProductFetchReason = error?.message || 'Error al consultar customer/products'
+            }
+          })
+        },
+        error: (error) => {
+          this.customerProduct = null
+          this.customerProductFetchReason = error?.message || 'No se pudo obtener tokenAccess para customer/products'
+        }
+      })
+    } catch (e) {
+      this.customerProduct = null
+      this.customerProductFetchReason = 'Error inesperado consultando customer/products'
+      console.error(e)
+    }
+  }
+
+  private getUserDataFromLocalStorage(): any {
+    try {
+      const raw = localStorage.getItem('userData')
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  }
+
+  private getCustomerIdentity(): { doctype: string; docid: number } | null {
+    const userData = this.getUserDataFromLocalStorage()
+    const doctype = String(
+      userData?.doctype ||
+      this.accessTokenData?.doctype ||
+      userData?.prefix ||
+      this.accessTokenData?.prefix ||
+      ''
+    ).trim()
+    const docid = Number(
+      userData?.docid ||
+      this.accessTokenData?.docid ||
+      userData?.rif ||
+      this.accessTokenData?.rif ||
+      0
+    )
+
+    if (!doctype || !docid) return null
+    return { doctype, docid }
+  }
+
   ngOnInit() {
+    this.loadCustomerProduct()
     setTimeout(() => {
       this.getPendingOrders()
     }, 2000);
