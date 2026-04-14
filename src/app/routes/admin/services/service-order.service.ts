@@ -26,18 +26,26 @@ export class ServiceOrderService {
     );
   }
 
-  public getOrderDetails(orderId: string) {
-    return this.http.get<OrderDetailsResponse>(`${this.baseUrl}/${this.getOrderDetailUrl}/${orderId}`).pipe(
+  public getOrderDetails(orderId: string, idMember?: number) {
+    const q =
+      idMember != null && !Number.isNaN(idMember) && idMember > 0
+        ? `?id_member=${encodeURIComponent(String(idMember))}`
+        : '';
+    return this.http.get<OrderDetailsResponse>(`${this.baseUrl}/${this.getOrderDetailUrl}/${orderId}${q}`).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error al obtener detalle de orden'));
       })
     );
   }
 
-  public applyCredit(orderId: string, creditAmount: number) {
+  public applyCredit(orderId: string, creditAmount: number, idMember?: number) {
+    const body: { creditAmount: number; id_member?: number } = { creditAmount };
+    if (idMember != null && !Number.isNaN(idMember) && idMember > 0) {
+      body.id_member = idMember;
+    }
     return this.http.post<ApplyCreditResponse>(
       `${this.baseUrl}/${this.applyCreditUrl}/${orderId}/apply-credit`,
-      { creditAmount }
+      body
     ).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error al aplicar credito'));

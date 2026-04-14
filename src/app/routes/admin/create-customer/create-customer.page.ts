@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
-import { Route, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Route, Router, RouterLink } from '@angular/router';
 import { EmissionDetailsService } from '../services/emission-details.service';
 import { MeritopService } from '../services/meritop.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
@@ -41,9 +41,12 @@ export class CreateCustomerPage implements OnInit {
   public emissionForm !: FormGroup
 
 
+  private idMember: number | null = null;
+
   constructor(
     private renderer: Renderer2,
     private nav: Router,
+    private route: ActivatedRoute,
     private fb: FormBuilder
   ) { 
 
@@ -90,6 +93,13 @@ export class CreateCustomerPage implements OnInit {
 
 
   ngOnInit() {
+    const qid = this.route.snapshot.queryParamMap.get('id');
+    this.idMember = qid ? Number(qid) : null;
+    if (!this.idMember) {
+      const s = sessionStorage.getItem('id_member');
+      this.idMember = s ? Number(s) : null;
+    }
+
     this.showLoading = true
     const token = this.getAccessToken()
     console.log(token)
@@ -100,7 +110,7 @@ export class CreateCustomerPage implements OnInit {
           docid: token.rif
         },
         name: token.name || '',
-        last_name: token.sup_ape || '',
+        last_name: token.sub_ape || '',
         email: token.email || '',
         phone_number: token.phone?.replace(/[^0-9]/g, '') || '',
         account_number: '',
@@ -180,9 +190,29 @@ export class CreateCustomerPage implements OnInit {
     this.showLoading = true;
     try {
       if (this.emissionForm.valid) {
-        const token = this.getAccessToken();
+        const idMember = this.idMember ?? Number(sessionStorage.getItem('id_member') || 0);
+        if (!idMember) {
+          this.mostrarToast('No se encontró la membresía. Vuelve al panel e intenta de nuevo.', 'toast-error');
+          this.showLoading = false;
+          return;
+        }
 
-        this._arysService.retry_credit_line(token.id_user).subscribe({
+        const clientId = this.emissionForm.get('clientId') as FormGroup;
+        const docPrefix = String(clientId.get('doctype')?.value || '').trim();
+        const docIdVal = String(clientId.get('docid')?.value || '').trim();
+        const fv = this.emissionForm.value;
+
+        this._arysService
+          .retry_credit_line(idMember, {
+            rif: docIdVal,
+            prefix: docPrefix || 'V',
+            name: fv.name,
+            last_name: fv.last_name,
+            email: fv.email,
+            phone_number: fv.phone_number,
+            account_number: fv.account_number,
+          })
+          .subscribe({
           next: (result: any) => {
             if (result.status === true) {
               this._emisionService.creditLine    = result.credit_line;
@@ -192,7 +222,9 @@ export class CreateCustomerPage implements OnInit {
                 this.nav.navigate(['/admin/service-orders/pending']);
               }, 1500);
             } else if (result.credit_line_reason === 'missing_rif') {
-              this.mostrarToast('No tienes un RIF registrado. Actualiza tus datos.', 'toast-error');
+              this.mostrarToast('Indica documento (tipo y número) para Meritop.', 'toast-error');
+            } else if (result.credit_line_reason === 'missing_meritop_fields') {
+              this.mostrarToast(String(result.message || 'Completa email, teléfono y cuenta bancaria.'), 'toast-error');
             } else {
               this.mostrarToast('No se pudo abrir la línea de crédito. Intenta más tarde.', 'toast-error');
             }

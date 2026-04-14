@@ -44,8 +44,7 @@
                     </div>
                     <div class="list-content">
                       <h6 class="title">Saldo disponible</h6>
-                      <p class="active-status">   {{amountTotal ? `${+amountTotal |
-                        formatCurrency}` : '1000' }} Bs</p>
+                      <p class="active-status">{{ amountTotal != null && amountTotal !== '' ? (+amountTotal | formatCurrency) : '—' }} Bs</p>
                     </div>
                   </a>
                 </li>
@@ -57,16 +56,15 @@
                 <ul>
                   <li>
                     <span class="name">Limite de crédito</span>
-                    <span class="about">$ {{limit ? limit : '500'}}</span>
+                    <span class="about">$ {{ limit != null && limit !== '' ? limit : '—' }}</span>
                   </li>
                   <li>
                     <span class="name">Saldo actual</span>
-                    <span class="about"> {{amountTotal ? `${+amountTotal |
-                        formatCurrency}` : '500' }} BS</span>
+                    <span class="about">{{ amountTotal != null && amountTotal !== '' ? (+amountTotal | formatCurrency) : '—' }} Bs</span>
                   </li>
                   <li>
                     <span class="name">Pague antes de</span>
-                    <span class="about">{{pay_before ? `${pay_before | date :'dd/MM/yyyy'}` : '31/12/2025'}}</span>
+                    <span class="about">{{ pay_before ? (pay_before | date :'dd/MM/yyyy') : '—' }}</span>
                   </li>
                 </ul>
               </div>
@@ -99,6 +97,8 @@
                     <div class="ic-status">BS- {{x.transaction_amt}}</div>
                   </a>
                 </li>
+              } @empty {
+                <li class="text-muted small px-2">Sin movimientos registrados.</li>
               }
               </ul>
             </div>

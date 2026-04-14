@@ -30,8 +30,9 @@ import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 export class MembresiasPage implements OnInit {
 
   private arys_service = inject(DataArysService)
-  id_user !: number
-  public data_membership !: any
+  private membershipId: number | null = null
+  private userEmail: string | null = null
+  public data_membership: any[] = [];
   name !: string 
   public showLoading : boolean = false
 
@@ -39,11 +40,9 @@ export class MembresiasPage implements OnInit {
     this.showLoading = true
     const decode : any = sessionStorage.getItem('accessToken')
     const decodeToken: any = jwtDecode(decode)
-    this.id_user = decodeToken.id_user
-    console.log(this.id_user);
-    
-    console.log(this.id_user);
-    
+    const stored = sessionStorage.getItem('id_member')
+    this.membershipId = stored ? Number(stored) : (decodeToken.id_member != null ? Number(decodeToken.id_member) : null)
+    this.userEmail = decodeToken.email ? String(decodeToken.email) : null
    }
 
    formatBs(amount: number): string {
@@ -64,16 +63,28 @@ export class MembresiasPage implements OnInit {
 
   private getMembership(){
     try{
-      this.arys_service.get_membership(this.id_user).subscribe({
-        next:(result) =>{
-          console.log(result);
-          
-          this.data_membership = result.data
-          if(this.data_membership){
-            this.showLoading = false
+      const req = this.membershipId
+        ? this.arys_service.get_membership(this.membershipId)
+        : this.userEmail
+          ? this.arys_service.get_membership_by_email(this.userEmail)
+          : null
+      if (!req) {
+        this.showLoading = false
+        return
+      }
+      req.subscribe({
+        next: (result) => {
+          this.data_membership =
+            result?.status && Array.isArray(result.data) ? result.data : [];
+          const first = this.data_membership[0];
+          if (first?.id_master != null) {
+            sessionStorage.setItem('id_member', String(first.id_master));
           }
-        },error:(error)=>{
-          this.showLoading = false
+          this.showLoading = false;
+        },
+        error: (error) => {
+          this.data_membership = [];
+          this.showLoading = false;
           console.log(error);
         }
       })
@@ -83,9 +94,7 @@ export class MembresiasPage implements OnInit {
   }
 
   ngOnInit() {
-   setTimeout(() => {
-    this.getMembership()
-   }, 2000);
+    this.getMembership();
   }
 
 }

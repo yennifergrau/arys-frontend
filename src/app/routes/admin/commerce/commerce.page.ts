@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TabComponent } from 'src/app/shared/components/tab/tab.component';
@@ -9,6 +9,9 @@ import { HttpClientModule } from '@angular/common/http';
 import { commerce, customer, data_commerce, data_customer } from '../interface/meritop.interface';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { EmissionDetailsService } from '../services/emission-details.service';
+import { jwtDecode } from 'jwt-decode';
+import { ServiceOrderService } from '../services/service-order.service';
+import { ServiceOrder } from '../interface/service-order.interface';
 
 @Component({
   selector: 'app-commerce',
@@ -22,9 +25,11 @@ import { EmissionDetailsService } from '../services/emission-details.service';
     RouterLink,
     HttpClientModule,
     SpinnerComponent],
-  providers:[MeritopService,JsonLoaderService]
+  providers:[MeritopService, JsonLoaderService, ServiceOrderService]
 })
-export class CommercePage implements OnInit, AfterViewInit {
+export class CommercePage implements OnInit {
+
+  private serviceOrderService = inject(ServiceOrderService);
 
   public isHidden: boolean = true;
   private json_commerce : commerce[] | any;
@@ -36,35 +41,8 @@ export class CommercePage implements OnInit, AfterViewInit {
   public json_customer : customer[] | any;
   public customer_data : data_customer[] = []
 
-  public mock_orders = [
-  {
-    order_id: "ORD-2025-001",
-    commerce_description: "Repuestos El Chino",
-    commerce_code: "COM-9982",
-    amount: 150.00,
-    status: "Pendiente",
-    date: "2024-05-24",
-    items: [
-      { name: "Pastillas de Freno", qty: 2, price: 40 },
-      { name: "Aceite 20W50", qty: 1, price: 70 }
-    ],
-    credit_used: "Membresía Toyota Corolla",
-    cutoff_date: "2024-06-05"
-  },
-  {
-    order_id: "ORD-2025-002",
-    commerce_description: "Cauchos La Guaira",
-    commerce_code: "COM-1123",
-    amount: 85.50,
-    status: "Pendiente",
-    date: "2024-05-23",
-    items: [
-      { name: "Alineación y Balanceo", qty: 1, price: 85.50 }
-    ],
-    credit_used: "Membresía Moto Empire",
-    cutoff_date: "2024-06-05"
-  }
-];
+  /** Órdenes de servicio pendientes del usuario (API real). */
+  public orders: ServiceOrder[] = [];
 
   constructor(
     private jsonPath: JsonLoaderService,
@@ -115,29 +93,6 @@ export class CommercePage implements OnInit, AfterViewInit {
 }
 
 
-public solicitarNuevaOrdenSimulada() {
-  this.showLoading = true;
-  
-  // Simulamos delay de red
-  setTimeout(() => {
-    const nuevaOrden = {
-      order_id: "ORD-" + Math.floor(Math.random() * 10000),
-      commerce_description: "Nueva Tienda Simulada",
-      commerce_code: "COM-0000",
-      amount: Math.floor(Math.random() * 500) + 100,
-      status: "Pendiente",
-      date: new Date().toISOString().split('T')[0],
-      items: [{ name: "Servicio General", qty: 1, price: 200 }],
-      credit_used: "Crédito Principal",
-      cutoff_date: "2024-07-01"
-    };
-
-    this.mock_orders.unshift(nuevaOrden); // Agregamos al inicio
-    this.showLoading = false;
-    // Aquí podrías usar tu función mostrarToast que creamos antes
-  }, 1000);
-}
-
   addComerce (value:string)  {
     this._emissionDetails.commerceData = value
   }
@@ -145,11 +100,6 @@ public solicitarNuevaOrdenSimulada() {
   public routingPage(value :any) : void {
     this._emissionDetails.commerceData = value
     this.router.navigate(['/admin/financiamiento/purchase/add/payment'])
-  }
-
-  ngAfterViewInit(): void {
-    this.showLoading = false
-  
   }
 
   public getShowSearch() : void {
@@ -167,7 +117,34 @@ public solicitarNuevaOrdenSimulada() {
   
 
   ngOnInit() {
-    this.showLoading = false
+    const token = sessionStorage.getItem('accessToken');
+    let idUser = 0;
+    if (token) {
+      try {
+        const dec: any = jwtDecode(token);
+        idUser = Number(dec?.id_user || 0);
+      } catch {
+        idUser = 0;
+      }
+    }
+    if (!idUser) {
+      this.orders = [];
+      this.showLoading = false;
+      return;
+    }
+    this.showLoading = true;
+    this.serviceOrderService.getPendingOrders(idUser).subscribe({
+      next: (res) => {
+        this.orders = res?.status && Array.isArray(res.data) ? res.data : [];
+        this.showLoading = false;
+        this.changeDetector.detectChanges();
+      },
+      error: () => {
+        this.orders = [];
+        this.showLoading = false;
+        this.changeDetector.detectChanges();
+      },
+    });
   }
 
 }

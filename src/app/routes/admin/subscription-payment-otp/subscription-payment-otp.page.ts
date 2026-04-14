@@ -1,6 +1,5 @@
 import { NavController } from '@ionic/angular';
 import { HttpClientModule } from '@angular/common/http';
-import { jwtDecode } from 'jwt-decode';
 import {
   AfterViewInit,
   Component,
@@ -170,7 +169,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
       console.log(res)
                   console.log(res);
                   this.emission_details.numberContract = res;
-                  this.membership(res.certificado, res.pdfUrl);
+                  this.membership(res.certificado, res.pdfUrl, res);
                   this.mostrarToast('Subscripcion con exito', 'toast-success');
                   setTimeout(() => {
                     this.nav.navigateRoot(
@@ -295,21 +294,19 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   //   });
   // }
 
-  private membership(certificate: any, urlPDF: any) {
-    const decode: any = sessionStorage.getItem('accessToken');
-    console.log(decode)
-    const decodeToken: any = jwtDecode(decode);
-    console.log(decodeToken)
+  private membership(certificate: any, urlPDF: any, subRes?: any) {
     try {
+      const id_poliza =
+        subRes?.id_poliza ?? subRes?.idPoliza ?? subRes?.id_poliza_ar ?? null;
       const data = {
         id_pay: this.id_pay,
         id_veh: this.emission_details.vehicle_id_arys,
         id_payer: this.emission_details.id_person_arys,
         certificate: certificate,
         pdf_url: urlPDF,
-        id_user: decodeToken.id_user,
         name: this.emission_details.planDetails[0].title,
         membership_type: this.emission_details.planDetails[0].id === 'moto' ? 'moto' : 'auto',
+        id_poliza,
       };
       console.log(data)
       this.arys_service.add_membership(data).subscribe({
@@ -317,6 +314,9 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
           console.log('[membership] Respuesta de add_membership:', result);
           sessionStorage.setItem('resultMembership', JSON.stringify(result));
           sessionStorage.setItem('dataMembership', JSON.stringify(data));
+          if (result?.id_master != null) {
+            sessionStorage.setItem('id_member', String(result.id_master));
+          }
           if (result.credit_line) {
             console.log('[Meritop] Línea de crédito abierta exitosamente:', result.credit_line);
             this.emission_details.creditLine = result.credit_line;

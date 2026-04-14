@@ -63,6 +63,20 @@
                 <span class="name">Monto</span>
                 <span class="about">Bs {{ formatBs(x.payment_amount) }} </span>
               </li>
+              @if (x.credit_line_id) {
+              <li>
+                <span class="name">Línea de crédito</span>
+                <span class="about">Activa</span>
+              </li>
+              <li>
+                <span class="name">Límite (USD)</span>
+                <span class="about">{{ formatBs(x.credit_limit || 0) }}</span>
+              </li>
+              <li>
+                <span class="name">Disponible (USD)</span>
+                <span class="about">{{ formatBs(x.credit_available || 0) }}</span>
+              </li>
+              }
             </ul>
             <button class="btn px-3 btn-thin rounded btn-secondary w-100" 
             [disabled]="!x.pdf_url"

@@ -126,12 +126,28 @@ export class AuthPage implements OnInit {
             const user = this.getAccessToken();
 
             try {
-              const membershipResult = await firstValueFrom(
-                this.arysService.get_membership(user.id_user)
-              );
+              const stored = sessionStorage.getItem('id_member');
+              const idMember = stored
+                ? Number(stored)
+                : user.id_member != null
+                  ? Number(user.id_member)
+                  : null;
+
+              const membershipResult = idMember
+                ? await firstValueFrom(this.arysService.get_membership(idMember))
+                : user.email
+                  ? await firstValueFrom(
+                      this.arysService.get_membership_by_email(String(user.email))
+                    )
+                  : null;
+
+              const first = membershipResult?.data?.[0];
+              if (first?.id_master != null) {
+                sessionStorage.setItem('id_member', String(first.id_master));
+              }
+
               const hasCreditLine =
-                membershipResult?.data?.length > 0 &&
-                !!membershipResult.data[0].credit_line_id;
+                !!first && !!first.credit_line_id;
 
               if (hasCreditLine) {
                 this.navCtrl.navigateRoot(['/admin/service-orders/pending']);

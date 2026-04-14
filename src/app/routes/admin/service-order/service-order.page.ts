@@ -9,6 +9,7 @@ import { jwtDecode } from 'jwt-decode';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { ServiceOrder, CreditInfo, ApplyCreditResponse, CustomerProductSummary } from '../interface/service-order.interface';
 import { MeritopService } from '../services/meritop.service';
+import { DataArysService } from '../services/data-arys.service';
 
 @Component({
   selector: 'app-service-order',
@@ -23,18 +24,27 @@ import { MeritopService } from '../services/meritop.service';
     HttpClientModule,
     SpinnerComponent,
   ],
-  providers: [ServiceOrderService]
+  providers: [ServiceOrderService, DataArysService]
 })
 export class ServiceOrderPage implements OnInit {
 
   private serviceOrderService = inject(ServiceOrderService)
   private meritopService = inject(MeritopService)
+  private dataArysService = inject(DataArysService)
   id_user!: number
   public pendingOrders: ServiceOrder[] = []
   public showLoading: boolean = false
   public customerProduct: CustomerProductSummary | null = null
   public customerProductFetchReason: string = ''
   private accessTokenData: any = null
+
+  /** Crédito persistido en ARYS (tabla membership); respaldo si Meritop no devuelve producto. */
+  public membershipSummary: {
+    credit_line_id: string | null;
+    credit_limit: string | number | null;
+    credit_available: string | number | null;
+    credit_used: string | number | null;
+  } | null = null
 
   public activeOrderId: string | null = null
   public creditInfo: CreditInfo | null = null
@@ -96,10 +106,52 @@ export class ServiceOrderPage implements OnInit {
 
   get cardMask(): string {
     const card = this.customerProduct?.cardnumber?.trim()
-    console.log('card',card)
-    if (!card) return '----'
-    const last4 = card.slice(-4)
-    return `**** ${last4}`
+    if (card) {
+      const last4 = card.slice(-4)
+      return `**** ${last4}`
+    }
+    return this.membershipCreditLineHint || '----'
+  }
+
+  /** Valor `cardnumber` que Meritop espera en addPurchase: tarjeta del producto o línea guardada en membresía. */
+  private resolveMeritopCardnumber(): string {
+    const fromProduct = this.customerProduct?.cardnumber?.trim()
+    if (fromProduct) return fromProduct
+    return (this.membershipSummary?.credit_line_id ?? '').trim()
+  }
+
+  /** Tarjeta Meritop con saldos útiles; si no, usamos membresía ARYS. */
+  private preferMeritopMetrics(): boolean {
+    const c = this.customerProduct
+    if (!c?.cardnumber?.trim()) return false
+    return this.toNumber(c.available) > 0 || this.toNumber(c.limit) > 0
+  }
+
+  get displayCreditLimit(): number {
+    if (this.preferMeritopMetrics()) return this.toNumber(this.customerProduct!.limit)
+    const m = this.toNumber(this.membershipSummary?.credit_limit)
+    if (m > 0) return m
+    return this.toNumber(this.customerProduct?.limit)
+  }
+
+  get displayCreditAvailable(): number {
+    if (this.preferMeritopMetrics()) return this.toNumber(this.customerProduct!.available)
+    const m = this.toNumber(this.membershipSummary?.credit_available)
+    if (m > 0) return m
+    return this.toNumber(this.customerProduct?.available)
+  }
+
+  get displayCreditUsed(): number {
+    if (this.preferMeritopMetrics()) return this.toNumber(this.customerProduct!.amount_used)
+    if (this.membershipSummary) return this.toNumber(this.membershipSummary.credit_used)
+    return this.toNumber(this.customerProduct?.amount_used)
+  }
+
+  get membershipCreditLineHint(): string {
+    const id = this.membershipSummary?.credit_line_id?.trim()
+    if (!id) return ''
+    const tail = id.length <= 4 ? id : id.slice(-4)
+    return `Línea •••• ${tail}`
   }
 
   getStatusLabel(status: string): string {
@@ -141,14 +193,22 @@ export class ServiceOrderPage implements OnInit {
     this.isApplyingCredit = false
     this.creditInfo = null
 
-    this.serviceOrderService.getOrderDetails(order.order_id).subscribe({
+    const idMemberRaw = sessionStorage.getItem('id_member');
+    const idMember = idMemberRaw ? Number(idMemberRaw) : undefined;
+    this.serviceOrderService
+      .getOrderDetails(order.order_id, idMember && !Number.isNaN(idMember) ? idMember : undefined)
+      .subscribe({
       next: (result) => {
         if (result.status && result.credit) {
           const availableFromCustomerProduct = this.toNumber(this.customerProduct?.available)
+          const availableFromMembership = this.toNumber(this.membershipSummary?.credit_available)
           const availableFromOrderDetails = this.toNumber(result.credit.available)
-          const resolvedAvailable = availableFromCustomerProduct > 0
-            ? availableFromCustomerProduct
-            : availableFromOrderDetails
+          const resolvedAvailable =
+            availableFromCustomerProduct > 0
+              ? availableFromCustomerProduct
+              : availableFromMembership > 0
+                ? availableFromMembership
+                : availableFromOrderDetails
 
           this.creditInfo = {
             ...result.credit,
@@ -216,6 +276,16 @@ export class ServiceOrderPage implements OnInit {
     const identity = this.getCustomerIdentity();
     if (!identity) return;
 
+    const cardnumber = this.resolveMeritopCardnumber();
+    if (!cardnumber) {
+      this.applyResult = {
+        status: false,
+        message:
+          'No hay número de línea/tarjeta Meritop. Activa la línea en tu membresía o verifica el producto en Meritop.',
+      };
+      return;
+    }
+
     this.isApplyingCredit = true;
 
 
@@ -233,7 +303,7 @@ export class ServiceOrderPage implements OnInit {
         doctype: identity.doctype,
         docid: identity.docid
       },
-      cardnumber: this.customerProduct?.cardnumber || '',
+      cardnumber,
       amount: amountToApply,
       concept: `Orden N° ${order.order.order_number} - ${order.order.service_name}`,
       channel: 'APP',
@@ -266,11 +336,49 @@ export class ServiceOrderPage implements OnInit {
     });
   }
 
+  private loadMembershipSummary() {
+    const idRaw = sessionStorage.getItem('id_member')
+    const idMember = idRaw ? Number(idRaw) : NaN
+    const email =
+      this.accessTokenData?.email != null ? String(this.accessTokenData.email).trim() : ''
+
+    const req =
+      !Number.isNaN(idMember) && idMember > 0
+        ? this.dataArysService.get_membership(idMember)
+        : email
+          ? this.dataArysService.get_membership_by_email(email)
+          : null
+
+    if (!req) return
+
+    req.subscribe({
+      next: (res: any) => {
+        const row = res?.status && Array.isArray(res.data) && res.data.length ? res.data[0] : null
+        if (!row) {
+          this.membershipSummary = null
+          return
+        }
+        this.membershipSummary = {
+          credit_line_id: row.credit_line_id != null ? String(row.credit_line_id) : null,
+          credit_limit: row.credit_limit,
+          credit_available: row.credit_available,
+          credit_used: row.credit_used,
+        }
+        if (row.id_master != null) {
+          sessionStorage.setItem('id_member', String(row.id_master))
+        }
+      },
+      error: () => {
+        this.membershipSummary = null
+      },
+    })
+  }
+
   private getPendingOrders() {
     try {
       this.serviceOrderService.getPendingOrders(this.id_user).subscribe({
         next: (result) => {
-          this.pendingOrders = result.data || []
+          this.pendingOrders = result?.status && Array.isArray(result.data) ? result.data : []
           this.showLoading = false
         },
         error: (error) => {
@@ -375,9 +483,8 @@ export class ServiceOrderPage implements OnInit {
   }
 
   ngOnInit() {
+    this.loadMembershipSummary()
     this.loadCustomerProduct()
-    setTimeout(() => {
-      this.getPendingOrders()
-    }, 2000);
+    this.getPendingOrders()
   }
 }

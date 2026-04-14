@@ -41,7 +41,7 @@
             <div class="ic-list m-b20">
               <h6 class="mb-3">Mis Membresías y Créditos</h6>
               <ul class="ic-list-group p-0">
-                @for(m of mockMemberships; track m.id_membership) {
+                @for(m of membershipList; track m.id_master) {
                   <li class="list-group-items mb-3 border rounded-3 p-3 shadow-sm" style="list-style: none; background: #ffffff;">
 
                     <div class="d-flex align-items-center">
@@ -66,13 +66,13 @@
                             <div class="col-6">
                               <small class="text-muted d-block lh-1">Disponible</small>
                               <span class="fw-bold text-warning fs-5">
-                                {{ isHidden ? '********' : (m.available_amount | formatCurrency) }} <small>Bs</small>
+                                {{ isHidden ? '********' : (m.available_amount | formatCurrency) }} <small>USD</small>
                               </span>
                             </div>
                             <div class="col-6 text-end text-sm-start">
                               <small class="text-muted d-block lh-1">Límite total</small>
                               <span class="fw-bold text-dark fs-5">
-                                {{ isHidden ? '********' : (m.credit_limit | formatCurrency) }} <small>Bs</small>
+                                {{ isHidden ? '********' : (m.credit_limit | formatCurrency) }} <small>USD</small>
                               </span>
                             </div>
                           </div>
@@ -82,14 +82,14 @@
                               <div>
                                 <small class="text-danger d-block fw-bold" style="font-size: 11px;">DEUDA ACTUAL</small>
                                 <span class="text-danger fw-bold fs-5">
-                                  {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }} <small>Bs</small>
+                                  {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }} <small>USD</small>
                                 </span>
                               </div>
                               <div class="contenedor-fecha-corte">
                                 <div>
                                   <small class="text-muted d-block lh-1" style="font-size: 11px;">Fecha de corte</small>
                                   <span class="fw-bold text-dark fs-5">
-                                    {{ '12/12/2025' }} 
+                                    —
                                   </span>
                                 </div>
                                 
@@ -113,6 +113,10 @@
                         }
                       </div>
                     </div>
+                  </li>
+                } @empty {
+                  <li class="list-group-items mb-3 border rounded-3 p-3 shadow-sm text-muted" style="list-style: none; background: #ffffff;">
+                    No se encontraron membresías. Abre «Mis membresías» en la barra inferior o vuelve a iniciar sesión si acabas de registrar tu póliza.
                   </li>
                 }
               </ul>

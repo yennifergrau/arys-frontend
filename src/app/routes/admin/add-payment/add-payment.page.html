@@ -41,7 +41,7 @@
                   <div class="list-content">
                     <h5 class="title">Pague antes de:</h5>
                   </div>
-                  <div class="ic-status">{{pay_before ? `${pay_before | date : 'dd/MM/yyyy'}` : '31/12/2025'}}</div>
+                  <div class="ic-status">{{ pay_before ? (pay_before | date : 'dd/MM/yyyy') : '—' }}</div>
                 </a>
               </li>
             </ul>

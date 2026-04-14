@@ -58,33 +58,36 @@ export class DashboardPage implements OnInit {
   public amountTotal!: string | number;
   public membershipName!: string | any;
   public username !: string
-  public id_user !: number
+  public data_membership: any[] | null = null;
 
-  public data_membership !: any
-
-  public mockMemberships = [
-  {
-    id_membership: 101,
-    name: "Membresía Carro Toyota",
-    available_amount: 3500, // Ha gastado 1500
-    credit_limit: 5000,
-    has_credit: true
-  },
-  {
-    id_membership: 103,
-    name: "Membresía Carro Honda",
-    available_amount: 5000, 
-    credit_limit: 5000,
-    has_credit: true
-  },
-  {
-    id_membership: 102,
-    name: "Membresía Moto Empire",
-    available_amount: 0,
-    credit_limit: 1000,
-    has_credit: false 
+  /** Filas listas para la vista (API `get_membership` → credit_limit / credit_available). */
+  get membershipList(): Array<{
+    id_master: number;
+    name: string;
+    available_amount: number;
+    credit_limit: number;
+    has_credit: boolean;
+  }> {
+    const d = this.data_membership;
+    if (!d || !Array.isArray(d)) return [];
+    return d.map((row: any) => {
+      const limit = Number(row.credit_limit) || 0;
+      const available = Number(row.credit_available) || 0;
+      const vehicleLabel = [row.vehicle_brand, row.vehicle_model, row.vehicle_year]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      const label = vehicleLabel || String(row.name || '').trim() || 'Membresía';
+      const lineId = row.credit_line_id != null && String(row.credit_line_id).trim() !== '';
+      return {
+        id_master: row.id_master,
+        name: label,
+        available_amount: available,
+        credit_limit: limit,
+        has_credit: !!lineId,
+      };
+    });
   }
-];
 
   constructor(
     private changeDetector: ChangeDetectorRef,
@@ -215,29 +218,61 @@ public pagarCredito(membership: any) {
     const decodeData: any = jwtDecode(dataUser)
     console.log(decodeData)
     this.username = decodeData?.name + ' ' + decodeData?.sub_ape
-    this.id_user = decodeData?.id_user
     this.UserVerifyMembership(decodeData.rif)
-    this.getMembership(this.id_user)
+    const stored = sessionStorage.getItem('id_member')
+    const idMember = stored
+      ? Number(stored)
+      : decodeData?.id_member != null
+        ? Number(decodeData.id_member)
+        : null
+    if (idMember) {
+      this.getMembershipById(idMember)
+    } else if (decodeData?.email) {
+      this.getMembershipByEmail(String(decodeData.email))
+    } else {
+      this.showLoading = false
+    }
   }
 
-  private getMembership(id_user: number){
+  private getMembershipById(idMember: number){
     try{
-      this.arys_service.get_membership(id_user).subscribe({
-        next:(result) =>{
-          console.log(result);
-          
-          this.data_membership = result.data
-          if(this.data_membership){
-            this.showLoading = false
-            console.log(this.data_membership)
-          }
-        },error:(error)=>{
-          this.showLoading = false
+      this.arys_service.get_membership(idMember).subscribe({
+        next: (result) => {
+          this.data_membership =
+            result?.status && Array.isArray(result.data) ? result.data : [];
+          this.showLoading = false;
+        },
+        error: (error) => {
+          this.data_membership = [];
+          this.showLoading = false;
           console.log(error);
         }
       })
     }catch(e){
       console.error(e);     
+    }
+  }
+
+  private getMembershipByEmail(email: string) {
+    try {
+      this.arys_service.get_membership_by_email(email).subscribe({
+        next: (result) => {
+          this.data_membership =
+            result?.status && Array.isArray(result.data) ? result.data : [];
+          const first = this.data_membership?.[0];
+          if (first?.id_master != null) {
+            sessionStorage.setItem('id_member', String(first.id_master));
+          }
+          this.showLoading = false;
+        },
+        error: () => {
+          this.data_membership = [];
+          this.showLoading = false;
+        }
+      })
+    } catch (e) {
+      console.error(e)
+      this.showLoading = false
     }
   }
 

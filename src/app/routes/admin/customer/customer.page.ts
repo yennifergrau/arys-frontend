@@ -128,37 +128,6 @@ export class CustomerPage implements OnInit {
 
 
   ngOnInit() {
-    this.data_customer = [
-    {
-      transaction_date: "2024-05-20",
-      transaction_desc: "Compra en Repuestos El Chino",
-      transaction_amt: "150,00",
-      type: "cargo"
-    },
-    {
-      transaction_date: "2024-05-18",
-      transaction_desc: "Abono a cuenta - Pago Móvil",
-      transaction_amt: "500,00",
-      type: "abono"
-    },
-    {
-      transaction_date: "2024-05-15",
-      transaction_desc: "Compra en Cauchos La Guaira",
-      transaction_amt: "2.100,75",
-      type: "cargo"
-    },
-    {
-      transaction_date: "2024-05-10",
-      transaction_desc: "Mantenimiento de cuenta Sarys",
-      transaction_amt: "25,00",
-      type: "cargo"
-    },
-    {
-      transaction_date: "2024-05-01",
-      transaction_desc: "Compra en Farmatodo",
-      transaction_amt: "340,50",
-      type: "cargo"
-    }
-  ];
+    this.data_customer = [];
   }
 }

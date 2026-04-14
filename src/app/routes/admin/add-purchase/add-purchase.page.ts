@@ -118,7 +118,7 @@ export class AddPurchasePage {
             docid: 404438521,
             account: '01710005096002556035',
             phonenumber: "04142298696",
-            paidon: '2025-05-05T16:49:04.369Z',
+            paidon: new Date().toISOString(),
           },
         };
        

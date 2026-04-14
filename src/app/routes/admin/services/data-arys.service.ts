@@ -15,6 +15,7 @@ export class DataArysService {
   private readonly add_payment_url = environment.arys.OtherApis.add_payment
   private readonly add_membership_url = environment.arys.OtherApis.add_membership
   private readonly get_membership_url = environment.arys.OtherApis.get_membership
+  private readonly get_membership_by_email_url = environment.arys.OtherApis.get_membership_by_email
   private readonly retry_credit_line_url = environment.arys.OtherApis.retry_credit_line
   private readonly updateCredit = environment.arys.OtherApis.update_credit
   private readonly getPurchased = environment.meritop.addData.get_purchase
@@ -70,18 +71,59 @@ export class DataArysService {
   }
 
 
-  public get_membership(id_user: any) {
-    console.log(id_user);
-
-    return this.http.get<any>(`${this.baseUrl}/${this.get_membership_url}/${id_user}`).pipe(
+  public get_membership(id_member: number | string) {
+    return this.http.get<any>(`${this.baseUrl}/${this.get_membership_url}/${id_member}`).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error obtener membresía'));
       })
     )
   }
 
-  public retry_credit_line(id_user: any) {
-    return this.http.post<any>(`${this.baseUrl}/${this.retry_credit_line_url}/${id_user}`, {}).pipe(
+  public get_membership_by_email(email: string) {
+    const q = encodeURIComponent(email.trim());
+    return this.http.get<any>(`${this.baseUrl}/${this.get_membership_by_email_url}?email=${q}`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error('Error obtener membresía por email'));
+      })
+    )
+  }
+
+  public retry_credit_line(
+    id_member: number | string,
+    payload?: {
+      rif?: string;
+      prefix?: string;
+      docid?: string;
+      docType?: string;
+      name?: string;
+      last_name?: string;
+      lastName?: string;
+      email?: string;
+      phone?: string;
+      phone_number?: string;
+      account_number?: string;
+      accountNumber?: string;
+    }
+  ) {
+    const body: Record<string, string> = {};
+    if (!payload) {
+      return this.http.post<any>(`${this.baseUrl}/${this.retry_credit_line_url}/${id_member}`, body).pipe(
+        catchError((error: HttpErrorResponse) => {
+          return throwError(() => new Error('Error al reintentar línea de crédito'));
+        })
+      );
+    }
+    const set = (k: string, v: string | undefined) => {
+      if (v != null && String(v).trim() !== '') body[k] = String(v).trim();
+    };
+    set('rif', payload.rif ?? payload.docid);
+    set('prefix', payload.prefix ?? payload.docType);
+    set('name', payload.name);
+    set('last_name', payload.last_name ?? payload.lastName);
+    set('email', payload.email);
+    set('phone_number', payload.phone_number ?? payload.phone);
+    set('account_number', payload.account_number ?? payload.accountNumber);
+    return this.http.post<any>(`${this.baseUrl}/${this.retry_credit_line_url}/${id_member}`, body).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error al reintentar línea de crédito'));
       })

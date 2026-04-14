@@ -50,7 +50,8 @@ export const environment = {
       add_vehicle:'data/fecht/vehicle/user',
       add_payment: 'data/fecht/payment/user',
       add_membership: 'data/fecht/membership/user',
-      get_membership: 'data/get/fecht/membership/user',
+      get_membership: 'data/get/fecht/membership/member',
+      get_membership_by_email: 'data/get/fecht/membership/by-email',
       retry_credit_line: 'data/post/fecht/retry/credit-line',
       update_credit: 'update/credit/data',
       get_pending_orders: 'api/service-orders/pending',
@@ -87,7 +88,7 @@ export const environment = {
   },
 
   user:{
-    url:'https://auth-arys-qa.polizaqui.com',
+    url:'https://demo-auth-arys.polizaqui.com',
     data:{
       view_user: 'view/user/fechetd/user',
       edit_user: 'edit/post/user/view'

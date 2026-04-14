@@ -20,24 +20,6 @@ export class MyShoppingPage implements OnInit {
   activeTab: string = 'enProceso';
   rif!: string;
   purchases: any[] = [];
-  public purchases_mock: any[] = [
-  {
-    commerce: "Repuestos El Chino",
-    document_commerce: "J-12345678",
-    amount: "150.00",
-    date: "20/05/2024",
-    status: "pendiente", // Para la pestaña "En Proceso"
-    id_purchase: "P-001"
-  },
-  {
-    commerce: "Cauchos La Guaira",
-    document_commerce: "J-87654321",
-    amount: "2,100.75",
-    date: "10/03/2024",
-    status: "finalizada", // Para la pestaña "Finalizadas"
-    id_purchase: "P-002"
-  }
-];
 
   constructor(
     private _dataService: DataArysService,
@@ -46,18 +28,17 @@ export class MyShoppingPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    // this.decodeToken();
-    // this.getFilteredPurchases();
+    this.decodeToken();
+    this.getFilteredPurchases();
   }
 
-  // Getters para filtrar automáticamente en la vista
-get enProceso() {
-  return this.purchases_mock.filter(p => p.status === 'pendiente');
-}
+  get enProceso() {
+    return this.purchases.filter((p) => (p.status || 'pendiente') === 'pendiente');
+  }
 
-get finalizadas() {
-  return this.purchases_mock.filter(p => p.status === 'finalizada');
-}
+  get finalizadas() {
+    return this.purchases.filter((p) => p.status === 'finalizada');
+  }
 
 public irAPagar(purchase: any) {
   // Guardamos la información de la compra que se va a pagar
@@ -74,21 +55,42 @@ public irAPagar(purchase: any) {
 
   private decodeToken() {
     const data = sessionStorage.getItem('accessToken') || '';
-    const decodeToken: any = jwtDecode(data);
-    console.log('Token decodificado:', decodeToken);
-    this.rif = decodeToken.prefix + decodeToken.rif; // Por ejemplo: "V28131789"
+    try {
+      const decodeToken: any = jwtDecode(data);
+      const p = decodeToken?.prefix != null ? String(decodeToken.prefix) : '';
+      const r = decodeToken?.rif != null ? String(decodeToken.rif) : '';
+      this.rif = `${p}${r}`.trim();
+    } catch {
+      this.rif = '';
+    }
   }
 
   private getFilteredPurchases() {
     this._dataService.get_purchased().subscribe({
-      next: (result) => {
-        const allPurchases = result.data;
-        this.purchases = allPurchases.filter((item: any) => item.document === this.rif);
-        console.log('Compras filtradas:', this.purchases);
+      next: (result: any) => {
+        const all: any[] = Array.isArray(result?.data) ? result.data : [];
+        const rifNorm = String(this.rif || '')
+          .replace(/\s/g, '')
+          .toUpperCase();
+        const filtered = all.filter((item: any) => {
+          const d = String(item.document || '')
+            .replace(/\s/g, '')
+            .toUpperCase();
+          return !rifNorm || d === rifNorm;
+        });
+        this.purchases = filtered.map((item: any) => ({
+          commerce: item.commerce,
+          document_commerce: item.document_commerce,
+          amount: item.amount,
+          date: item.date,
+          status: item.status || 'pendiente',
+          id_purchase: String(item.id ?? ''),
+        }));
       },
       error: (error) => {
+        this.purchases = [];
         console.error('Error al obtener compras:', error);
-      }
+      },
     });
   }
 }
