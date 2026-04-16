@@ -32,6 +32,7 @@ export class ServiceOrderPage implements OnInit {
   private meritopService = inject(MeritopService)
   private dataArysService = inject(DataArysService)
   id_user!: number
+  private id_member: number = 0
   public pendingOrders: ServiceOrder[] = []
   public showLoading: boolean = false
   public customerProduct: CustomerProductSummary | null = null
@@ -81,6 +82,7 @@ export class ServiceOrderPage implements OnInit {
     try {
       this.accessTokenData = jwtDecode(token)
       this.id_user = Number(this.accessTokenData?.id_user || 0)
+      this.id_member = Number(this.accessTokenData?.id_member || 0)
     } catch (e) {
       console.error('Token invalido en service-order', e)
     }
@@ -376,7 +378,9 @@ export class ServiceOrderPage implements OnInit {
 
   private getPendingOrders() {
     try {
-      this.serviceOrderService.getPendingOrders(this.id_user).subscribe({
+      const storedMember = sessionStorage.getItem('id_member')
+      const membershipId = storedMember ? Number(storedMember) : this.id_member
+      this.serviceOrderService.getPendingOrders(membershipId).subscribe({
         next: (result) => {
           this.pendingOrders = result?.status && Array.isArray(result.data) ? result.data : []
           this.showLoading = false

@@ -103,21 +103,18 @@ export class CreateCustomerPage implements OnInit {
     this.showLoading = true
     const token = this.getAccessToken()
     console.log(token)
-    if (this._emisionService?.data_user) {
-      this.emissionForm.patchValue({
-        clientId: {
-          doctype: token?.prefix || '',
-          docid: token.rif
-        },
-        name: token.name || '',
-        last_name: token.sub_ape || '',
-        email: token.email || '',
-        phone_number: token.phone?.replace(/[^0-9]/g, '') || '',
-        account_number: '',
-        segment : '1'
-        // segment: (this._emisionService.planDetails?.[0]?.id || '').toString()
-      });
-    }
+    this.emissionForm.patchValue({
+      clientId: {
+        doctype: token?.prefix || '',
+        docid: token?.rif || ''
+      },
+      name: token?.name || '',
+      last_name: token?.sub_ape || '',
+      email: token?.email || '',
+      phone_number: token?.phone?.replace(/[^0-9]/g, '') || '',
+      account_number: '',
+      segment: '1'
+    });
     // if (this._emisionService?.data_user) {
     //   this.emissionForm.patchValue({
     //     clientId: {
