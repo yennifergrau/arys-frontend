@@ -107,7 +107,7 @@ export class DataArysService {
   ) {
     const body: Record<string, string> = {};
     if (!payload) {
-      return this.http.post<any>(`${this.baseUrl}/${this.retry_credit_line_url}/${id_member}`, body).pipe(
+      return this.http.post<any>(`${this.baseUrl}/${this.retry_credit_line_url}/member/${id_member}`, body).pipe(
         catchError((error: HttpErrorResponse) => {
           return throwError(() => new Error('Error al reintentar línea de crédito'));
         })
@@ -123,7 +123,7 @@ export class DataArysService {
     set('email', payload.email);
     set('phone_number', payload.phone_number ?? payload.phone);
     set('account_number', payload.account_number ?? payload.accountNumber);
-    return this.http.post<any>(`${this.baseUrl}/${this.retry_credit_line_url}/${id_member}`, body).pipe(
+    return this.http.post<any>(`${this.baseUrl}/${this.retry_credit_line_url}/member/${id_member}`, body).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error al reintentar línea de crédito'));
       })

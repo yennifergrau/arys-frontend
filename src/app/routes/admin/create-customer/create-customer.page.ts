@@ -103,21 +103,18 @@ export class CreateCustomerPage implements OnInit {
     this.showLoading = true
     const token = this.getAccessToken()
     console.log(token)
-    if (this._emisionService?.data_user) {
-      this.emissionForm.patchValue({
-        clientId: {
-          doctype: token?.prefix || '',
-          docid: token.rif
-        },
-        name: token.name || '',
-        last_name: token.sub_ape || '',
-        email: token.email || '',
-        phone_number: token.phone?.replace(/[^0-9]/g, '') || '',
-        account_number: '',
-        segment : '1'
-        // segment: (this._emisionService.planDetails?.[0]?.id || '').toString()
-      });
-    }
+    this.emissionForm.patchValue({
+      clientId: {
+        doctype: token?.prefix || '',
+        docid: token?.rif || ''
+      },
+      name: token?.name || '',
+      last_name: token?.sub_ape || '',
+      email: token?.email || '',
+      phone_number: token?.phone?.replace(/[^0-9]/g, '') || '',
+      account_number: '',
+      segment: '1'
+    });
     // if (this._emisionService?.data_user) {
     //   this.emissionForm.patchValue({
     //     clientId: {
@@ -240,7 +237,19 @@ export class CreateCustomerPage implements OnInit {
       } else {
         this.emissionForm.markAllAsTouched();
         this.showLoading = false;
-        this.mostrarToast('¡El número de cuenta es obligatorio!', 'toast-error');
+        
+        const isAccountInvalid = this.emissionForm.get('account_number')?.invalid;
+        const isDocIdInvalid = this.emissionForm.get('clientId.docid')?.invalid;
+        const isDocTypeInvalid = this.emissionForm.get('clientId.doctype')?.invalid;
+        
+        let errorMsg = 'Revisa los campos del formulario.';
+        if (isAccountInvalid) {
+          errorMsg = '¡El número de cuenta es obligatorio!';
+        } else if (isDocIdInvalid || isDocTypeInvalid) {
+          errorMsg = '¡El documento de identidad es obligatorio!';
+        }
+        
+        this.mostrarToast(errorMsg, 'toast-error');
       }
     } catch (e) {
       this.showLoading = false;
