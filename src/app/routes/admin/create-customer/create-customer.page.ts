@@ -237,7 +237,19 @@ export class CreateCustomerPage implements OnInit {
       } else {
         this.emissionForm.markAllAsTouched();
         this.showLoading = false;
-        this.mostrarToast('¡El número de cuenta es obligatorio!', 'toast-error');
+        
+        const isAccountInvalid = this.emissionForm.get('account_number')?.invalid;
+        const isDocIdInvalid = this.emissionForm.get('clientId.docid')?.invalid;
+        const isDocTypeInvalid = this.emissionForm.get('clientId.doctype')?.invalid;
+        
+        let errorMsg = 'Revisa los campos del formulario.';
+        if (isAccountInvalid) {
+          errorMsg = '¡El número de cuenta es obligatorio!';
+        } else if (isDocIdInvalid || isDocTypeInvalid) {
+          errorMsg = '¡El documento de identidad es obligatorio!';
+        }
+        
+        this.mostrarToast(errorMsg, 'toast-error');
       }
     } catch (e) {
       this.showLoading = false;

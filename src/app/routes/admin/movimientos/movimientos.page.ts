@@ -8,16 +8,19 @@ import { TabComponent } from 'src/app/shared/components/tab/tab.component';
 import { RouterLink } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
 import { finalize } from 'rxjs';
+import { DataArysService } from '../services/data-arys.service';
 
 @Component({
   selector: 'app-movimientos',
   templateUrl: './movimientos.page.html',
   styleUrls: ['./movimientos.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule, TabComponent, RouterLink]
+  imports: [IonicModule, CommonModule, FormsModule, TabComponent, RouterLink],
+  providers: [DataArysService]
 })
 export class MovimientosPage implements OnInit {
   private meritopService = inject(MeritopService);
+  private dataArysService = inject(DataArysService);
   private navCtrl = inject(NavController);
 
   public transactions: Transaction[] = [];
@@ -36,11 +39,72 @@ export class MovimientosPage implements OnInit {
   private docType = '';
   private productId: string | null = null;
 
-  constructor() {}
+  public membershipSummary: any = null;
+  private accessTokenData: any = null;
+
+  private toNumber(value: any): number {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      let normalized: string;
+      if (trimmed.includes(',')) {
+        normalized = trimmed.replace(/\./g, '').replace(',', '.');
+      } else {
+        normalized = trimmed;
+      }
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  constructor() {
+    const token = sessionStorage.getItem('accessToken');
+    if (token) {
+      try {
+        this.accessTokenData = jwtDecode(token);
+      } catch (e) {
+        console.error('Token invalido', e);
+      }
+    }
+  }
 
   ngOnInit() {
     this.initializeDateRange();
+    this.loadMembershipSummary();
     this.loadCustomerProduct();
+  }
+
+  private loadMembershipSummary() {
+    const idRaw = sessionStorage.getItem('id_member');
+    const idMember = idRaw ? Number(idRaw) : NaN;
+    const email = this.accessTokenData?.email != null ? String(this.accessTokenData.email).trim() : '';
+
+    const req = !Number.isNaN(idMember) && idMember > 0
+      ? this.dataArysService.get_membership(idMember)
+      : email ? this.dataArysService.get_membership_by_email(email) : null;
+
+    if (!req) return;
+
+    req.subscribe({
+      next: (res: any) => {
+        const row = res?.status && Array.isArray(res.data) && res.data.length ? res.data[0] : null;
+        if (!row) {
+          this.membershipSummary = null;
+          return;
+        }
+        this.membershipSummary = {
+          credit_line_id: row.credit_line_id != null ? String(row.credit_line_id) : null,
+          credit_limit: row.credit_limit,
+          credit_available: row.credit_available,
+          credit_used: row.credit_used,
+        };
+      },
+      error: () => {
+        this.membershipSummary = null;
+      }
+    });
   }
 
   private initializeDateRange() {
@@ -115,9 +179,12 @@ export class MovimientosPage implements OnInit {
                 return;
               }
 
-              this.debtAmount = Number(product.amount_used ?? product.present_debt_amt ?? 0);
-              this.limitAmount = Number(product.limit ?? 0);
-              this.minPayAmount = Number(product.amount_share_to_pay ?? (this.debtAmount * 0.15));
+              this.debtAmount = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
+              this.limitAmount = this.toNumber(product.limit ?? 0);
+              
+              const minPay = this.toNumber(product.amount_share_to_pay);
+              this.minPayAmount = minPay > 0 ? minPay : (this.debtAmount * 0.15);
+              
               this.creditPayBefore = String(product.credit_pay_before ?? '');
               this.cardNumber = String(product.cardnumber ?? '');
               this.productId = String(product.id ?? '');
@@ -138,8 +205,23 @@ export class MovimientosPage implements OnInit {
     });
   }
 
+  get displayCreditLimit(): number {
+    const cLim = this.toNumber(this.limitAmount);
+    const mLim = this.toNumber(this.membershipSummary?.credit_limit);
+    if (cLim <= 0 && mLim > 0) return mLim;
+    return cLim;
+  }
+
+  get displayDebtAmount(): number {
+    const cDebt = this.toNumber(this.debtAmount);
+    const mDebt = this.toNumber(this.membershipSummary?.credit_used);
+    if (this.toNumber(this.limitAmount) <= 0 && mDebt > 0) return mDebt;
+    return cDebt;
+  }
+
   get availableAmount(): number {
-    return Math.max(0, this.limitAmount - this.debtAmount);
+    const avail = this.displayCreditLimit - this.displayDebtAmount;
+    return Math.max(0, avail);
   }
 
   get cardMask(): string {

@@ -50,7 +50,7 @@
               <div class="label">Disponible</div>
               <div class="value big">{{ availableAmount | number:'1.2-2' }} Bs</div>
               <div class="label" style="margin-top:10px">Deuda actual</div>
-              <div class="value big">{{ debtAmount | number:'1.2-2' }} Bs</div>
+              <div class="value big">{{ displayDebtAmount | number:'1.2-2' }} Bs</div>
             </div>
 
             <div class="metric-box">
@@ -73,7 +73,7 @@
         <div class="payment-form mt-4 p-3 bg-white rounded-4 border shadow-sm">
           <div class="d-flex justify-content-between mb-2">
             <span class="text-muted">Deuda actual</span>
-            <span class="fw-bold text-dark">{{ debtAmount | number:'1.2-2' }} Bs</span>
+            <span class="fw-bold text-dark">{{ displayDebtAmount | number:'1.2-2' }} Bs</span>
           </div>
           <div class="d-flex justify-content-between mb-4 pb-2 border-bottom">
             <span class="text-muted">Pago minimo</span>
@@ -142,7 +142,7 @@
             </div>
             <div class="d-flex justify-content-between border-top pt-2 mt-2">
               <span class="text-muted">Nueva deuda</span>
-              <span class="fw-bold text-danger">{{ debtAmount | number:'1.2-2' }} Bs</span>
+              <span class="fw-bold text-danger">{{ displayDebtAmount | number:'1.2-2' }} Bs</span>
             </div>
           </div>
 
