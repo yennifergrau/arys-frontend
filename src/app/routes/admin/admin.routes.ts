@@ -23,6 +23,7 @@ import { CreateCustomerPage } from './create-customer/create-customer.page';
 import { ServiceOrderPage } from './service-order/service-order.page';
 import { MovimientosPage } from './movimientos/movimientos.page';
 import { PagarDeudaPage } from './pagar-deuda/pagar-deuda.page';
+import { creditLineGuard } from './guards/credit-line.guard';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -119,11 +120,13 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path:'movimientos',
-    component: MovimientosPage
+    component: MovimientosPage,
+    canActivate: [creditLineGuard],
   },
   {
     path:'pagar-deuda',
-    component: PagarDeudaPage
+    component: PagarDeudaPage,
+    canActivate: [creditLineGuard],
   },
   {
     path:'Customer/create/sarys/meritop',
@@ -132,6 +135,7 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'service-orders/pending',
     component: ServiceOrderPage,
+    canActivate: [creditLineGuard],
   },
   {
     path: '**',
