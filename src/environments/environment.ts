@@ -56,7 +56,6 @@ export const environment = {
       add_vehicle:'data/fecht/vehicle/user',
       add_payment: 'data/fecht/payment/user',
       add_membership: 'data/fecht/membership/user',
-      register_membership: 'register/membership',
       get_membership: 'data/get/fecht/membership/member',
       get_membership_by_email: 'data/get/fecht/membership/by-email',
       retry_credit_line: 'data/post/fecht/retry/credit-line',
