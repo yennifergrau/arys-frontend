@@ -389,14 +389,14 @@ export class ServiceOrderPage implements OnInit {
       concept: `Orden N° ${order.order.order_number} - ${order.order.service_name}`,
       channel: 'APP',
       payment: {
-        bankcode: bankcode,
+        bankcode,
         doctype: benefitDoctype,
-        docid: benefitDocid,
+        docid: String(benefitDocid),
         name: order.order.provider_name,
-        phonenumber: phonenumber,
+        phonenumber,
         account: null
       },
-      reference: order.order.order_id,
+      reference: null,
       ip: '127.0.0.1'
     };
 
