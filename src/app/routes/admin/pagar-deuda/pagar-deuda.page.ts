@@ -45,6 +45,15 @@ export class PagarDeudaPage implements OnInit {
   public docId: string | number = '';
   public docType = '';
 
+  // Evita “parpadeo” de saldos (membresía -> Meritop)
+  public summaryReady = false;
+  private membershipLoaded = false;
+  private productLoaded = false;
+
+  private updateSummaryReady() {
+    this.summaryReady = this.membershipLoaded && this.productLoaded;
+  }
+
   private toNumber(value: any): number {
     if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
     if (typeof value === 'string') {
@@ -74,6 +83,9 @@ export class PagarDeudaPage implements OnInit {
   }
 
   ngOnInit() {
+    this.summaryReady = false;
+    this.membershipLoaded = false;
+    this.productLoaded = false;
     this.loadMembershipSummary();
     this.loadCustomerProduct();
   }
@@ -102,9 +114,13 @@ export class PagarDeudaPage implements OnInit {
           credit_available: row.credit_available,
           credit_used: row.credit_used,
         };
+        this.membershipLoaded = true;
+        this.updateSummaryReady();
       },
       error: () => {
         this.membershipSummary = null;
+        this.membershipLoaded = true;
+        this.updateSummaryReady();
       }
     });
   }
@@ -124,7 +140,7 @@ export class PagarDeudaPage implements OnInit {
     try {
       const raw = localStorage.getItem('userData');
       const userData = raw ? JSON.parse(raw) : null;
-      const docType = String(userData?.doctype || userData?.prefix || '').trim();
+      const docType = String(userData?.doctype || userData?.prefix || userData?.letra_rif || '').trim();
       const docId = Number(userData?.docid || userData?.rif || 0);
       if (docType && docId > 0) {
         return { doctype: docType, docid: docId };
@@ -138,7 +154,11 @@ export class PagarDeudaPage implements OnInit {
 
   private loadCustomerProduct() {
     const identity = this.getIdentity();
-    if (!identity) return;
+    if (!identity) {
+      this.productLoaded = true;
+      this.updateSummaryReady();
+      return;
+    }
 
     this.docType = identity.doctype;
     this.docId = identity.docid;
@@ -151,11 +171,14 @@ export class PagarDeudaPage implements OnInit {
       clientid: identity
     };
 
-    this.showLoading = true;
+    // `showLoading` aquí NO se usa, porque está reservado para el submit de pago.
     this.meritopService.getAccessToken().subscribe({
       next: () => {
         this.meritopService.customerProduct(payload)
-          .pipe(finalize(() => this.showLoading = false))
+          .pipe(finalize(() => {
+            this.productLoaded = true;
+            this.updateSummaryReady();
+          }))
           .subscribe({
             next: (result: any) => {
               const product = result?.products?.[0];
@@ -174,8 +197,9 @@ export class PagarDeudaPage implements OnInit {
           });
       },
       error: () => {
-        this.showLoading = false;
         this.showToast('No se pudo obtener token de Meritop.', 'warning');
+        this.productLoaded = true;
+        this.updateSummaryReady();
       }
     });
   }
@@ -199,6 +223,10 @@ export class PagarDeudaPage implements OnInit {
     return Math.max(0, avail);
   }
 
+  get hasDebt(): boolean {
+    return this.summaryReady && this.displayDebtAmount > 0;
+  }
+
   get cardMask(): string {
     const card = (this.cardNumber || '').trim();
     if (!card) return '----';
@@ -206,6 +234,9 @@ export class PagarDeudaPage implements OnInit {
   }
 
   get formattedPayBefore(): string {
+    // Meritop puede enviar `credit_pay_before` aunque no exista deuda.
+    // Para UX, solo mostramos la fecha cuando hay deuda pendiente.
+    if (!this.hasDebt) return '--';
     if (!this.creditPayBefore) return '--';
     const date = new Date(this.creditPayBefore);
     if (Number.isNaN(date.getTime())) return this.creditPayBefore;
@@ -217,6 +248,10 @@ export class PagarDeudaPage implements OnInit {
   }
 
   public async confirmPayment() {
+    if (!this.hasDebt) {
+      this.showToast('No tienes deuda pendiente para pagar.', 'warning');
+      return;
+    }
     if (!this.payAmount || this.payAmount <= 0) {
       this.showToast('El monto debe ser mayor a 0', 'warning');
       return;

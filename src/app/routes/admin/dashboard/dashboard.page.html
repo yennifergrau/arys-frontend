@@ -46,7 +46,7 @@
 
                     <div class="d-flex align-items-center">
                       <div class="ic-icon me-3 mt-1">
-                        <i class="fa-solid fa-dollar-sign fs-4 text-dark"></i>
+                        <i class="fa-solid title fs-5 text-dark">Bs</i>
                       </div>
                     
                       <div class="flex-grow-1">
@@ -66,13 +66,13 @@
                             <div class="col-6">
                               <small class="text-muted d-block lh-1">Disponible</small>
                               <span class="fw-bold text-warning fs-5">
-                                {{ isHidden ? '********' : (m.available_amount | formatCurrency) }} <small>USD</small>
+                                {{ isHidden ? '********' : (m.available_amount | formatCurrency) }} <small>Bs</small>
                               </span>
                             </div>
                             <div class="col-6 text-end text-sm-start">
                               <small class="text-muted d-block lh-1">Límite total</small>
                               <span class="fw-bold text-dark fs-5">
-                                {{ isHidden ? '********' : (m.credit_limit | formatCurrency) }} <small>USD</small>
+                                {{ isHidden ? '********' : (m.credit_limit | formatCurrency) }} <small>Bs</small>
                               </span>
                             </div>
                           </div>
@@ -82,7 +82,7 @@
                               <div>
                                 <small class="text-danger d-block fw-bold" style="font-size: 11px;">DEUDA ACTUAL</small>
                                 <span class="text-danger fw-bold fs-5">
-                                  {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }} <small>USD</small>
+                                  {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }} <small>Bs</small>
                                 </span>
                               </div>
                               <div class="contenedor-fecha-corte">
@@ -126,7 +126,7 @@
                 <li class="list-group-items">
                   <a class="item-link-active">
                     <div class="ic-icon">
-                      <i class="fa-solid fa-dollar-sign"></i>
+                      <i class="fa-solid title">Bs</i>
                     </div>
                     <div class="list-content">
                       <h6 class="title">Saldo disponible</h6>

@@ -60,6 +60,10 @@ export class DashboardPage implements OnInit {
   public username !: string
   public data_membership: any[] | null = null;
 
+  // Resumen Meritop para mostrar montos reales en Inicio
+  private meritopSummaryState: 'idle' | 'loading' | 'ready' | 'fallback' = 'idle';
+  private meritopProduct: { available: number; limit: number; cardnumber: string } | null = null;
+
   /** Filas listas para la vista (API `get_membership` → credit_limit / credit_available). */
   get membershipList(): Array<{
     id_master: number;
@@ -71,8 +75,19 @@ export class DashboardPage implements OnInit {
     const d = this.data_membership;
     if (!d || !Array.isArray(d)) return [];
     return d.map((row: any) => {
-      const limit = Number(row.credit_limit) || 0;
-      const available = Number(row.credit_available) || 0;
+      let limit = Number(row.credit_limit) || 0;
+      let available = Number(row.credit_available) || 0;
+
+      // Si Meritop respondió bien, preferimos esos montos (evita mostrar 300 “fijo” de ARYS).
+      if (
+        this.meritopSummaryState === 'ready' &&
+        this.meritopProduct &&
+        this.meritopProduct.limit > 0
+      ) {
+        limit = this.meritopProduct.limit;
+        available = this.meritopProduct.available;
+      }
+
       const vehicleLabel = [row.vehicle_brand, row.vehicle_model, row.vehicle_year]
         .filter(Boolean)
         .join(' ')
@@ -86,6 +101,81 @@ export class DashboardPage implements OnInit {
         credit_limit: limit,
         has_credit: !!lineId,
       };
+    });
+  }
+
+  private getIdentity(): { doctype: string; docid: number } | null {
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      if (token) {
+        const decoded: any = jwtDecode(token);
+        const tokenDocType = String(decoded?.doctype || decoded?.prefix || '').trim();
+        const tokenDocId = Number(decoded?.docid || decoded?.rif || 0);
+        if (tokenDocType && tokenDocId > 0) return { doctype: tokenDocType, docid: tokenDocId };
+      }
+    } catch {
+      // noop
+    }
+
+    try {
+      const raw = localStorage.getItem('userData');
+      const userData = raw ? JSON.parse(raw) : null;
+      const docType = String(userData?.doctype || userData?.prefix || userData?.letra_rif || '').trim();
+      const docId = Number(userData?.docid || userData?.rif || 0);
+      if (docType && docId > 0) return { doctype: docType, docid: docId };
+    } catch {
+      // noop
+    }
+
+    return null;
+  }
+
+  private loadMeritopSummary() {
+    const identity = this.getIdentity();
+    if (!identity) {
+      this.meritopSummaryState = 'fallback';
+      this.meritopProduct = null;
+      return;
+    }
+
+    this.meritopSummaryState = 'loading';
+    const payload = {
+      bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
+      channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
+      terminal: '0',
+      ip: '127.0.0.1',
+      clientid: identity
+    };
+
+    this.meritopService.getAccessToken().subscribe({
+      next: () => {
+        this.meritopService.customerProduct(payload).subscribe({
+          next: (result: any) => {
+            const product = result?.products?.[0];
+            if (!product) {
+              this.meritopSummaryState = 'fallback';
+              this.meritopProduct = null;
+              return;
+            }
+            const limit = Number(product.limit ?? 0) || 0;
+            const available = Number(product.available ?? 0) || 0;
+            this.meritopProduct = {
+              limit,
+              available,
+              cardnumber: String(product.cardnumber ?? '')
+            };
+            this.meritopSummaryState = 'ready';
+          },
+          error: () => {
+            this.meritopSummaryState = 'fallback';
+            this.meritopProduct = null;
+          }
+        });
+      },
+      error: () => {
+        this.meritopSummaryState = 'fallback';
+        this.meritopProduct = null;
+      }
     });
   }
 
@@ -202,11 +292,9 @@ public pagarCredito(membership: any) {
         error: (err: any) => {
 
           console.log(err)
-  
-          this.mostrarToast(
-            'No se pudo verificar la actividad del usuario',
-            'toast-error'
-          );
+          // En Inicio no bloqueamos la UX por fallas de red/servidor.
+          // Si esta validación falla, el usuario igual puede ver su dashboard.
+          this.showLoading = false;
         },
       });
     }
@@ -219,6 +307,10 @@ public pagarCredito(membership: any) {
     console.log(decodeData)
     this.username = decodeData?.name + ' ' + decodeData?.sub_ape
     this.UserVerifyMembership(decodeData.rif)
+
+    // Cargamos Meritop en paralelo para mostrar montos reales en Inicio.
+    this.loadMeritopSummary()
+
     const stored = sessionStorage.getItem('id_member')
     const idMember = stored
       ? Number(stored)

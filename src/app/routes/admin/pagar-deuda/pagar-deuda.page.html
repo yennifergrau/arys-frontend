@@ -48,14 +48,35 @@
           <div class="summary-col">
             <div class="metric-box">
               <div class="label">Disponible</div>
-              <div class="value big">{{ availableAmount | number:'1.2-2' }} Bs</div>
+              <div class="value big">
+                <ng-container *ngIf="summaryReady; else summaryLoadingAvail">
+                  {{ availableAmount | number:'1.2-2' }} Bs
+                </ng-container>
+                <ng-template #summaryLoadingAvail>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </div>
               <div class="label" style="margin-top:10px">Deuda actual</div>
-              <div class="value big">{{ displayDebtAmount | number:'1.2-2' }} Bs</div>
+              <div class="value big">
+                <ng-container *ngIf="summaryReady; else summaryLoadingDebt">
+                  {{ displayDebtAmount | number:'1.2-2' }} Bs
+                </ng-container>
+                <ng-template #summaryLoadingDebt>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </div>
             </div>
 
             <div class="metric-box">
               <div class="label">Pago minimo</div>
-              <div class="value big">{{ minPayAmount | number:'1.2-2' }} Bs</div>
+              <div class="value big">
+                <ng-container *ngIf="summaryReady; else summaryLoadingMinPay">
+                  {{ minPayAmount | number:'1.2-2' }} Bs
+                </ng-container>
+                <ng-template #summaryLoadingMinPay>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </div>
             </div>
           </div>
 
@@ -70,14 +91,35 @@
           </div>
         </div>
 
+        <div class="info-box mt-3" *ngIf="summaryReady && !hasDebt">
+          <div class="info-content">
+            <p><strong>Sin deuda pendiente.</strong></p>
+            <p class="subtitle">No necesitas realizar un pago en este momento.</p>
+          </div>
+        </div>
+
         <div class="payment-form mt-4 p-3 bg-white rounded-4 border shadow-sm">
           <div class="d-flex justify-content-between mb-2">
             <span class="text-muted">Deuda actual</span>
-            <span class="fw-bold text-dark">{{ displayDebtAmount | number:'1.2-2' }} Bs</span>
+            <span class="fw-bold text-dark">
+              <ng-container *ngIf="summaryReady; else summaryLoadingDebt2">
+                {{ displayDebtAmount | number:'1.2-2' }} Bs
+              </ng-container>
+              <ng-template #summaryLoadingDebt2>
+                <ion-spinner name="crescent" style="width:16px;height:16px;vertical-align:middle;"></ion-spinner>
+              </ng-template>
+            </span>
           </div>
           <div class="d-flex justify-content-between mb-4 pb-2 border-bottom">
             <span class="text-muted">Pago minimo</span>
-            <span class="fw-bold text-dark">{{ minPayAmount | number:'1.2-2' }} Bs</span>
+            <span class="fw-bold text-dark">
+              <ng-container *ngIf="summaryReady; else summaryLoadingMinPay2">
+                {{ minPayAmount | number:'1.2-2' }} Bs
+              </ng-container>
+              <ng-template #summaryLoadingMinPay2>
+                <ion-spinner name="crescent" style="width:16px;height:16px;vertical-align:middle;"></ion-spinner>
+              </ng-template>
+            </span>
           </div>
 
           <div class="form-group mb-3">
@@ -107,7 +149,7 @@
             </div>
           </div>
 
-          <button class="btn btn-primary w-100 mt-4 py-3 fw-bold" [disabled]="showLoading" (click)="confirmPayment()">
+          <button class="btn btn-primary w-100 mt-4 py-3 fw-bold" [disabled]="showLoading || !hasDebt" (click)="confirmPayment()">
             <ion-spinner name="crescent" *ngIf="showLoading" class="me-2"></ion-spinner>
             Confirmar pago
           </button>

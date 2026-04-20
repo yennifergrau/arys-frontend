@@ -7,6 +7,7 @@ import { environment } from 'src/environments/environment';
 
 /** Rutas admin que muestran <app-tab /> (el FAB debe quedar encima de esa barra). */
 const ADMIN_PATHS_WITH_TAB = new Set<string>([
+  'dashboard/sarys',
   'commerce/sarys/data',
   'financiamiento/purchase/add/payment',
   'my-shopping',

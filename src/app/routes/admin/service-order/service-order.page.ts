@@ -10,6 +10,7 @@ import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { ServiceOrder, CreditInfo, ApplyCreditResponse, CustomerProductSummary } from '../interface/service-order.interface';
 import { MeritopService } from '../services/meritop.service';
 import { DataArysService } from '../services/data-arys.service';
+import { IonicModule } from '@ionic/angular';
 
 @Component({
   selector: 'app-service-order',
@@ -19,6 +20,7 @@ import { DataArysService } from '../services/data-arys.service';
   imports: [
     CommonModule,
     FormsModule,
+    IonicModule,
     RouterLink,
     TabComponent,
     HttpClientModule,
@@ -47,6 +49,13 @@ export class ServiceOrderPage implements OnInit {
     credit_used: string | number | null;
   } | null = null
 
+  // Evita “parpadeo” de saldos (membresía -> Meritop)
+  // - loading: esperamos respuesta de Meritop antes de pintar montos
+  // - ready: ya tenemos datos de Meritop (customerProduct)
+  // - fallback: Meritop falló; mostramos membresía ARYS si existe
+  public summaryState: 'loading' | 'ready' | 'fallback' = 'loading'
+  public summaryMessage: string = ''
+
   public activeOrderId: string | null = null
   public creditInfo: CreditInfo | null = null
   public selectedCredit: number | null = null
@@ -54,6 +63,8 @@ export class ServiceOrderPage implements OnInit {
   public isApplyingCredit: boolean = false
   public applyResult: ApplyCreditResponse | null = null
   private orderDetails: any = null
+  public isLoadingCreditPanel: boolean = false
+  public creditPanelMessage: string = ''
 
   private toNumber(value: any): number {
     if (typeof value === 'number') return Number.isFinite(value) ? value : 0
@@ -95,7 +106,14 @@ export class ServiceOrderPage implements OnInit {
     }).format(amount);
   }
 
+  get hasDebt(): boolean {
+    return (this.summaryState === 'ready' || this.summaryState === 'fallback') && this.displayCreditUsed > 0
+  }
+
   get formattedPayBefore(): string {
+    // Meritop puede enviar `credit_pay_before` aunque no exista deuda.
+    // Para UX, solo mostramos la fecha cuando hay deuda pendiente.
+    if (!this.hasDebt) return '--'
     if (!this.customerProduct?.credit_pay_before) return '--'
     const date = new Date(this.customerProduct.credit_pay_before)
     if (Number.isNaN(date.getTime())) return this.customerProduct.credit_pay_before
@@ -187,6 +205,8 @@ export class ServiceOrderPage implements OnInit {
       this.activeOrderId = null
       this.creditInfo = null
       this.applyResult = null
+      this.isLoadingCreditPanel = false
+      this.creditPanelMessage = ''
       return
     }
 
@@ -194,6 +214,8 @@ export class ServiceOrderPage implements OnInit {
     this.applyResult = null
     this.isApplyingCredit = false
     this.creditInfo = null
+    this.isLoadingCreditPanel = true
+    this.creditPanelMessage = ''
 
     const idMemberRaw = sessionStorage.getItem('id_member');
     const idMember = idMemberRaw ? Number(idMemberRaw) : undefined;
@@ -201,6 +223,7 @@ export class ServiceOrderPage implements OnInit {
       .getOrderDetails(order.order_id, idMember && !Number.isNaN(idMember) ? idMember : undefined)
       .subscribe({
       next: (result) => {
+        this.isLoadingCreditPanel = false
         if (result.status && result.credit) {
           const availableFromCustomerProduct = this.toNumber(this.customerProduct?.available)
           const availableFromMembership = this.toNumber(this.membershipSummary?.credit_available)
@@ -223,10 +246,19 @@ export class ServiceOrderPage implements OnInit {
           this.selectedCredit = this.maxCredit > 0 ? this.maxCredit : null
         } else {
           this.creditInfo = null
+          this.maxCredit = 0
+          this.selectedCredit = null
+          this.creditPanelMessage =
+            result?.message ||
+            'No se pudo obtener la información de crédito para esta orden.'
         }
       },
       error: () => {
+        this.isLoadingCreditPanel = false
         this.creditInfo = null
+        this.maxCredit = 0
+        this.selectedCredit = null
+        this.creditPanelMessage = 'Error al cargar el detalle de la orden.'
       }
     })
   }
@@ -269,14 +301,34 @@ export class ServiceOrderPage implements OnInit {
 
   confirmarConsumo(orderId: string) {
     const amountToApply = Number(this.selectedCredit ?? 0);
-    if (!orderId || amountToApply <= 0) return;
+    if (!orderId) {
+      this.applyResult = { status: false, message: 'No se encontró el id de la orden.' };
+      return;
+    }
+    if (amountToApply <= 0) {
+      this.applyResult = { status: false, message: 'El monto a consumir debe ser mayor a 0.' };
+      return;
+    }
 
 
     const order = this.orderDetails;
-    if (!order) return;
+    if (!order) {
+      this.applyResult = {
+        status: false,
+        message: 'Primero abre el panel de la orden para cargar el detalle antes de confirmar.'
+      };
+      return;
+    }
 
     const identity = this.getCustomerIdentity();
-    if (!identity) return;
+    if (!identity) {
+      this.applyResult = {
+        status: false,
+        message:
+          'No se pudo obtener tu identificación (doctype/docid). Revisa que `userData` esté en localStorage o que el token tenga esos campos.'
+      };
+      return;
+    }
 
     const cardnumber = this.resolveMeritopCardnumber();
     if (!cardnumber) {
@@ -289,15 +341,42 @@ export class ServiceOrderPage implements OnInit {
     }
 
     this.isApplyingCredit = true;
+    this.applyResult = null;
+    console.log('[ARYS crédito] Confirmar consumo', {
+      orderId,
+      amountToApply,
+      identity,
+      cardnumber,
+      membershipSummary: this.membershipSummary,
+      customerProduct: this.customerProduct,
+    });
 
 
     // Usamos los datos de provider_payment_mobile que vienen del endpoint de la orden
     const providerPayment = order.order.provider_payment_mobile;
+    if (!providerPayment) {
+      this.isApplyingCredit = false;
+      this.applyResult = {
+        status: false,
+        message:
+          'La orden no trae `provider_payment_mobile` (datos de pago del proveedor). Sin esos datos no se puede procesar el consumo.'
+      };
+      return;
+    }
     const rawDoc = providerPayment?.id_number || '';
     const benefitDoctype = rawDoc.match(/^[a-zA-Z]/) ? rawDoc.charAt(0).toUpperCase() : 'V';
     const benefitDocid = rawDoc.replace(/^[a-zA-Z]/, '').trim();
     const bankcode = providerPayment?.bank_code || '';
     const phonenumber = providerPayment?.mobile_number || '';
+    if (!bankcode || !benefitDocid || !phonenumber) {
+      this.isApplyingCredit = false;
+      this.applyResult = {
+        status: false,
+        message:
+          'Faltan datos del proveedor para el pago (bank_code / id_number / mobile_number).'
+      };
+      return;
+    }
 
     // Payload según doc.md para /transaction/addPurchase
     const payload = {
@@ -396,6 +475,8 @@ export class ServiceOrderPage implements OnInit {
   }
 
   private loadCustomerProduct() {
+    this.summaryState = 'loading'
+    this.summaryMessage = ''
     try {
       const identity = this.getCustomerIdentity()
       const doctype = identity?.doctype || ''
@@ -403,6 +484,9 @@ export class ServiceOrderPage implements OnInit {
 
       if (!doctype || !docid) {
         this.customerProductFetchReason = 'Faltan datos de identidad (doctype/docid) para consultar customer/products'
+        this.customerProduct = null
+        this.summaryState = 'fallback'
+        this.summaryMessage = 'No se pudo consultar Meritop (faltan doctype/docid). Mostrando saldo de membresía.'
         return
       }
 
@@ -424,6 +508,9 @@ export class ServiceOrderPage implements OnInit {
               const product = result?.products?.[0]
               if (!product) {
                 this.customerProductFetchReason = 'customer/products respondio sin products[0]'
+                this.customerProduct = null
+                this.summaryState = 'fallback'
+                this.summaryMessage = 'Meritop no devolvió producto. Mostrando saldo de membresía.'
                 return
               }
 
@@ -437,22 +524,29 @@ export class ServiceOrderPage implements OnInit {
                 credit_pay_before: String(product.credit_pay_before ?? '')
               }
               this.customerProductFetchReason = ''
+              this.summaryState = 'ready'
             },
             error: (error) => {
               this.customerProduct = null
               this.customerProductFetchReason = error?.message || 'Error al consultar customer/products'
+              this.summaryState = 'fallback'
+              this.summaryMessage = 'No se pudo consultar Meritop. Mostrando saldo de membresía.'
             }
           })
         },
         error: (error) => {
           this.customerProduct = null
           this.customerProductFetchReason = error?.message || 'No se pudo obtener tokenAccess para customer/products'
+          this.summaryState = 'fallback'
+          this.summaryMessage = 'No se pudo obtener token de Meritop. Mostrando saldo de membresía.'
         }
       })
     } catch (e) {
       this.customerProduct = null
       this.customerProductFetchReason = 'Error inesperado consultando customer/products'
       console.error(e)
+      this.summaryState = 'fallback'
+      this.summaryMessage = 'Error inesperado consultando Meritop. Mostrando saldo de membresía.'
     }
   }
 
@@ -470,6 +564,7 @@ export class ServiceOrderPage implements OnInit {
     const doctype = String(
       userData?.doctype ||
       this.accessTokenData?.doctype ||
+      userData?.letra_rif ||
       userData?.prefix ||
       this.accessTokenData?.prefix ||
       ''
@@ -487,6 +582,8 @@ export class ServiceOrderPage implements OnInit {
   }
 
   ngOnInit() {
+    this.summaryState = 'loading'
+    this.summaryMessage = ''
     this.loadMembershipSummary()
     this.loadCustomerProduct()
     this.getPendingOrders()

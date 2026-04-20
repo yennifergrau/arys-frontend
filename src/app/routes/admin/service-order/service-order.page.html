@@ -55,14 +55,32 @@
           <div class="summary-col">
             <div class="metric-box">
               <div class="label">Disponible</div>
-              <div class="value big">{{ formatBs(displayCreditAvailable) }} Bs</div>
+              <div class="value big">
+                @if(summaryState === 'ready' || summaryState === 'fallback'){
+                  {{ formatBs(displayCreditAvailable) }} Bs
+                } @else {
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                }
+              </div>
               <div class="label" style="margin-top:10px">Deuda actual</div>
-              <div class="value big">{{ formatBs(displayCreditUsed) }} Bs</div>
+              <div class="value big">
+                @if(summaryState === 'ready' || summaryState === 'fallback'){
+                  {{ formatBs(displayCreditUsed) }} Bs
+                } @else {
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                }
+              </div>
             </div>
 
             <div class="metric-box">
               <div class="label">Pago minimo</div>
-              <div class="value big">{{ formatBs(customerProduct?.amount_share_to_pay || 0) }} Bs</div>
+              <div class="value big">
+                @if(summaryState === 'ready' || summaryState === 'fallback'){
+                  {{ formatBs(customerProduct?.amount_share_to_pay || 0) }} Bs
+                } @else {
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                }
+              </div>
             </div>
           </div>
 
@@ -73,11 +91,26 @@
                 <div class="value">{{ formattedPayBefore }}</div>
               </div>
               <div class="so-pay-hint">
-                Limite: <strong>{{ formatBs(displayCreditLimit) }} Bs</strong>
+                Limite:
+                <strong>
+                  @if(summaryState === 'ready' || summaryState === 'fallback'){
+                    {{ formatBs(displayCreditLimit) }} Bs
+                  } @else {
+                    <ion-spinner name="crescent" style="width:16px;height:16px;vertical-align:middle;"></ion-spinner>
+                  }
+                </strong>
               </div>
             </div>
           </div>
         </div>
+
+        @if(summaryState === 'fallback' && summaryMessage){
+          <div class="info-box mt-3">
+            <div class="info-content">
+              <p><strong>Atención:</strong> {{ summaryMessage }}</p>
+            </div>
+          </div>
+        }
 
         <div class="link-action">
           Ordenes de servicio recibidas ({{ pendingOrders.length }})
@@ -126,11 +159,18 @@
 
             @if(activeOrderId === order.order_id){
 
-              @if(creditInfo === null){
+              @if(isLoadingCreditPanel){
                 <div class="loader"><span></span><span></span><span></span></div>
               }
 
-              @if(creditInfo !== null){
+              @if(!isLoadingCreditPanel && creditInfo === null){
+                <div class="so-result so-result--err">
+                  <i class="feather icon-alert-circle"></i>
+                  <p>{{ creditPanelMessage || 'No hay información de crédito para mostrar.' }}</p>
+                </div>
+              }
+
+              @if(!isLoadingCreditPanel && creditInfo !== null){
                 <div class="so-purchase-panel">
 
                   <div class="section-title">Cuanto deseas pagar con ARYS?</div>

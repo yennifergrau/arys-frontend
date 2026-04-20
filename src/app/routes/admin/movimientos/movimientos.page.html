@@ -49,14 +49,35 @@
           <div class="summary-col">
             <div class="metric-box">
               <div class="label">Disponible</div>
-              <div class="value big">{{ availableAmount | number:'1.2-2' }} Bs</div>
+              <div class="value big">
+                <ng-container *ngIf="summaryReady; else summaryLoadingAvail">
+                  {{ availableAmount | number:'1.2-2' }} Bs
+                </ng-container>
+                <ng-template #summaryLoadingAvail>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </div>
               <div class="label" style="margin-top:10px">Deuda actual</div>
-              <div class="value big">{{ displayDebtAmount | number:'1.2-2' }} Bs</div>
+              <div class="value big">
+                <ng-container *ngIf="summaryReady; else summaryLoadingDebt">
+                  {{ displayDebtAmount | number:'1.2-2' }} Bs
+                </ng-container>
+                <ng-template #summaryLoadingDebt>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </div>
             </div>
 
             <div class="metric-box">
               <div class="label">Pago minimo</div>
-              <div class="value big">{{ minPayAmount | number:'1.2-2' }} Bs</div>
+              <div class="value big">
+                <ng-container *ngIf="summaryReady; else summaryLoadingMinPay">
+                  {{ minPayAmount | number:'1.2-2' }} Bs
+                </ng-container>
+                <ng-template #summaryLoadingMinPay>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </div>
             </div>
           </div>
 
@@ -66,9 +87,16 @@
                 <div class="label">Pague antes de</div>
                 <div class="value">{{ formattedPayBefore }}</div>
               </div>
-              <button class="btn btn-success btn-sm px-3 py-2 fw-bold" routerLink="/admin/pagar-deuda">
-                Pagar deuda
-              </button>
+              <ng-container *ngIf="hasDebt; else payDebtDisabled">
+                <button class="btn btn-success btn-sm px-3 py-2 fw-bold" routerLink="/admin/pagar-deuda">
+                  Pagar deuda
+                </button>
+              </ng-container>
+              <ng-template #payDebtDisabled>
+                <button class="btn btn-success btn-sm px-3 py-2 fw-bold" type="button" disabled>
+                  Pagar deuda
+                </button>
+              </ng-template>
             </div>
           </div>
         </div>
