@@ -24,9 +24,10 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PaymentService } from '../services/payment.service';
 import { EmissionDetailsService } from '../services/emission-details.service';
 import { EmissionService } from '../services/emission.service';
-import { DataArysService } from '../services/data-arys.service';
 import { NotificationService } from 'src/app/shared/services/notification.service';
 import { operationStatuses } from 'src/app/shared/interface/error.interface';
+import { jwtDecode } from 'jwt-decode';
+import { PolizaquiService } from '../services/polizaqui.service';
 
 @Component({
   selector: 'app-subscription-payment-otp',
@@ -46,7 +47,6 @@ import { operationStatuses } from 'src/app/shared/interface/error.interface';
     PaymentService,
     EmissionDetailsService,
     EmissionService,
-    DataArysService,
   ],
 })
 export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
@@ -61,13 +61,12 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   payment = inject(PaymentService);
   emission_details = inject(EmissionDetailsService);
   emission_service = inject(EmissionService);
-  arys_service = inject(DataArysService);
+  polizaqui = inject(PolizaquiService);
   emission = inject(EmissionService);
   showSpinner: boolean = false;
   otpForm!: FormGroup;
   planDetails!: any;
   paymentData: any;
-  id_pay!: any;
   numberContact!: string;
   private countBank: string = '01740126281264340652';
   private codeBank: string = '0174';
@@ -164,12 +163,23 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
               tipoMembresia
             )
             .subscribe(
-              (res: any) => {
+              async (res: any) => {
                 if (res) {
       console.log(res)
                   console.log(res);
                   this.emission_details.numberContract = res;
-                  this.membership(res.certificado, res.pdfUrl, res);
+                  // Guardados adicionales tipo Arys-Poliza (no afecta Meritop)
+                  await this.registerSypagoPaymentPolizaqui();
+                  await this.registerMembershipPolizaquiRow(res);
+                  // Mantener `dataMembership` para pantallas/compartir (sin llamar a Arys demo)
+                  sessionStorage.setItem(
+                    'dataMembership',
+                    JSON.stringify({
+                      pdf_url: res?.pdfUrl ?? '',
+                      certificate: res?.certificado ?? '',
+                      id_poliza: res?.id_poliza ?? res?.idPoliza ?? res?.id_poliza_ar ?? null,
+                    })
+                  );
                   this.mostrarToast('Subscripcion con exito', 'toast-success');
                   setTimeout(() => {
                     this.nav.navigateRoot(
@@ -214,37 +224,8 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   //   }
   // }
 
-  private paymentDataArys(transaction_id: any): Promise<void> {
-    return new Promise((resolve) => {
-      try {
-        const data = {
-          bank_code:
-            this.emission_details.planDetails[1].debitor_account.bank_code,
-          amount: this.emission_details.planDetails[1].amount.amt,
-          prefix: this.emission_details.planDetails[1].debitor_document_info.type,
-          rif: this.emission_details.planDetails[1].debitor_document_info.number,
-          phone_bank: this.emission_details.planDetails[1].debitor_account.number,
-          bank_acc: this.emission_details.planDetails[1].debitor_account.account_number,
-          reference: transaction_id,
-        };
-        console.log(data)
-        this.arys_service.add_payment(data).subscribe({
-          next: (result) => {
-            console.log(result);
-            this.id_pay = result.id_pay;
-            resolve();
-          },
-          error: (error) => {
-            console.log(error);
-            resolve();
-          },
-        });
-      } catch (e) {
-        console.error(e);
-        resolve();
-      }
-    });
-  }
+  // Nota: removimos el guardado `data/fecht/payment/user` (Arys demo).
+  // El único guardado de pago que queda es `register/payment` (Arys-Poliza).
     public async resendOtp() {
   try {
     this.showSpinner = true;
@@ -294,44 +275,73 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   //   });
   // }
 
-  private membership(certificate: any, urlPDF: any, subRes?: any) {
+  // Nota: removimos el guardado `data/fecht/membership/user` (Arys demo).
+  // El único guardado de membresía que queda es `register/membership` (Arys-Poliza).
+
+  private getUserEmailFromToken(): string {
     try {
-      const id_poliza =
-        subRes?.id_poliza ?? subRes?.idPoliza ?? subRes?.id_poliza_ar ?? null;
-      const data = {
-        id_pay: this.id_pay,
-        id_veh: this.emission_details.vehicle_id_arys,
-        id_payer: this.emission_details.id_person_arys,
-        certificate: certificate,
-        pdf_url: urlPDF,
-        name: this.emission_details.planDetails[0].title,
-        membership_type: this.emission_details.planDetails[0].id === 'moto' ? 'moto' : 'auto',
-        id_poliza,
+      const raw = sessionStorage.getItem('accessToken');
+      if (!raw) return '';
+      const decoded: any = jwtDecode(raw);
+      return decoded?.email != null ? String(decoded.email).trim() : '';
+    } catch {
+      return '';
+    }
+  }
+
+  /**
+   * Registro del pago SyPago en backend (formato Polizaqui / Arys-Poliza).
+   * No afecta el flujo Meritop: es un guardado adicional.
+   */
+  private async registerSypagoPaymentPolizaqui(): Promise<void> {
+    try {
+      const email = this.getUserEmailFromToken();
+      const planTitle = this.emission_details.planDetails?.[0]?.title ?? '';
+      const payload = {
+        numero_poliza: this.emission_details.numberContract?.certificado ?? '',
+        monto_pago: this.paymentData?.amount?.amt ?? null,
+        fecha_pago: new Date().toISOString(),
+        metodo_pago: this.paymentData?.debitor_account?.type ?? '',
+        referencia: this.idTransaction,
+        banco: this.paymentData?.debitor_account?.number ?? '',
+        sypago: this.paymentData,
+        transaction_id: this.idTransaction,
+        status: true,
+        email,
+        aliado: 'ARYS CLUB',
+        plan: planTitle,
+        estado: 'PAGADA',
+        empresa: 'ARYS CLUB',
       };
-      console.log(data)
-      this.arys_service.add_membership(data).subscribe({
-        next: (result) => {
-          console.log('[membership] Respuesta de add_membership:', result);
-          sessionStorage.setItem('resultMembership', JSON.stringify(result));
-          sessionStorage.setItem('dataMembership', JSON.stringify(data));
-          if (result?.id_master != null) {
-            sessionStorage.setItem('id_member', String(result.id_master));
-          }
-          if (result.credit_line) {
-            console.log('[Meritop] Línea de crédito abierta exitosamente:', result.credit_line);
-            this.emission_details.creditLine = result.credit_line;
-            this.emission_details.creditLineReason = null;
-          } else {
-            console.warn('[Meritop] No se obtuvo línea de crédito:', result.credit_line_reason, result);
-            this.emission_details.creditLineReason = result.credit_line_reason ?? 'meritop_error';
-          }
-        },
-        error: (error) => {
-          console.log(error);
-        },
-      });
+      await this.polizaqui.registerPayment(payload);
     } catch (e) {
-      console.error(e);
+      console.warn('[register/payment] no se pudo registrar pago SyPago:', e);
+    }
+  }
+
+  /**
+   * Registro de membresía con el formato de `Arys-Poliza`:
+   * { certificate, id_poliza, anio, marca, modelo, version, placa, serial, url_membresia }
+   */
+  private async registerMembershipPolizaquiRow(subRes: any): Promise<void> {
+    try {
+      const id_poliza = subRes?.id_poliza ?? subRes?.idPoliza ?? subRes?.id_poliza_ar ?? null;
+      if (id_poliza == null || id_poliza === '') return;
+      const veh = this.emission_details.data_vehicle ?? {};
+      const payload = {
+        certificate: subRes?.certificado ?? this.emission_details.numberContract?.certificado ?? '',
+        id_poliza,
+        anio: veh?.year ?? veh?.anio ?? null,
+        marca: veh?.brand ?? veh?.marca ?? '',
+        modelo: veh?.model ?? veh?.modelo ?? '',
+        version: veh?.version ?? '',
+        placa: veh?.plate ?? veh?.placa ?? '',
+        serial: veh?.serial ?? veh?.serial_carroceria ?? veh?.serial_motor ?? '',
+        url_membresia: subRes?.pdfUrl ?? subRes?.pdf_url ?? '',
+      };
+      await this.polizaqui.registerMembership(payload);
+    } catch (e) {
+      console.warn('[register/membership] no se pudo registrar la membresía:', e);
     }
   }
 
@@ -447,7 +457,6 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
 
           switch (status) {
             case 'ACCP':
-              await this.paymentDataArys(this.idTransaction);
               this.generateSubscriptions();
               this.mostrarToast('Pago confirmado', 'toast-success');
               clearInterval(interval);

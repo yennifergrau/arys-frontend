@@ -133,8 +133,22 @@ export class SharedMembershipPage implements OnInit {
 
   ngOnInit() {
     this.mostrarToast('Pago confirmado','toast-success')
-    this.dataMembership = sessionStorage.getItem('dataMembership')
-    this.dataMembership = JSON.parse(this.dataMembership)
+    const raw = sessionStorage.getItem('dataMembership');
+    if (raw) {
+      try {
+        this.dataMembership = JSON.parse(raw);
+      } catch {
+        this.dataMembership = null;
+      }
+    }
+    // Fallback: si no existe `dataMembership`, usar la suscripción (Sarys) ya guardada en `numberContract`.
+    if (!this.dataMembership) {
+      const nc = this.emission_details.numberContract;
+      this.dataMembership = {
+        pdf_url: nc?.pdfUrl ?? '',
+        certificate: nc?.certificado ?? '',
+      };
+    }
     setTimeout(() => {
       this.SendDataEmail()
     }, 3000);

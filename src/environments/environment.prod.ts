@@ -11,6 +11,12 @@ export const environment = {
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',
   ocrFileService: 'https://adjuntar-documento-qa.polizaqui.com',
   paymentSypago: 'https://pagos-qa.arys.polizaqui.com',
+  /** Backend Polizaqui (Arys-Poliza): register/payment + register/membership */
+  polizaqui: {
+    baseUrl: 'https://arys-ui-service-poliza.polizaqui.com',
+    registerPayment: 'register/payment',
+    registerMembership: 'register/membership',
+  },
 
   sarys: {
     url: 'https://demo-services-arys.polizaqui.com',

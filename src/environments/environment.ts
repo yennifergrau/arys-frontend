@@ -11,6 +11,12 @@ export const environment = {
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',
   ocrFileService: 'https://adjuntar-documento-qa.polizaqui.com',
   paymentSypago: 'https://pagos-qa.arys.polizaqui.com',
+  /** Backend Polizaqui (Arys-Poliza): register/payment + register/membership */
+  polizaqui: {
+    baseUrl: 'https://arys-ui-service-poliza.polizaqui.com',
+    registerPayment: 'register/payment',
+    registerMembership: 'register/membership',
+  },
 
   sarys: {
     url: 'https://demo-services-arys.polizaqui.com',
@@ -50,6 +56,7 @@ export const environment = {
       add_vehicle:'data/fecht/vehicle/user',
       add_payment: 'data/fecht/payment/user',
       add_membership: 'data/fecht/membership/user',
+      register_membership: 'register/membership',
       get_membership: 'data/get/fecht/membership/member',
       get_membership_by_email: 'data/get/fecht/membership/by-email',
       retry_credit_line: 'data/post/fecht/retry/credit-line',

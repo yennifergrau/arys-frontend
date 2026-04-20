@@ -14,6 +14,7 @@ export class DataArysService {
   private readonly add_vehicle_url = environment.arys.OtherApis.add_vehicle
   private readonly add_payment_url = environment.arys.OtherApis.add_payment
   private readonly add_membership_url = environment.arys.OtherApis.add_membership
+  private readonly register_membership_url = environment.arys.OtherApis.register_membership
   private readonly get_membership_url = environment.arys.OtherApis.get_membership
   private readonly get_membership_by_email_url = environment.arys.OtherApis.get_membership_by_email
   private readonly retry_credit_line_url = environment.arys.OtherApis.retry_credit_line
@@ -66,6 +67,28 @@ export class DataArysService {
     return this.http.post<any>(`${this.baseUrl}/${this.add_membership_url}`,data).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error añadir membresía'));
+      })
+    )
+  }
+
+  /**
+   * Registro de membresía (formato Polizaqui / Arys-Poliza).
+   * No reemplaza `add_membership`; se usa en el flujo SyPago + membresía.
+   */
+  public register_membership(data: {
+    certificate: string;
+    id_poliza: number | string;
+    anio?: number | null;
+    marca?: string;
+    modelo?: string;
+    version?: string;
+    placa?: string;
+    serial?: string;
+    url_membresia?: string;
+  }) {
+    return this.http.post<any>(`${this.baseUrl}/${this.register_membership_url}`, data).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error('Error registrar membresía'));
       })
     )
   }
