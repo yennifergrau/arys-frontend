@@ -253,12 +253,16 @@ export class DashboardPage implements OnInit {
     this.isHidden = !this.isHidden;
   }
 
-  // Función para navegar a la pantalla de pago
-public pagarCredito(membership: any) {
-  this._emisionService.paymentData = membership; // Guardamos la info para la siguiente vista
-  // Inicio: el botón Pagar debe llevar a la pantalla de pagar deuda.
-  this.router.navigate(['/admin/pagar-deuda']);
-}
+  public pagarCredito(membership: any) {
+    const limit = Number(membership?.credit_limit) || 0;
+    const avail = Number(membership?.available_amount) || 0;
+    if (limit <= avail) {
+      this.mostrarToast('No tienes deuda pendiente para abonar.', 'toast-error');
+      return;
+    }
+    this._emisionService.paymentData = membership;
+    this.router.navigate(['/admin/pagar-deuda']);
+  }
 
   // private async loadCustomer() {
   //   try {

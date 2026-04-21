@@ -87,16 +87,13 @@
                 <div class="label">Pague antes de</div>
                 <div class="value">{{ formattedPayBefore }}</div>
               </div>
-              <ng-container *ngIf="hasDebt; else payDebtDisabled">
-                <button class="btn btn-success btn-sm px-3 py-2 fw-bold" routerLink="/admin/pagar-deuda">
-                  Pagar deuda
-                </button>
-              </ng-container>
-              <ng-template #payDebtDisabled>
-                <button class="btn btn-success btn-sm px-3 py-2 fw-bold" type="button" disabled>
-                  Pagar deuda
-                </button>
-              </ng-template>
+              <a
+                *ngIf="hasDebt"
+                routerLink="/admin/pagar-deuda"
+                class="btn btn-success btn-sm px-3 py-2 fw-bold text-decoration-none text-center d-block">
+                Pagar deuda
+              </a>
+              <p *ngIf="summaryReady && !hasDebt" class="mov-no-debt-hint mb-0">Sin deuda pendiente</p>
             </div>
           </div>
         </div>

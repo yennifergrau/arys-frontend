@@ -45,13 +45,35 @@ export class PagarDeudaPage implements OnInit {
   public docId: string | number = '';
   public docType = '';
 
+  /** Cuenta receptora para abonos (customer/products → receiving_account). */
+  public receivingAccount: {
+    bankname: string;
+    bankcode: string;
+    clientid: string;
+    phonenumber: string;
+  } | null = null;
+
   // Evita “parpadeo” de saldos (membresía -> Meritop)
   public summaryReady = false;
   private membershipLoaded = false;
   private productLoaded = false;
+  /** Evita redirección o toast duplicado si no hay deuda. */
+  private debtGateHandled = false;
 
   private updateSummaryReady() {
     this.summaryReady = this.membershipLoaded && this.productLoaded;
+    if (this.summaryReady) {
+      void this.maybeBlockPagarDeudaWithoutDebt();
+    }
+  }
+
+  /** Sin deuda no se permite usar esta pantalla (evita URL directa). */
+  private async maybeBlockPagarDeudaWithoutDebt() {
+    if (this.debtGateHandled || this.showSuccess) return;
+    if (this.displayDebtAmount > 0) return;
+    this.debtGateHandled = true;
+    await this.showToast('No tienes deuda pendiente para abonar.', 'warning');
+    this.navCtrl.navigateRoot('/admin/dashboard/sarys');
   }
 
   private toNumber(value: any): number {
@@ -69,6 +91,44 @@ export class PagarDeudaPage implements OnInit {
     }
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  /**
+   * Pago mínimo en customer/products: varias claves posibles; si no viene, 15% de la deuda.
+   */
+  private resolveMeritopMinPayment(product: any): number {
+    if (!product || typeof product !== 'object') return 0;
+    const debt = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
+    const candidates = [
+      product.amount_share_to_pay,
+      product.amount_share_to_pay_converted,
+      product.min_pay,
+      product.minimum_payment,
+      product.share_to_pay,
+    ];
+    for (const c of candidates) {
+      const n = this.toNumber(c);
+      if (n > 0) return parseFloat(n.toFixed(2));
+    }
+    if (debt > 0) return parseFloat((debt * 0.15).toFixed(2));
+    return 0;
+  }
+
+  private mapReceivingAccount(product: any): void {
+    const ra = product?.receiving_account;
+    if (!ra || typeof ra !== 'object') {
+      this.receivingAccount = null;
+      return;
+    }
+    const bankname = ra.bankname != null ? String(ra.bankname).trim() : '';
+    const bankcode = ra.bankcode != null ? String(ra.bankcode).trim() : '';
+    const clientid = ra.clientid != null ? String(ra.clientid).trim() : '';
+    const phonenumber = ra.phonenumber != null ? String(ra.phonenumber).trim() : '';
+    if (!bankname && !bankcode && !clientid && !phonenumber) {
+      this.receivingAccount = null;
+      return;
+    }
+    this.receivingAccount = { bankname, bankcode, clientid, phonenumber };
   }
 
   constructor() {
@@ -99,7 +159,11 @@ export class PagarDeudaPage implements OnInit {
       ? this.dataArysService.get_membership(idMember)
       : email ? this.dataArysService.get_membership_by_email(email) : null;
 
-    if (!req) return;
+    if (!req) {
+      this.membershipLoaded = true;
+      this.updateSummaryReady();
+      return;
+    }
 
     req.subscribe({
       next: (res: any) => {
@@ -187,8 +251,8 @@ export class PagarDeudaPage implements OnInit {
               this.debtAmount = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
               this.limitAmount = this.toNumber(product.limit ?? 0);
               this.cardNumber = String(product.cardnumber ?? '');
-              const minPay = this.toNumber(product.amount_share_to_pay);
-              this.minPayAmount = minPay > 0 ? minPay : (this.debtAmount * 0.15);
+              this.minPayAmount = this.resolveMeritopMinPayment(product);
+              this.mapReceivingAccount(product);
               this.creditPayBefore = String(product.credit_pay_before ?? '');
             },
             error: () => {
@@ -234,12 +298,10 @@ export class PagarDeudaPage implements OnInit {
   }
 
   get formattedPayBefore(): string {
-    // Meritop puede enviar `credit_pay_before` aunque no exista deuda.
-    // Para UX, solo mostramos la fecha cuando hay deuda pendiente.
-    if (!this.hasDebt) return '--';
-    if (!this.creditPayBefore) return '--';
-    const date = new Date(this.creditPayBefore);
-    if (Number.isNaN(date.getTime())) return this.creditPayBefore;
+    const raw = (this.creditPayBefore ?? '').toString().trim();
+    if (!raw) return '--';
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return raw;
     return new Intl.DateTimeFormat('es-VE', {
       day: '2-digit',
       month: '2-digit',
@@ -313,6 +375,18 @@ export class PagarDeudaPage implements OnInit {
 
   public goToMovements() {
     this.navCtrl.navigateForward('/admin/movimientos');
+  }
+
+  /** En móvil, copiar RIF/teléfono/código evita errores al hacer el pago. */
+  public async copyReceivingValue(value: string, label: string) {
+    const v = (value ?? '').trim();
+    if (!v) return;
+    try {
+      await navigator.clipboard.writeText(v);
+      await this.showToast(`${label} copiado al portapapeles`, 'success');
+    } catch {
+      await this.showToast('No se pudo copiar. Selecciona el texto manualmente.', 'warning');
+    }
   }
 
   private async showToast(message: string, color: string) {

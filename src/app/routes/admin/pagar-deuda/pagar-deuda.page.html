@@ -91,6 +91,60 @@
           </div>
         </div>
 
+        <section class="pm-destination" *ngIf="summaryReady && receivingAccount" aria-label="Datos de pago móvil destino">
+          <div class="pm-destination__accent" aria-hidden="true"></div>
+          <div class="pm-destination__head">
+            <div class="pm-destination__icon" aria-hidden="true">
+              <i class="feather icon-smartphone"></i>
+            </div>
+            <div class="pm-destination__titles">
+              <h2 class="pm-destination__title">Pago móvil — a esta cuenta</h2>
+              <p class="pm-destination__sub">
+                Destino del abono (Meritop). Más abajo registrarás <strong>tu</strong> banco y teléfono de <strong>origen</strong>.
+              </p>
+              <p class="pm-destination__tap-hint">
+                <i class="feather icon-copy"></i>
+                Toca un dato para copiarlo
+              </p>
+            </div>
+          </div>
+
+          <div class="pm-destination__stack">
+            <button
+              type="button"
+              class="pm-kv"
+              *ngIf="receivingAccount.bankname"
+              (click)="copyReceivingValue(receivingAccount.bankname, 'Banco')">
+              <span class="pm-kv__label">Banco</span>
+              <span class="pm-kv__value">{{ receivingAccount.bankname }}</span>
+            </button>
+            <button
+              type="button"
+              class="pm-kv pm-kv--mono"
+              *ngIf="receivingAccount.bankcode"
+              (click)="copyReceivingValue(receivingAccount.bankcode, 'Código de banco')">
+              <span class="pm-kv__label">Código de banco</span>
+              <span class="pm-kv__value">{{ receivingAccount.bankcode }}</span>
+            </button>
+            <button
+              type="button"
+              class="pm-kv"
+              *ngIf="receivingAccount.clientid"
+              (click)="copyReceivingValue(receivingAccount.clientid, 'RIF / documento')">
+              <span class="pm-kv__label">RIF o documento</span>
+              <span class="pm-kv__value">{{ receivingAccount.clientid }}</span>
+            </button>
+            <button
+              type="button"
+              class="pm-kv pm-kv--mono"
+              *ngIf="receivingAccount.phonenumber"
+              (click)="copyReceivingValue(receivingAccount.phonenumber, 'Teléfono')">
+              <span class="pm-kv__label">Teléfono (pago móvil)</span>
+              <span class="pm-kv__value">{{ receivingAccount.phonenumber }}</span>
+            </button>
+          </div>
+        </section>
+
         <div class="info-box mt-3" *ngIf="summaryReady && !hasDebt">
           <div class="info-content">
             <p><strong>Sin deuda pendiente.</strong></p>
@@ -162,35 +216,47 @@
         </div>
       </div>
 
-      <div class="container p-2 h-100" *ngIf="showSuccess">
-        <div class="success-box text-center p-4 h-100 d-flex flex-column justify-content-center align-items-center">
-          <div class="check-container mb-4">
-            <div class="check-circle pulse-animation">
-              <i class="feather icon-check"></i>
+      <div class="container p-2 pay-success-wrap" *ngIf="showSuccess">
+        <div class="pay-success">
+          <div class="pay-success__hero">
+            <div class="pay-success__check-ring" aria-hidden="true">
+              <div class="pay-success__check">
+                <i class="feather icon-check"></i>
+              </div>
+            </div>
+            <p class="pay-success__eyebrow">Línea Club ARYS</p>
+            <h1 class="pay-success__title">Abono realizado</h1>
+            <p class="pay-success__lead">
+              Tu abono se registró correctamente. El saldo pendiente de tu línea bajó y tendrás más cupo disponible para usar cuando el banco confirme el movimiento.
+            </p>
+          </div>
+
+          <div class="pay-success__card">
+            <div class="pay-success__row pay-success__row--highlight">
+              <span class="pay-success__label">Abonaste</span>
+              <span class="pay-success__value pay-success__value--xl">{{ payAmount | number:'1.2-2' }}&nbsp;Bs</span>
+            </div>
+            <div class="pay-success__row">
+              <span class="pay-success__label">Movimiento</span>
+              <span class="pay-success__value">Abono a tu línea de crédito</span>
+            </div>
+            <div class="pay-success__row pay-success__row--last">
+              <span class="pay-success__label">Deuda pendiente</span>
+              <span
+                class="pay-success__value"
+                [ngClass]="displayDebtAmount <= 0 ? 'pay-success__value--zero' : 'pay-success__value--debt'">
+                {{ displayDebtAmount | number:'1.2-2' }}&nbsp;Bs
+              </span>
             </div>
           </div>
 
-          <h2 class="fw-bold mb-2">Pago aplicado</h2>
-          <p class="text-muted mb-5">Se proceso el addPayment y el abono redujo tu deuda e incremento el disponible.</p>
-
-          <div class="summary-details w-100 mb-5 p-3 rounded-4 border bg-white">
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted">Monto pagado</span>
-              <span class="fw-bold">{{ payAmount | number:'1.2-2' }} Bs</span>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted">Operacion</span>
-              <span class="fw-bold">Abono ARYS</span>
-            </div>
-            <div class="d-flex justify-content-between border-top pt-2 mt-2">
-              <span class="text-muted">Nueva deuda</span>
-              <span class="fw-bold text-danger">{{ displayDebtAmount | number:'1.2-2' }} Bs</span>
-            </div>
-          </div>
-
-          <div class="btn-group w-100 flex-column gap-3">
-            <button class="btn btn-primary w-100 py-3 fw-bold" (click)="goBack()">Volver al inicio</button>
-            <button class="btn btn-outline-secondary w-100 py-3 fw-bold border-0" (click)="goToMovements()">Ver movimientos</button>
+          <div class="pay-success__actions">
+            <button type="button" class="btn btn-primary w-100 pay-success__btn-primary" (click)="goBack()">
+              Volver al inicio
+            </button>
+            <button type="button" class="btn w-100 pay-success__btn-secondary" (click)="goToMovements()">
+              Ver movimientos
+            </button>
           </div>
         </div>
       </div>

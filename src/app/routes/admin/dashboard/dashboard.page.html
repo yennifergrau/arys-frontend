@@ -77,31 +77,33 @@
                             </div>
                           </div>
                         
-                          <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                            @if(m.available_amount < m.credit_limit) {
-                              <div>
-                                <small class="text-danger d-block fw-bold" style="font-size: 11px;">DEUDA ACTUAL</small>
-                                <span class="text-danger fw-bold fs-5">
-                                  {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }} <small>Bs</small>
-                                </span>
-                              </div>
-                              <div class="contenedor-fecha-corte">
+                          <div class="pt-2 border-top">
+                            <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                              @if(m.available_amount < m.credit_limit) {
                                 <div>
-                                  <small class="text-muted d-block lh-1" style="font-size: 11px;">Fecha de corte</small>
-                                  <span class="fw-bold text-dark fs-5">
-                                    {{ formatCreditPayBefore(m.credit_pay_before) }}
+                                  <small class="text-danger d-block fw-bold" style="font-size: 11px;">DEUDA ACTUAL</small>
+                                  <span class="text-danger fw-bold fs-5">
+                                    {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }} <small>Bs</small>
                                   </span>
                                 </div>
-                                
-                                <button class="btn btn-success px-4 py-2 fw-bold shadow-sm" (click)="pagarCredito(m)">
-                                Pagar
-                              </button>
+                              } @else {
+                                <span class="badge bg-light text-success border px-3 py-2 align-self-center">
+                                  <i class="fa-solid fa-check-circle me-1"></i> Al día
+                                </span>
+                              }
+                              <div class="contenedor-fecha-corte text-end ms-auto">
+                                <small class="text-muted d-block lh-1" style="font-size: 11px;">Pague antes de</small>
+                                <span class="fw-bold text-dark fs-6">
+                                  {{ formatCreditPayBefore(m.credit_pay_before) }}
+                                </span>
                               </div>
-                              
-                            } @else {
-                              <span class="badge bg-light text-success border px-3 py-2">
-                                <i class="fa-solid fa-check-circle me-1"></i> Al día
-                              </span>
+                            </div>
+                            @if(m.available_amount < m.credit_limit) {
+                              <div class="mt-3">
+                                <button type="button" class="btn btn-success w-100 py-2 fw-bold shadow-sm" (click)="pagarCredito(m)">
+                                  Pagar
+                                </button>
+                              </div>
                             }
                           </div>
                         } @else {

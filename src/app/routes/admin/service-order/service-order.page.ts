@@ -86,6 +86,28 @@ export class ServiceOrderPage implements OnInit {
     return Number.isFinite(parsed) ? parsed : 0
   }
 
+  /**
+   * Pago mínimo en customer/products: Meritop puede enviar el monto en varias claves
+   * o solo en `amount_share_to_pay_converted`; si no hay valor, se usa 15% de la deuda.
+   */
+  private resolveMeritopMinPayment(product: any): number {
+    if (!product || typeof product !== 'object') return 0
+    const debt = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0)
+    const candidates = [
+      product.amount_share_to_pay,
+      product.amount_share_to_pay_converted,
+      product.min_pay,
+      product.minimum_payment,
+      product.share_to_pay,
+    ]
+    for (const c of candidates) {
+      const n = this.toNumber(c)
+      if (n > 0) return parseFloat(n.toFixed(2))
+    }
+    if (debt > 0) return parseFloat((debt * 0.15).toFixed(2))
+    return 0
+  }
+
   constructor() {
     this.showLoading = true
     const token = sessionStorage.getItem('accessToken')
@@ -122,12 +144,11 @@ export class ServiceOrderPage implements OnInit {
   }
 
   get formattedPayBefore(): string {
-    // Meritop puede enviar `credit_pay_before` aunque no exista deuda.
-    // Para UX, solo mostramos la fecha cuando hay deuda pendiente.
-    if (!this.hasDebt) return '--'
-    if (!this.customerProduct?.credit_pay_before) return '--'
-    const date = new Date(this.customerProduct.credit_pay_before)
-    if (Number.isNaN(date.getTime())) return this.customerProduct.credit_pay_before
+    if (this.summaryState !== 'ready' && this.summaryState !== 'fallback') return '--'
+    const raw = (this.customerProduct?.credit_pay_before ?? '').toString().trim()
+    if (!raw) return '--'
+    const date = new Date(raw)
+    if (Number.isNaN(date.getTime())) return raw
     return new Intl.DateTimeFormat('es-VE', {
       day: '2-digit',
       month: '2-digit',
@@ -539,8 +560,8 @@ export class ServiceOrderPage implements OnInit {
                 cardnumber: String(product.cardnumber ?? ''),
                 limit: Number(product.limit ?? 0),
                 available: Number(product.available ?? 0),
-                amount_used: Number(product.amount_used ?? 0),
-                amount_share_to_pay: Number(product.amount_share_to_pay ?? 0),
+                amount_used: this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0),
+                amount_share_to_pay: this.resolveMeritopMinPayment(product),
                 credit_pay_before: String(product.credit_pay_before ?? '')
               }
               this.customerProductFetchReason = ''

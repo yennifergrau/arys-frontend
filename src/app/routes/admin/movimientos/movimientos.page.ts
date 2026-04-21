@@ -68,6 +68,24 @@ export class MovimientosPage implements OnInit {
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
+  private resolveMeritopMinPayment(product: any): number {
+    if (!product || typeof product !== 'object') return 0;
+    const debt = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
+    const candidates = [
+      product.amount_share_to_pay,
+      product.amount_share_to_pay_converted,
+      product.min_pay,
+      product.minimum_payment,
+      product.share_to_pay,
+    ];
+    for (const c of candidates) {
+      const n = this.toNumber(c);
+      if (n > 0) return parseFloat(n.toFixed(2));
+    }
+    if (debt > 0) return parseFloat((debt * 0.15).toFixed(2));
+    return 0;
+  }
+
   private normalizeTransaction(raw: any): Transaction {
     const date = raw?.date ?? raw?.datetime ?? raw?.created_at ?? raw?.createdAt ?? '';
     const amount = this.toNumber(raw?.amount ?? raw?.monto ?? 0);
@@ -239,9 +257,7 @@ export class MovimientosPage implements OnInit {
 
               this.debtAmount = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
               this.limitAmount = this.toNumber(product.limit ?? 0);
-              
-              const minPay = this.toNumber(product.amount_share_to_pay);
-              this.minPayAmount = minPay > 0 ? minPay : (this.debtAmount * 0.15);
+              this.minPayAmount = this.resolveMeritopMinPayment(product);
               
               this.creditPayBefore = String(product.credit_pay_before ?? '');
               this.cardNumber = String(product.cardnumber ?? '');
@@ -294,12 +310,11 @@ export class MovimientosPage implements OnInit {
   }
 
   get formattedPayBefore(): string {
-    // Meritop puede enviar `credit_pay_before` aunque no exista deuda.
-    // Para UX, solo mostramos la fecha cuando hay deuda pendiente.
-    if (!this.hasDebt) return '--';
-    if (!this.creditPayBefore) return '--';
-    const date = new Date(this.creditPayBefore);
-    if (Number.isNaN(date.getTime())) return this.creditPayBefore;
+    if (!this.summaryReady) return '--';
+    const raw = (this.creditPayBefore ?? '').toString().trim();
+    if (!raw) return '--';
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return raw;
     return new Intl.DateTimeFormat('es-VE', {
       day: '2-digit',
       month: '2-digit',
