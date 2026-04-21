@@ -10,7 +10,7 @@ import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { ServiceOrder, CreditInfo, ApplyCreditResponse, CustomerProductSummary } from '../interface/service-order.interface';
 import { MeritopService } from '../services/meritop.service';
 import { DataArysService } from '../services/data-arys.service';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-service-order',
@@ -33,6 +33,7 @@ export class ServiceOrderPage implements OnInit {
   private serviceOrderService = inject(ServiceOrderService)
   private meritopService = inject(MeritopService)
   private dataArysService = inject(DataArysService)
+  private toastCtrl = inject(ToastController)
   id_user!: number
   private id_member: number = 0
   public pendingOrders: ServiceOrder[] = []
@@ -104,6 +105,16 @@ export class ServiceOrderPage implements OnInit {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
+  }
+
+  private async presentToast(message: string, color: 'success' | 'danger' | 'warning' = 'success') {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2500,
+      position: 'top',
+      color,
+    });
+    await toast.present();
   }
 
   get hasDebt(): boolean {
@@ -351,7 +362,6 @@ export class ServiceOrderPage implements OnInit {
       customerProduct: this.customerProduct,
     });
 
-
     // Usamos los datos de provider_payment_mobile que vienen del endpoint de la orden
     const providerPayment = order.order.provider_payment_mobile;
     if (!providerPayment) {
@@ -386,7 +396,7 @@ export class ServiceOrderPage implements OnInit {
       },
       cardnumber,
       amount: amountToApply,
-      concept: `Orden N° ${order.order.order_number} - ${order.order.service_name}`,
+      concept: `Pago Movil`,
       channel: 'APP',
       payment: {
         bankcode,
@@ -403,7 +413,16 @@ export class ServiceOrderPage implements OnInit {
     this.meritopService.addPurchased(payload).subscribe({
       next: (result) => {
         this.isApplyingCredit = false;
-        this.applyResult = result;
+        if (result?.status) {
+          const txId = result?.transaction_id ?? result?.transactionId ?? result?.id ?? null;
+          const msg = txId != null && String(txId).trim() !== ''
+            ? `Transacción ${txId} creada exitosamente`
+            : 'Transacción creada exitosamente';
+          this.presentToast(msg, 'success');
+          this.applyResult = { ...result, message: msg };
+        } else {
+          this.applyResult = result;
+        }
         // Actualiza el estado de la orden si es necesario
         if (order.order && result.status) {
           order.order.status = (result.order_status as any) || 'credit_applied';
@@ -413,6 +432,7 @@ export class ServiceOrderPage implements OnInit {
         this.isApplyingCredit = false;
         // El mensaje ya viene extraído correctamente desde el CatchError del servicio (MeritopService)
         this.applyResult = { status: false, message: err.message };
+        this.presentToast(err.message || 'Error al procesar el pago.', 'danger');
       }
     });
   }

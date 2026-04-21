@@ -62,7 +62,7 @@ export class DashboardPage implements OnInit {
 
   // Resumen Meritop para mostrar montos reales en Inicio
   private meritopSummaryState: 'idle' | 'loading' | 'ready' | 'fallback' = 'idle';
-  private meritopProduct: { available: number; limit: number; cardnumber: string } | null = null;
+  private meritopProduct: { available: number; limit: number; cardnumber: string; credit_pay_before?: string } | null = null;
 
   /** Filas listas para la vista (API `get_membership` → credit_limit / credit_available). */
   get membershipList(): Array<{
@@ -71,12 +71,14 @@ export class DashboardPage implements OnInit {
     available_amount: number;
     credit_limit: number;
     has_credit: boolean;
+    credit_pay_before?: string;
   }> {
     const d = this.data_membership;
     if (!d || !Array.isArray(d)) return [];
     return d.map((row: any) => {
       let limit = Number(row.credit_limit) || 0;
       let available = Number(row.credit_available) || 0;
+      let creditPayBefore: string | undefined = row?.credit_pay_before != null ? String(row.credit_pay_before) : undefined;
 
       // Si Meritop respondió bien, preferimos esos montos (evita mostrar 300 “fijo” de ARYS).
       if (
@@ -86,6 +88,9 @@ export class DashboardPage implements OnInit {
       ) {
         limit = this.meritopProduct.limit;
         available = this.meritopProduct.available;
+        if (this.meritopProduct.credit_pay_before) {
+          creditPayBefore = this.meritopProduct.credit_pay_before;
+        }
       }
 
       const vehicleLabel = [row.vehicle_brand, row.vehicle_model, row.vehicle_year]
@@ -100,8 +105,21 @@ export class DashboardPage implements OnInit {
         available_amount: available,
         credit_limit: limit,
         has_credit: !!lineId,
+        credit_pay_before: creditPayBefore,
       };
     });
+  }
+
+  public formatCreditPayBefore(value?: string): string {
+    const raw = (value ?? '').toString().trim();
+    if (!raw) return '—';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw;
+    return new Intl.DateTimeFormat('es-VE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(d);
   }
 
   private getIdentity(): { doctype: string; docid: number } | null {
@@ -162,7 +180,8 @@ export class DashboardPage implements OnInit {
             this.meritopProduct = {
               limit,
               available,
-              cardnumber: String(product.cardnumber ?? '')
+              cardnumber: String(product.cardnumber ?? ''),
+              credit_pay_before: product.credit_pay_before != null ? String(product.credit_pay_before) : undefined,
             };
             this.meritopSummaryState = 'ready';
           },
@@ -237,7 +256,8 @@ export class DashboardPage implements OnInit {
   // Función para navegar a la pantalla de pago
 public pagarCredito(membership: any) {
   this._emisionService.paymentData = membership; // Guardamos la info para la siguiente vista
-  this.router.navigate(['/admin/customer/payment/purchased']);
+  // Inicio: el botón Pagar debe llevar a la pantalla de pagar deuda.
+  this.router.navigate(['/admin/pagar-deuda']);
 }
 
   // private async loadCustomer() {

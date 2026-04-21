@@ -68,6 +68,43 @@ export class MovimientosPage implements OnInit {
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
+  private normalizeTransaction(raw: any): Transaction {
+    const date = raw?.date ?? raw?.datetime ?? raw?.created_at ?? raw?.createdAt ?? '';
+    const amount = this.toNumber(raw?.amount ?? raw?.monto ?? 0);
+
+    return {
+      transactionId: String(raw?.transactionId ?? raw?.id ?? raw?.reference ?? ''),
+      amount,
+      description: String(
+        raw?.description ??
+        raw?.concept ??
+        raw?.type_transaction ??
+        raw?.payment_type ??
+        raw?.payment_status ??
+        ''
+      ),
+      merchantName: String(raw?.merchantName ?? raw?.commerceName ?? raw?.commerce_name ?? raw?.commerce ?? ''),
+      date: String(date),
+      type: String(raw?.type ?? (amount < 0 ? 'purchase' : 'payment')),
+      status: String(raw?.status ?? raw?.payment_status ?? '')
+    };
+  }
+
+  private parseTxDate(tx: Transaction): Date | null {
+    const raw = (tx?.date ?? '').toString().trim();
+    if (!raw) return null;
+
+    const d = new Date(raw);
+    if (!Number.isNaN(d.getTime())) return d;
+
+    // Soporte extra por si viene sin separadores / formatos raros.
+    const normalized = raw.replace(' ', 'T');
+    const d2 = new Date(normalized);
+    if (!Number.isNaN(d2.getTime())) return d2;
+
+    return null;
+  }
+
   constructor() {
     const token = sessionStorage.getItem('accessToken');
     if (token) {
@@ -298,7 +335,8 @@ export class MovimientosPage implements OnInit {
         .pipe(finalize(() => this.showLoading = false))
         .subscribe({
           next: (res) => {
-            this.transactions = res?.transactions || [];
+            const source = res?.transactions || [];
+            this.transactions = source.map((t: any) => this.normalizeTransaction(t));
             this.groupTransactions();
           },
           error: () => {
@@ -317,7 +355,7 @@ export class MovimientosPage implements OnInit {
         .pipe(finalize(() => this.showLoading = false))
         .subscribe({
           next: (res) => {
-            const source = res?.transactions || [];
+            const source = (res?.transactions || []).map((t: any) => this.normalizeTransaction(t));
             this.transactions = this.filterTransactionsByDateRange(source);
             this.groupTransactions();
           },
@@ -338,7 +376,8 @@ export class MovimientosPage implements OnInit {
     if (Number.isNaN(from) || Number.isNaN(to) || from > to) return source;
 
     return source.filter(tx => {
-      const txTime = new Date(tx.date).getTime();
+      const d = this.parseTxDate(tx);
+      const txTime = d ? d.getTime() : NaN;
       if (Number.isNaN(txTime)) return false;
       return txTime >= from && txTime <= to;
     });
@@ -348,8 +387,8 @@ export class MovimientosPage implements OnInit {
     const groups: { [key: string]: Transaction[] } = {};
 
     this.transactions.forEach(tx => {
-      const date = new Date(tx.date);
-      const dateStr = this.formatDateHeader(date);
+      const date = this.parseTxDate(tx);
+      const dateStr = date ? this.formatDateHeader(date) : 'Sin fecha';
       if (!groups[dateStr]) groups[dateStr] = [];
       groups[dateStr].push(tx);
     });
@@ -357,7 +396,11 @@ export class MovimientosPage implements OnInit {
     this.groupedTransactions = Object.keys(groups).map(date => ({
       date,
       items: groups[date]
-    })).sort((a, b) => new Date(b.items[0].date).getTime() - new Date(a.items[0].date).getTime());
+    })).sort((a, b) => {
+      const da = this.parseTxDate(a.items[0])?.getTime() ?? 0;
+      const db = this.parseTxDate(b.items[0])?.getTime() ?? 0;
+      return db - da;
+    });
   }
 
   private formatDateHeader(date: Date): string {
