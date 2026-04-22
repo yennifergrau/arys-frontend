@@ -15,114 +15,147 @@
     <main class="page-content space-top p-b70">
       <div class="container p-tb10 px-2">
         <div class="profile-area">
-          <div class="ic-box style-3 m-b10">
-            <div class="main-profile">
-              <div class="media">
-                <div class="media-40 user-image">
-                  <img
-                    src="../../../../assets/imagenes/icon/favicon.png"
-                    alt="profile-image"
-                  />
+          <div class="ic-box style-3 m-b10 dashboard-shell">
+            <section class="dashboard-hero">
+              <div class="dashboard-hero__top">
+                <div class="dashboard-hero__identity">
+                  <div class="dashboard-hero__avatar">
+                    <img
+                      src="../../../../assets/imagenes/icon/favicon.png"
+                      alt="profile-image"
+                    />
+                  </div>
+                  <div class="dashboard-hero__text">
+                    <div class="dashboard-hero__name">¡Hola, {{ username }}!</div>
+                    <div class="dashboard-hero__hint">
+                      Gestiona tu membresía y solicita servicios en segundos.
+                    </div>
+                  </div>
                 </div>
-                <div class="contenedor-header">
-                  <h4 class="name mb-0">¡Hola, {{username}}!</h4>
-                  <!-- <small>Miembro de: <strong>{{membershipName}}</strong></small> -->
-                   <i class="fa-solid text-muted" 
-                      [ngClass]="isHidden ? 'fa-eye-slash' : 'fa-eye'" 
-                      (click)="toggleVisibility($event)" 
-                      style="cursor: pointer;">
-                   </i>
-                </div>
-                
+
+                <button
+                  type="button"
+                  class="dashboard-hero__toggle"
+                  (click)="toggleVisibility($event)"
+                  [attr.aria-label]="isHidden ? 'Mostrar montos' : 'Ocultar montos'"
+                >
+                  <i class="fa-solid" [ngClass]="isHidden ? 'fa-eye-slash' : 'fa-eye'"></i>
+                </button>
               </div>
-            </div>
-            <!-- <h6 class="title">{{ m.vehicle_brand + " " + m.vehicle_model + " " + m.vehicle_year }}</h6> -->
 
-            <div class="ic-list m-b20">
-              <h6 class="mb-3">Mis Membresías y Créditos</h6>
-              <ul class="ic-list-group p-0">
+              <div class="dashboard-actions">
+                <button
+                  type="button"
+                  class="btn btn-primary dashboard-actions__primary"
+                  (click)="solicitarServicio()"
+                >
+                  <i class="fa-solid fa-wrench me-2"></i>
+                  Solicitar un servicio
+                </button>
+              </div>
+            </section>
+
+            <section class="dashboard-section">
+              <div class="dashboard-section__header">
+                <div>
+                  <div class="dashboard-section__title">Mis Membresías y Créditos</div>
+                  <div class="dashboard-section__subtitle">Saldos, deuda y fecha de pago.</div>
+                </div>
+              </div>
+
+              <ul class="membership-grid">
                 @for(m of membershipList; track m.id_master) {
-                  <li class="list-group-items mb-3 border rounded-3 p-3 shadow-sm" style="list-style: none; background: #ffffff;">
-
-                    <div class="d-flex align-items-center">
-                      <div class="ic-icon me-3 mt-1">
-                        <i class="fa-solid title fs-5 text-dark">Bs</i>
+                  <li class="membership-card" [class.membership-card--no-credit]="!m.has_credit">
+                    <div class="membership-card__header">
+                      <div class="membership-card__icon">
+                        <i class="fa-solid fa-wallet"></i>
                       </div>
-                    
-                      <div class="flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                          <h6 class="title mb-0 fw-bold text-dark">{{ m.name }}</h6>
-                          <!-- @if(m.has_credit) {
-                            <i class="fa-solid text-muted" 
-                               [ngClass]="isHidden ? 'fa-eye-slash' : 'fa-eye'" 
-                               (click)="toggleVisibility($event)" 
-                               style="cursor: pointer;">
-                            </i>
-                          } -->
+                      <div class="membership-card__meta">
+                        <div class="membership-card__name">{{ m.name }}</div>
+                        <div class="membership-card__chip">
+                          @if(m.has_credit) {
+                            <span class="chip chip--success">Línea activa</span>
+                          } @else {
+                            <span class="chip chip--warning">Sin línea</span>
+                          }
                         </div>
-                      
-                        @if(m.has_credit) {
-                          <div class="row gx-2 mb-3">
-                            <div class="col-6">
-                              <small class="text-muted d-block lh-1">Disponible</small>
-                              <span class="fw-bold text-warning fs-5">
-                                {{ isHidden ? '********' : (m.available_amount | formatCurrency) }} <small>Bs</small>
-                              </span>
-                            </div>
-                            <div class="col-6 text-end text-sm-start">
-                              <small class="text-muted d-block lh-1">Límite total</small>
-                              <span class="fw-bold text-dark fs-5">
-                                {{ isHidden ? '********' : (m.credit_limit | formatCurrency) }} <small>Bs</small>
-                              </span>
-                            </div>
-                          </div>
-                        
-                          <div class="pt-2 border-top">
-                            <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
-                              @if(m.available_amount < m.credit_limit) {
-                                <div>
-                                  <small class="text-danger d-block fw-bold" style="font-size: 11px;">DEUDA ACTUAL</small>
-                                  <span class="text-danger fw-bold fs-5">
-                                    {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }} <small>Bs</small>
-                                  </span>
-                                </div>
-                              } @else {
-                                <span class="badge bg-light text-success border px-3 py-2 align-self-center">
-                                  <i class="fa-solid fa-check-circle me-1"></i> Al día
-                                </span>
-                              }
-                              <div class="contenedor-fecha-corte text-end ms-auto">
-                                <small class="text-muted d-block lh-1" style="font-size: 11px;">Pague antes de</small>
-                                <span class="fw-bold text-dark fs-6">
-                                  {{ formatCreditPayBefore(m.credit_pay_before) }}
-                                </span>
-                              </div>
-                            </div>
-                            @if(m.available_amount < m.credit_limit) {
-                              <div class="mt-3">
-                                <button type="button" class="btn btn-success w-100 py-2 fw-bold shadow-sm" (click)="pagarCredito(m)">
-                                  Pagar
-                                </button>
-                              </div>
-                            }
-                          </div>
-                        } @else {
-                          <div class="mt-2">
-                            <button class="btn btn-outline-primary btn-sm w-100" (click)="solicitarCredito(m)">
-                              <i class="fa-solid fa-plus me-1"></i> Solicitar Crédito
-                            </button>
-                          </div>
-                        }
                       </div>
                     </div>
+
+                    @if(m.has_credit) {
+                      <div class="membership-card__metrics">
+                        <div class="metric">
+                          <div class="metric__label">Disponible</div>
+                          <div class="metric__value metric__value--accent">
+                            {{ isHidden ? '********' : (m.available_amount | formatCurrency) }}
+                            <span class="metric__unit">Bs</span>
+                          </div>
+                        </div>
+                        <div class="metric metric--right">
+                          <div class="metric__label">Límite</div>
+                          <div class="metric__value">
+                            {{ isHidden ? '********' : (m.credit_limit | formatCurrency) }}
+                            <span class="metric__unit">Bs</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="membership-card__footer">
+                        <div class="membership-card__status">
+                          @if(m.available_amount < m.credit_limit) {
+                            <div class="debt">
+                              <div class="debt__label">Deuda actual</div>
+                              <div class="debt__value">
+                                {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }}
+                                <span class="metric__unit">Bs</span>
+                              </div>
+                            </div>
+                          } @else {
+                            <span class="chip chip--ok">
+                              <i class="fa-solid fa-check-circle me-1"></i> Al día
+                            </span>
+                          }
+                        </div>
+                        <div class="membership-card__due">
+                          <div class="metric__label">Pague antes de</div>
+                          <div class="membership-card__dueDate">
+                            {{ formatCreditPayBefore(m.credit_pay_before) }}
+                          </div>
+                        </div>
+                      </div>
+
+                      @if(m.available_amount < m.credit_limit) {
+                        <button
+                          type="button"
+                          class="btn btn-success w-100 membership-card__cta"
+                          (click)="pagarCredito(m)"
+                        >
+                          Pagar
+                        </button>
+                      }
+                    } @else {
+                      <div class="membership-card__empty">
+                        Abre tu línea de crédito para solicitar servicios con financiamiento.
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary w-100 membership-card__cta"
+                        (click)="solicitarCredito(m)"
+                      >
+                        <i class="fa-solid fa-plus me-2"></i>
+                        Abrir línea de crédito
+                      </button>
+                    }
                   </li>
                 } @empty {
-                  <li class="list-group-items mb-3 border rounded-3 p-3 shadow-sm text-muted" style="list-style: none; background: #ffffff;">
-                    No se encontraron membresías. Abre «Mis membresías» en la barra inferior o vuelve a iniciar sesión si acabas de registrar tu póliza.
+                  <li class="membership-card membership-card--empty">
+                    <div class="membership-card__empty">
+                      No se encontraron membresías. Abre «Mis membresías» en la barra inferior o vuelve a iniciar sesión si acabas de registrar tu póliza.
+                    </div>
                   </li>
                 }
               </ul>
-            </div>
+            </section>
             <!-- <div class="ic-list m-b20">
               <ul class="ic-list-group">
                 <li class="list-group-items">

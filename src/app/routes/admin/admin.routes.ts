@@ -23,6 +23,7 @@ import { CreateCustomerPage } from './create-customer/create-customer.page';
 import { ServiceOrderPage } from './service-order/service-order.page';
 import { MovimientosPage } from './movimientos/movimientos.page';
 import { PagarDeudaPage } from './pagar-deuda/pagar-deuda.page';
+import { ServiceRequestPage } from './service-request/service-request.page';
 import { creditLineGuard } from './guards/credit-line.guard';
 
 export const ADMIN_ROUTES: Routes = [
@@ -33,6 +34,10 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'dashboard/sarys',
     component: DashboardPage,
+  },
+  {
+    path: 'service-request',
+    component: ServiceRequestPage,
   },
   {
     path: 'auth-veirify-sarys',

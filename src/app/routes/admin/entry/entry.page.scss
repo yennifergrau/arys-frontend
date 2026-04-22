@@ -1,0 +1,24 @@
+.toast-container{
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  width: calc(100% - 24px);
+  max-width: 520px;
+}
+
+.toast-warning{
+  background: #f0ad4e;
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.15);
+}
+
+.toast-content{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+

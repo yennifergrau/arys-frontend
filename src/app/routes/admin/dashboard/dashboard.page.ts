@@ -28,6 +28,8 @@ import { EmissionService } from '../services/emission.service';
 import { NavController } from '@ionic/angular';
 import { EmissionDetailsService } from '../services/emission-details.service';
 import { DataArysService } from '../services/data-arys.service';
+import { ServiceOrderService } from '../services/service-order.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -42,7 +44,7 @@ import { DataArysService } from '../services/data-arys.service';
     SpinnerComponent,
     FormatCurrencyPipe,
   ],
-  providers: [MeritopService, JsonLoaderService, EmissionService, DataArysService],
+  providers: [MeritopService, JsonLoaderService, EmissionService, DataArysService, ServiceOrderService],
 })
 export class DashboardPage implements OnInit {
 
@@ -59,6 +61,7 @@ export class DashboardPage implements OnInit {
   public membershipName!: string | any;
   public username !: string
   public data_membership: any[] | null = null;
+  public hasPendingOrder: boolean = false;
 
   // Resumen Meritop para mostrar montos reales en Inicio
   private meritopSummaryState: 'idle' | 'loading' | 'ready' | 'fallback' = 'idle';
@@ -204,7 +207,8 @@ export class DashboardPage implements OnInit {
     private _emisionService: EmissionDetailsService,
     private router : Router,
     private renderer: Renderer2,
-    private navCtrl: NavController
+    private navCtrl: NavController,
+    private serviceOrders: ServiceOrderService
   ) {
     // try {
     //   this.showLoading = false;
@@ -251,6 +255,28 @@ export class DashboardPage implements OnInit {
   toggleVisibility(event: Event) {
     event.stopPropagation();
     this.isHidden = !this.isHidden;
+  }
+
+  public solicitarServicio() {
+    this.router.navigate(['/admin/service-request']);
+  }
+
+  private async checkPendingOrdersAndRedirect(): Promise<void> {
+    const stored = sessionStorage.getItem('id_member');
+    const membershipId = stored ? Number(stored) : NaN;
+    if (Number.isNaN(membershipId) || membershipId <= 0) return;
+
+    try {
+      const res: any = await firstValueFrom(this.serviceOrders.getPendingOrders(membershipId));
+      const list = res?.status && Array.isArray(res.data) ? res.data : [];
+      this.hasPendingOrder = list.length > 0;
+      if (this.hasPendingOrder) {
+        this.navCtrl.navigateRoot(['/admin/service-orders/pending']);
+      }
+    } catch {
+      // Si falla, no bloqueamos el inicio.
+      this.hasPendingOrder = false;
+    }
   }
 
   public pagarCredito(membership: any) {
@@ -356,6 +382,20 @@ export class DashboardPage implements OnInit {
         next: (result) => {
           this.data_membership =
             result?.status && Array.isArray(result.data) ? result.data : [];
+          const first = this.data_membership?.[0];
+          if (first?.id_master != null) {
+            sessionStorage.setItem('id_member', String(first.id_master));
+          }
+
+          // Si hay orden pendiente, debe verse al iniciar.
+          this.checkPendingOrdersAndRedirect();
+
+          if (first && (!first.credit_line_id || String(first.credit_line_id).trim() === '')) {
+            this.mostrarToast(
+              'Aún no tienes línea de crédito activa. Puedes abrirla para solicitar servicios con financiamiento.',
+              'toast-warning'
+            );
+          }
           this.showLoading = false;
         },
         error: (error) => {
@@ -378,6 +418,16 @@ export class DashboardPage implements OnInit {
           const first = this.data_membership?.[0];
           if (first?.id_master != null) {
             sessionStorage.setItem('id_member', String(first.id_master));
+          }
+
+          // Si hay orden pendiente, debe verse al iniciar.
+          this.checkPendingOrdersAndRedirect();
+
+          if (first && (!first.credit_line_id || String(first.credit_line_id).trim() === '')) {
+            this.mostrarToast(
+              'Aún no tienes línea de crédito activa. Puedes abrirla para solicitar servicios con financiamiento.',
+              'toast-warning'
+            );
           }
           this.showLoading = false;
         },

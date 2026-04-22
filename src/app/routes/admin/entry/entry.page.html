@@ -1,0 +1,93 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content"></div>
+        <div class="mid-content"><h5 class="title">Inicio</h5></div>
+      </div>
+    </header>
+
+    @if (showLoading) {
+      <app-spinner />
+    }
+
+    <main class="page-content space-top p-b70">
+      <div class="container p-tb10 px-2">
+        <div class="ic-box style-3 m-b10">
+          <div class="main-profile">
+            <div class="media">
+              <div class="media-40 user-image">
+                <img
+                  src="../../../../assets/imagenes/icon/favicon.png"
+                  alt="profile-image"
+                />
+              </div>
+              <div class="contenedor-header">
+                <h4 class="name mb-0">¡Hola, {{ username || 'Usuario' }}!</h4>
+                @if (membership?.name) {
+                  <small class="text-muted">
+                    Membresía: <strong>{{ membership?.name }}</strong>
+                  </small>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="m-t10">
+            <div class="card p-3 border rounded-3 shadow-sm bg-white">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <small class="text-muted d-block lh-1">Estado de crédito</small>
+                  @if (hasCreditLine) {
+                    <span class="badge bg-light text-success border px-3 py-2">
+                      Línea activa
+                    </span>
+                  } @else {
+                    <span class="badge bg-light text-warning border px-3 py-2">
+                      Sin línea activa
+                    </span>
+                  }
+                </div>
+                <div class="text-end">
+                  <small class="text-muted d-block lh-1">ID membresía</small>
+                  <span class="fw-bold">{{ membership?.id_master || '—' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="m-t15">
+              <button
+                type="button"
+                class="btn btn-primary w-100 py-2 fw-bold shadow-sm"
+                (click)="goRequestService()"
+              >
+                Solicitar un servicio
+              </button>
+            </div>
+
+            @if (!hasCreditLine) {
+              <div class="m-t10">
+                <button
+                  type="button"
+                  class="btn btn-outline-primary w-100 py-2 fw-bold shadow-sm"
+                  (click)="goOpenCreditLine()"
+                >
+                  Abrir línea de crédito
+                </button>
+              </div>
+            }
+
+            <div class="m-t10 text-muted" style="font-size: 12px;">
+              Si tienes una orden pendiente, el sistema te llevará automáticamente a tu orden de servicio.
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <app-tab />
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer-entry"></div>
+

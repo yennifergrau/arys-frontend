@@ -1,0 +1,210 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a (click)="goBack()" class="back-btn ic-icon icon-sm">
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content"><h5 class="title">Solicitar servicio</h5></div>
+      </div>
+    </header>
+
+    <main class="page-content space-top p-b70">
+      <div class="container p-2" id="sr-top">
+        <div class="ic-box style-2 rounded-md sr-shell">
+          <div class="title-head">
+            <h6 class="font-title mb-1">Solicitar un servicio</h6>
+            <p class="title font-15 mb-0">
+              Completa los datos y confirma. Se abrirá WhatsApp con el mensaje listo para enviar.
+            </p>
+          </div>
+
+          <div class="sr-progress">
+            <div class="sr-progress__top">
+              <span class="sr-progress__label">Paso {{ currentStep }}/3</span>
+              <button type="button" class="sr-link" (click)="clearAll()">Limpiar</button>
+            </div>
+            <div class="sr-progress__bar" role="progressbar" [attr.aria-valuenow]="progressPercent" aria-valuemin="0" aria-valuemax="100">
+              <div class="sr-progress__fill" [style.width.%]="progressPercent"></div>
+            </div>
+          </div>
+
+          <div class="card style-2 m-t10">
+            <div class="card-header">
+              <h6 class="card-title">Tu información</h6>
+            </div>
+            <div class="card-body">
+              <div class="sr-pills">
+                @if (username) {
+                  <span class="sr-pill"><i class="fa-solid fa-user me-2"></i>{{ username }}</span>
+                }
+                @if (docLabel) {
+                  <span class="sr-pill"><i class="fa-solid fa-id-card me-2"></i>{{ docLabel }}</span>
+                }
+                @if (membershipCertificate) {
+                  <span class="sr-pill"><i class="fa-solid fa-file-lines me-2"></i>Cert. {{ membershipCertificate }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          @if (selectedCount > 0) {
+            <div class="card style-2 m-t10">
+              <div class="card-header">
+                <h6 class="card-title">Seleccionados</h6>
+              </div>
+              <div class="card-body">
+                <div class="sr-chips">
+                  @for(s of selectedOptions; track s.id) {
+                    <button type="button" class="sr-chip" (click)="removeOption(s)" [attr.aria-label]="'Quitar ' + s.label">
+                      <span>{{ s.label }}</span>
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+
+          <div class="card style-2 m-t10" id="sr-step-1">
+            <div class="card-header">
+              <h6 class="card-title">1) ¿Qué servicio necesitas?</h6>
+            </div>
+            <div class="card-body">
+              <div class="sr-hint">
+                Seleccionados: <strong>{{ selectedCount }}</strong>
+              </div>
+
+              <div class="ic-list">
+                <ul class="ic-list-group p-0">
+                  @for(opt of options; track opt.id) {
+                    <li class="sr-row" [class.sr-row--active]="opt.selected">
+                      <button type="button" class="sr-row__btn" (click)="selectOption(opt)">
+                        <span class="sr-row__left">
+                          <span class="sr-row__icon">
+                            @switch (opt.id) {
+                              @case ('grua') { <i class="fa-solid fa-truck-pickup"></i> }
+                              @case ('bateria') { <i class="fa-solid fa-car-battery"></i> }
+                              @case ('caucho') { <i class="fa-solid fa-circle-dot"></i> }
+                              @case ('gasolina') { <i class="fa-solid fa-gas-pump"></i> }
+                              @case ('cerrajero') { <i class="fa-solid fa-key"></i> }
+                              @default { <i class="fa-solid fa-screwdriver-wrench"></i> }
+                            }
+                          </span>
+                          <span class="sr-row__content">
+                            <span class="sr-row__title">{{ opt.label }}</span>
+                            @if (opt.description) {
+                              <span class="sr-row__subtitle">{{ opt.description }}</span>
+                            }
+                          </span>
+                        </span>
+                        <span class="sr-row__right">
+                          @if (opt.selected) {
+                            <span class="sr-check sr-check--on">
+                              <i class="fa-solid fa-check"></i>
+                            </span>
+                          } @else {
+                            <span class="sr-check sr-check--off"></span>
+                          }
+                        </span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="card style-2 m-t10" id="sr-step-2">
+            <div class="card-header">
+              <h6 class="card-title">2) Datos para ubicarte</h6>
+            </div>
+            <div class="card-body">
+              <div class="sr-hint">
+                Mientras más detalles, más rápido se procesa tu orden.
+              </div>
+              <div class="m-b15 input-group input-lg input-rounded">
+                <input
+                  class="form-control"
+                  type="text"
+                  placeholder="Placa (opcional)"
+                  [(ngModel)]="plate"
+                />
+              </div>
+              <div class="m-b15 input-group input-lg input-rounded">
+                <input
+                  class="form-control"
+                  type="text"
+                  placeholder="Ubicación (ej: Av. X, Urb. Y, Ciudad)"
+                  [(ngModel)]="location"
+                />
+              </div>
+              <div class="m-b15 input-group input-lg input-rounded">
+                <input
+                  class="form-control"
+                  type="text"
+                  placeholder="Punto de referencia (opcional)"
+                  [(ngModel)]="reference"
+                />
+              </div>
+              <div class="m-b15 input-group input-lg input-rounded">
+                <textarea
+                  class="form-control"
+                  rows="3"
+                  placeholder="Notas adicionales (opcional)"
+                  [(ngModel)]="notes"
+                ></textarea>
+              </div>
+
+              <div class="sr-inline-actions">
+                <button type="button" class="btn btn-sm btn-secondary text-primary" (click)="togglePreview()">
+                  {{ showPreview ? 'Ocultar vista previa' : 'Ver vista previa' }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="scrollTo('sr-step-1')">
+                  Cambiar servicio
+                </button>
+              </div>
+            </div>
+          </div>
+
+          @if (showPreview) {
+            <div class="card style-2 m-t10" id="sr-step-3">
+              <div class="card-header">
+                <h6 class="card-title">3) Vista previa del mensaje</h6>
+              </div>
+              <div class="card-body">
+                <div class="sr-preview">
+                  <pre class="preview-body">{{ buildMessage() }}</pre>
+                </div>
+              </div>
+            </div>
+          }
+
+          <div class="sr-bottom-space"></div>
+        </div>
+      </div>
+    </main>
+
+    <app-tab />
+  </div>
+</div>
+
+<div class="sr-sticky-action">
+  <div class="sr-sticky-action__inner">
+    <button
+      type="button"
+      class="btn btn-lg btn-thin btn-secondary text-primary w-100 rounded-xl"
+      [disabled]="!canSend"
+      (click)="sendWhatsapp()"
+    >
+      <i class="fa-brands fa-whatsapp me-2"></i>
+      Abrir WhatsApp y enviar
+    </button>
+    <div class="sr-sticky-hint">
+      @if (!canSend) { Selecciona un servicio o agrega datos para continuar. }
+    </div>
+  </div>
+</div>
+

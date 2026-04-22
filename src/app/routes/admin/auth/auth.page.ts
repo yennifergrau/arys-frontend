@@ -149,13 +149,11 @@ export class AuthPage implements OnInit {
               const hasCreditLine =
                 !!first && !!first.credit_line_id;
 
-              if (hasCreditLine) {
-                this.navCtrl.navigateRoot(['/admin/service-orders/pending']);
-              } else {
-                this.navCtrl.navigateRoot(['/admin/Customer/create/sarys/meritop']);
-              }
+              // Nuevo flujo: el inicio es el Dashboard (ahí se decide
+              // si redirigir a orden pendiente o mostrar acciones).
+              this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
             } catch {
-              this.navCtrl.navigateRoot(['/admin/Customer/create/sarys/meritop']);
+              this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
             }
           } else if (
             response.estatus_gene1 === '' ||
