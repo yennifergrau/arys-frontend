@@ -1026,12 +1026,6 @@ export class DashboardPage implements OnInit {
           // Solo si NO hay órdenes pendientes, cargamos Meritop.
           this.loadMeritopSummary();
 
-          if (first && (!first.credit_line_id || String(first.credit_line_id).trim() === '')) {
-            this.mostrarToast(
-              'Aún no tienes línea de crédito activa. Puedes abrirla para solicitar servicios con financiamiento.',
-              'toast-warning'
-            );
-          }
           this.loadState.membership = true;
           this.finishIfReady();
         },
@@ -1074,12 +1068,6 @@ export class DashboardPage implements OnInit {
           // Solo si NO hay órdenes pendientes, cargamos Meritop.
           this.loadMeritopSummary();
 
-          if (first && (!first.credit_line_id || String(first.credit_line_id).trim() === '')) {
-            this.mostrarToast(
-              'Aún no tienes línea de crédito activa. Puedes abrirla para solicitar servicios con financiamiento.',
-              'toast-warning'
-            );
-          }
           this.loadState.membership = true;
           this.finishIfReady();
         },

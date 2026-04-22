@@ -16,6 +16,23 @@ const STORAGE_KEY = 'arys_access_state_v1';
 export class UserAccessService {
   private readonly dataArys = inject(DataArysService);
 
+  /**
+   * Marca la línea de crédito como activa en sesión para evitar bucles de guard
+   * cuando el backend tarda en reflejar `credit_line_id` después de activación.
+   */
+  markCreditLineActive(idMember?: number | null): void {
+    const current = this.state;
+    const resolvedId =
+      idMember != null && !Number.isNaN(Number(idMember)) ? Number(idMember) : current.idMember;
+    const next: UserAccessState = {
+      loaded: true,
+      hasMembership: current.hasMembership || (resolvedId != null && resolvedId > 0),
+      hasCreditLine: true,
+      idMember: resolvedId ?? null,
+    };
+    this.setState(next);
+  }
+
   get state(): UserAccessState {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) {

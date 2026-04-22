@@ -8,6 +8,7 @@ import { EmissionDetailsService } from '../services/emission-details.service';
 import { MeritopService } from '../services/meritop.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { DataArysService } from '../services/data-arys.service';
+import { UserAccessService } from '../services/user-access.service';
 import { jwtDecode } from 'jwt-decode';
 
 
@@ -37,6 +38,7 @@ export class CreateCustomerPage implements OnInit {
   private _emisionService = inject(EmissionDetailsService);
   private _meritopService = inject(MeritopService);
   private _arysService = inject( DataArysService )
+  private access = inject(UserAccessService);
   public showLoading : boolean = false;
   public emissionForm !: FormGroup
 
@@ -214,6 +216,8 @@ export class CreateCustomerPage implements OnInit {
             if (result.status === true) {
               this._emisionService.creditLine    = result.credit_line;
               this._emisionService.creditLineReason = null;
+              // Evita bucle del creditLineGuard mientras el backend persiste `credit_line_id`.
+              this.access.markCreditLineActive(idMember);
               this.mostrarToast('¡Línea de crédito activada con éxito!', 'toast-success');
               setTimeout(() => {
                 this.nav.navigate(['/admin/service-orders/pending']);

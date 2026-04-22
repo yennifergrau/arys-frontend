@@ -149,13 +149,6 @@ export class EntryPage implements OnInit {
       return;
     }
 
-    if (!this.hasCreditLine) {
-      this.mostrarToast(
-        'Aún no tienes línea de crédito activa. Puedes abrirla para solicitar servicios con financiamiento.',
-        'toast-warning'
-      );
-    }
-
     this.showLoading = false;
   }
 }
