@@ -54,14 +54,7 @@
       
     </a>
 
-    <a routerLink="/admin/edit/user/information/data" (click)="goTo('/admin/edit/user/information/data')" [ngClass]="{'item-active': isActive('/admin/edit/user/information/data')}" class="nav-link" title="Editar usuario">
-      <svg  aria-hidden="true" class="icon-svg"  xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="-1 1 24 24">
-        <path fill-rule="evenodd" d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4h-4Z" clip-rule="evenodd"/>
-      </svg>
-      
-    </a>
-
-    <a routerLink="/login" (click)="goTo('/login')" [ngClass]="{'item-active': isActive('/login')}" class="nav-link" title="Salir">
+    <a (click)="logout($event)" [ngClass]="{'item-active': false}" class="nav-link" title="Salir">
       <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="icon-svg"   fill="currentColor" viewBox="-1 1 24 24">
         <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm7.707-3.707a1 1 0 0 0-1.414 1.414L10.586 12l-2.293 2.293a1 1 0 1 0 1.414 1.414L12 13.414l2.293 2.293a1 1 0 0 0 1.414-1.414L13.414 12l2.293-2.293a1 1 0 0 0-1.414-1.414L12 10.586 9.707 8.293Z" clip-rule="evenodd"/>
       </svg>

@@ -18,7 +18,6 @@ import { ReportPage } from './report/report.page';
 import { MembresiasPage } from './membresias/membresias.page';
 import { SharedMembershipPage } from './shared-membership/shared-membership.page';
 import { RecipePurchasePage } from './recipe-purchase/recipe-purchase.page';
-import { EditUserPage } from './edit-user/edit-user.page';
 import { CreateCustomerPage } from './create-customer/create-customer.page';
 import { ServiceOrderPage } from './service-order/service-order.page';
 import { MovimientosPage } from './movimientos/movimientos.page';
@@ -118,10 +117,6 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'shared/membership/user/sarys',
     component: SharedMembershipPage,
-  },
-  {
-    path:'edit/user/information/data',
-    component:EditUserPage
   },
   {
     path:'movimientos',

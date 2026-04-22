@@ -56,6 +56,8 @@ export class ServiceOrderPage implements OnInit {
   // - fallback: Meritop falló; mostramos membresía ARYS si existe
   public summaryState: 'loading' | 'ready' | 'fallback' = 'loading'
   public summaryMessage: string = ''
+  private readonly MERITOP_CACHE_KEY = 'meritop_summary_v1'
+  private readonly PENDING_ORDERS_CACHE_KEY = 'pending_orders_v1'
 
   public activeOrderId: string | null = null
   public creditInfo: CreditInfo | null = null
@@ -120,6 +122,50 @@ export class ServiceOrderPage implements OnInit {
     } catch (e) {
       console.error('Token invalido en service-order', e)
     }
+  }
+
+  private hydrateFromCache(): { meritop: boolean; pending: boolean } {
+    let meritopOk = false
+    let pendingOk = false
+    try {
+      const raw = sessionStorage.getItem(this.MERITOP_CACHE_KEY)
+      if (raw) {
+        const cached = JSON.parse(raw)
+        const limit = this.toNumber(cached?.limit ?? 0)
+        const available = this.toNumber(cached?.available ?? 0)
+        if (limit > 0) {
+          this.customerProduct = {
+            id: '',
+            cardnumber: String(cached?.cardnumber ?? ''),
+            limit,
+            available,
+            amount_used: this.toNumber(cached?.amount_used ?? 0),
+            amount_share_to_pay: this.toNumber(cached?.amount_share_to_pay ?? 0),
+            credit_pay_before: String(cached?.credit_pay_before ?? ''),
+          }
+          this.summaryState = 'ready'
+          this.summaryMessage = ''
+          meritopOk = true
+        }
+      }
+    } catch {
+      // noop
+    }
+
+    try {
+      const raw = sessionStorage.getItem(this.PENDING_ORDERS_CACHE_KEY)
+      if (raw) {
+        const list = JSON.parse(raw)
+        this.pendingOrders = Array.isArray(list) ? list : []
+        pendingOk = true
+        // Si ya tenemos las órdenes, no dejamos el spinner global pegado.
+        this.showLoading = false
+      }
+    } catch {
+      // noop
+    }
+
+    return { meritop: meritopOk, pending: pendingOk }
   }
 
   formatBs(amount: number): string {
@@ -626,7 +672,8 @@ export class ServiceOrderPage implements OnInit {
     this.summaryState = 'loading'
     this.summaryMessage = ''
     this.loadMembershipSummary()
-    this.loadCustomerProduct()
-    this.getPendingOrders()
+    const cached = this.hydrateFromCache()
+    if (!cached.meritop) this.loadCustomerProduct()
+    if (!cached.pending) this.getPendingOrders()
   }
 }

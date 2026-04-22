@@ -223,7 +223,7 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 70px; /* por el tab */
+  bottom: 14px;
   z-index: 20;
   display: flex;
   justify-content: center;
@@ -237,6 +237,13 @@
   pointer-events: auto;
 }
 
+.sr-send{
+  border-radius: 14px;
+  padding: 14px 14px;
+  font-weight: 900;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+}
+
 .sr-sticky-hint{
   margin-top: 6px;
   font-size: 12px;
@@ -246,6 +253,6 @@
 }
 
 .sr-bottom-space{
-  height: 90px;
+  height: 120px;
 }
 

@@ -53,6 +53,8 @@ export class PagarDeudaPage implements OnInit {
     phonenumber: string;
   } | null = null;
 
+  private readonly MERITOP_CACHE_KEY = 'meritop_summary_v1';
+
   // Evita “parpadeo” de saldos (membresía -> Meritop)
   public summaryReady = false;
   private membershipLoaded = false;
@@ -147,7 +149,38 @@ export class PagarDeudaPage implements OnInit {
     this.membershipLoaded = false;
     this.productLoaded = false;
     this.loadMembershipSummary();
-    this.loadCustomerProduct();
+    // Si Inicio ya precargó Meritop, no lo volvemos a pedir aquí.
+    const usedCache = this.hydrateMeritopFromCache();
+    if (!usedCache) {
+      this.loadCustomerProduct();
+    } else {
+      this.productLoaded = true;
+      this.updateSummaryReady();
+    }
+  }
+
+  private hydrateMeritopFromCache(): boolean {
+    try {
+      const raw = sessionStorage.getItem(this.MERITOP_CACHE_KEY);
+      if (!raw) return false;
+      const cached = JSON.parse(raw);
+      const limit = this.toNumber(cached?.limit ?? 0);
+      const available = this.toNumber(cached?.available ?? 0);
+      if (limit <= 0) return false;
+      const debt = Math.max(0, limit - available);
+      this.limitAmount = limit;
+      this.debtAmount = debt;
+      this.minPayAmount = this.resolveMeritopMinPayment({ amount_used: debt });
+      this.creditPayBefore = cached?.credit_pay_before != null ? String(cached.credit_pay_before) : '';
+      this.cardNumber = cached?.cardnumber != null ? String(cached.cardnumber) : this.cardNumber;
+      // Guardado desde Inicio: permite mostrar Pago móvil sin refetch.
+      if (cached?.receiving_account) {
+        this.mapReceivingAccount({ receiving_account: cached.receiving_account });
+      }
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private loadMembershipSummary() {

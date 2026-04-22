@@ -2,11 +2,10 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
 import { NavController } from '@ionic/angular';
+import { ActivatedRoute } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
 import { environment } from 'src/environments/environment';
-import { TabComponent } from 'src/app/shared/components/tab/tab.component';
 import { DataArysService } from '../services/data-arys.service';
 
 type ServiceOption = {
@@ -21,15 +20,17 @@ type ServiceOption = {
   templateUrl: './service-request.page.html',
   styleUrls: ['./service-request.page.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule, RouterLink, TabComponent],
+  imports: [CommonModule, FormsModule, HttpClientModule],
 })
 export class ServiceRequestPage implements OnInit {
   private navCtrl = inject(NavController);
   private arys = inject(DataArysService);
+  private route = inject(ActivatedRoute);
 
   public username = '';
   public docLabel = '';
   public membershipCertificate = '';
+  public membershipPlanLabel: string = '';
   public location = '';
   public plate = '';
   public reference = '';
@@ -131,6 +132,7 @@ export class ServiceRequestPage implements OnInit {
       this.username ? `Cliente: ${this.username}` : '',
       this.docLabel ? `Documento: ${this.docLabel}` : '',
       this.membershipCertificate ? `Certificado: ${this.membershipCertificate}` : '',
+      this.membershipPlanLabel ? `Plan: ${this.membershipPlanLabel}` : '',
       this.plate.trim() ? `Placa: ${this.plate.trim().toUpperCase()}` : '',
       this.location.trim() ? `Ubicación: ${this.location.trim()}` : '',
       this.reference.trim() ? `Referencia: ${this.reference.trim()}` : '',
@@ -139,6 +141,23 @@ export class ServiceRequestPage implements OnInit {
       this.notes.trim() ? `\nNotas:\n${this.notes.trim()}` : '',
     ].filter(Boolean);
     return lines.join('\n');
+  }
+
+  private resolvePlanLabelFromCertificate(certificate: string): string {
+    const cert = String(certificate || '').trim();
+    const m = cert.match(/^(\d+)\s*-/);
+    if (!m) return '';
+    const productId = Number(m[1]);
+    if (!Number.isFinite(productId) || productId <= 0) return '';
+    const map: Record<number, string> = {
+      1: 'ARYSCLUB Moto Básico',
+      2: 'ARYSCLUB Vehículo Básico',
+      3: 'CLUB-ARYS GRUERO',
+      4: 'PLAN BÁSICO GRÚA',
+      5: 'PLAN GOLD',
+      6: 'PLAN DIAMANTE',
+    };
+    return map[productId] ?? `Plan ${productId}`;
   }
 
   public sendWhatsapp(): void {
@@ -160,6 +179,14 @@ export class ServiceRequestPage implements OnInit {
   }
 
   ngOnInit(): void {
+    const preselect = String(this.route.snapshot.queryParamMap.get('service') || '').trim().toLowerCase();
+    if (preselect) {
+      const opt = this.options.find(o => o.id === preselect);
+      if (opt) {
+        this.selectOption(opt);
+      }
+    }
+
     const storedMember = sessionStorage.getItem('id_member');
     const token = sessionStorage.getItem('accessToken');
     if (token) {
@@ -187,6 +214,7 @@ export class ServiceRequestPage implements OnInit {
       const cert = nc?.certificado != null ? String(nc.certificado).trim() : '';
       if (cert) {
         this.membershipCertificate = cert;
+        this.membershipPlanLabel = this.resolvePlanLabelFromCertificate(cert);
       }
     } catch {
       // noop
@@ -202,7 +230,10 @@ export class ServiceRequestPage implements OnInit {
       next: (res: any) => {
         const first = res?.status && Array.isArray(res.data) ? res.data[0] : null;
         const cert = first?.certificate != null ? String(first.certificate).trim() : '';
-        if (cert) this.membershipCertificate = cert;
+        if (cert) {
+          this.membershipCertificate = cert;
+          this.membershipPlanLabel = this.resolvePlanLabelFromCertificate(cert);
+        }
       },
       error: () => {
         // noop

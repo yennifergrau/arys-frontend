@@ -30,6 +30,17 @@ import { EmissionDetailsService } from '../services/emission-details.service';
 import { DataArysService } from '../services/data-arys.service';
 import { ServiceOrderService } from '../services/service-order.service';
 import { firstValueFrom } from 'rxjs';
+import { environment } from 'src/environments/environment';
+
+type ServiceOption = {
+  id: string;
+  label: string;
+  description?: string;
+  icon: string;
+  selected: boolean;
+};
+
+type QuickChip = { label: string; value: string };
 
 @Component({
   selector: 'app-dashboard',
@@ -62,15 +73,80 @@ export class DashboardPage implements OnInit {
   public username !: string
   public data_membership: any[] | null = null;
   public hasPendingOrder: boolean = false;
+  public pendingOrdersCount: number = 0;
+
+  // Control de carga: la UX debe esperar a que todo esté listo
+  private loadState = {
+    membership: false,
+    meritop: false,
+    pendingOrders: false,
+  };
+
+  // WhatsApp (armador rápido en Inicio)
+  public waExpanded: boolean = false;
+  public waLocation: string = '';
+  public waPlate: string = '';
+  public waReference: string = '';
+  public waNotes: string = '';
+  public waShowPreview: boolean = false;
+  public waShowExtra: boolean = false;
+
+  // WhatsApp (solicitud a proveedores / repuestos)
+  public buyExpanded: boolean = false;
+  public buyItem: string = '';
+  public buyLocation: string = '';
+  public buyPlate: string = '';
+  public buyNotes: string = '';
+  public buyShowPreview: boolean = false;
+  public buyShowExtra: boolean = false;
+
+  public buyCategories: Array<{ id: string; label: string; icon: string; selected: boolean }> = [
+    { id: 'repuesto', label: 'Repuesto', icon: 'fa-gears', selected: false },
+    { id: 'bateria', label: 'Batería', icon: 'fa-car-battery', selected: false },
+    { id: 'caucho', label: 'Caucho', icon: 'fa-circle-dot', selected: false },
+    { id: 'aceite', label: 'Aceite', icon: 'fa-oil-can', selected: false },
+    { id: 'frenos', label: 'Frenos', icon: 'fa-car', selected: false },
+    { id: 'otro', label: 'Otro', icon: 'fa-cart-shopping', selected: false },
+  ];
+
+  private defaultPlate: string = '';
+
+  public waOptions: ServiceOption[] = [
+    { id: 'grua', label: 'Grúa', description: 'Remolque / traslado', icon: 'fa-truck-pickup', selected: false },
+    { id: 'bateria', label: 'Batería', description: 'Paso de corriente / asistencia', icon: 'fa-car-battery', selected: false },
+    { id: 'caucho', label: 'Cambio de caucho', description: 'Asistencia por pinchazo', icon: 'fa-circle-dot', selected: false },
+    { id: 'gasolina', label: 'Suministro de gasolina', description: 'Asistencia por combustible', icon: 'fa-gas-pump', selected: false },
+    { id: 'cerrajero', label: 'Cerrajero', description: 'Apertura de vehículo', icon: 'fa-key', selected: false },
+    { id: 'mecanica', label: 'Mecánica ligera', description: 'Revisión básica', icon: 'fa-screwdriver-wrench', selected: false },
+  ];
 
   // Resumen Meritop para mostrar montos reales en Inicio
   private meritopSummaryState: 'idle' | 'loading' | 'ready' | 'fallback' = 'idle';
   private meritopProduct: { available: number; limit: number; cardnumber: string; credit_pay_before?: string } | null = null;
+  public get meritopReady(): boolean {
+    return this.meritopSummaryState === 'ready' && !!this.meritopProduct && this.meritopProduct.limit > 0;
+  }
+
+  public get meritopLoading(): boolean {
+    return this.meritopSummaryState === 'loading' || this.meritopSummaryState === 'idle';
+  }
+
+  public creditUsagePercent(m: { credit_limit: number; available_amount: number } | any): number {
+    if (!this.meritopReady) return 0;
+    const limit = Number(m?.credit_limit) || 0;
+    const available = Number(m?.available_amount) || 0;
+    if (limit <= 0) return 0;
+    const used = Math.max(0, Math.min(limit, limit - available));
+    return Math.max(0, Math.min(100, Math.round((used / limit) * 100)));
+  }
+  private readonly MERITOP_CACHE_KEY = 'meritop_summary_v1';
+  private readonly PENDING_ORDERS_CACHE_KEY = 'pending_orders_v1';
 
   /** Filas listas para la vista (API `get_membership` → credit_limit / credit_available). */
   get membershipList(): Array<{
     id_master: number;
     name: string;
+    plan_label?: string;
     available_amount: number;
     credit_limit: number;
     has_credit: boolean;
@@ -78,6 +154,7 @@ export class DashboardPage implements OnInit {
   }> {
     const d = this.data_membership;
     if (!d || !Array.isArray(d)) return [];
+    const contractProductId = this.getContractProductId();
     return d.map((row: any) => {
       let limit = Number(row.credit_limit) || 0;
       let available = Number(row.credit_available) || 0;
@@ -96,21 +173,433 @@ export class DashboardPage implements OnInit {
         }
       }
 
-      const vehicleLabel = [row.vehicle_brand, row.vehicle_model, row.vehicle_year]
-        .filter(Boolean)
-        .join(' ')
-        .trim();
-      const label = vehicleLabel || String(row.name || '').trim() || 'Membresía';
+      const certificate = String(row.certificate ?? row.certificado ?? '').trim();
+      // Requisito UX: en el dashboard mostramos únicamente el certificado.
+      const label = certificate || 'Certificado';
       const lineId = row.credit_line_id != null && String(row.credit_line_id).trim() !== '';
+
+      // Si el certificado viene en formato "<id_producto>-...", usamos el prefijo para mapear el plan.
+      const productIdFromCertificate = (() => {
+        const m = certificate.match(/^(\d+)\s*-/);
+        if (!m) return null;
+        const n = Number(m[1]);
+        return Number.isFinite(n) ? n : null;
+      })();
+      const productId =
+        contractProductId ??
+        productIdFromCertificate ??
+        (row.id_producto != null ? Number(row.id_producto) : null) ??
+        (row.product_id != null ? Number(row.product_id) : null) ??
+        (row.id_product != null ? Number(row.id_product) : null) ??
+        null;
+      const plan_label = this.resolvePlanLabel(productId);
+
       return {
         id_master: row.id_master,
         name: label,
+        plan_label,
         available_amount: available,
         credit_limit: limit,
         has_credit: !!lineId,
         credit_pay_before: creditPayBefore,
       };
     });
+  }
+
+  private getContractProductId(): number | null {
+    // Preferimos el contrato guardado en `userData` (localStorage) porque suele ser la fuente correcta.
+    // Fallback: sessionStorage.numberContract si existe.
+    const asNumber = (v: any): number | null => {
+      const n = typeof v === 'string' && v.trim() !== '' ? Number(v) : Number(v);
+      return Number.isFinite(n) && n > 0 ? n : null;
+    };
+
+    try {
+      const raw = localStorage.getItem('userData');
+      const ud = raw ? JSON.parse(raw) : null;
+      const contract =
+        ud?.contract ??
+        ud?.contrato ??
+        ud?.numberContract ??
+        ud?.numeroContrato ??
+        ud?.id_producto ??
+        ud?.product_id ??
+        ud?.id_product;
+      const n = asNumber(contract);
+      if (n) return n;
+    } catch {
+      // noop
+    }
+
+    try {
+      const n = asNumber(sessionStorage.getItem('numberContract'));
+      if (n) return n;
+    } catch {
+      // noop
+    }
+
+    return null;
+  }
+
+  private resolvePlanLabel(productId: number | null): string | undefined {
+    if (!productId || Number.isNaN(productId)) return undefined;
+    const map: Record<number, string> = {
+      1: 'ARYSCLUB Moto Básico',
+      2: 'ARYSCLUB Vehículo Básico',
+      3: 'CLUB-ARYS GRUERO',
+      4: 'PLAN BÁSICO GRÚA',
+      5: 'PLAN GOLD',
+      6: 'PLAN DIAMANTE',
+    };
+    return map[productId] ?? `Plan ${productId}`;
+  }
+
+  public get waSelectedCount(): number {
+    return this.waOptions.reduce((acc, o) => acc + (o.selected ? 1 : 0), 0);
+  }
+
+  public get waSelected(): ServiceOption | null {
+    return this.waOptions.find(o => o.selected) ?? null;
+  }
+
+  public get waLocationChips(): QuickChip[] {
+    return [
+      { label: 'Autopista', value: 'Autopista' },
+      { label: 'En casa', value: 'En casa' },
+      { label: 'Trabajo', value: 'Trabajo' },
+      { label: 'Centro comercial', value: 'Centro comercial' },
+      { label: 'Estacionamiento', value: 'Estacionamiento' },
+    ];
+  }
+
+  public get waNoteChips(): QuickChip[] {
+    const id = this.waSelected?.id ?? '';
+    const common: QuickChip[] = [
+      { label: 'Estoy seguro', value: 'Estoy en un lugar seguro' },
+      { label: 'Estoy en vía', value: 'Estoy en vía' },
+      { label: 'Urgente', value: 'Necesito ayuda lo antes posible' },
+    ];
+    const byService: Record<string, QuickChip[]> = {
+      grua: [
+        { label: 'No enciende', value: 'El vehículo no enciende' },
+        { label: 'Accidente', value: 'Tuve un incidente/accidente' },
+        { label: 'Traslado', value: 'Necesito traslado del vehículo' },
+      ],
+      bateria: [
+        { label: 'No enciende', value: 'No enciende' },
+        { label: 'Arranque lento', value: 'El arranque está lento' },
+        { label: 'Luces débiles', value: 'Las luces están débiles' },
+      ],
+      caucho: [
+        { label: 'Pinchazo', value: 'Tengo un pinchazo' },
+        { label: 'Sin repuesto', value: 'No tengo caucho de repuesto' },
+        { label: 'Rueda trancada', value: 'La rueda está trancada' },
+      ],
+      gasolina: [
+        { label: 'Sin gasolina', value: 'Me quedé sin gasolina' },
+        { label: 'No sé combustible', value: 'No estoy seguro del tipo de combustible' },
+      ],
+      cerrajero: [
+        { label: 'Llaves adentro', value: 'Dejé las llaves dentro del vehículo' },
+        { label: 'Perdí llaves', value: 'Perdí las llaves' },
+        { label: 'Cerradura bloqueada', value: 'La cerradura está bloqueada' },
+      ],
+      mecanica: [
+        { label: 'Se apagó', value: 'Se apagó y no enciende' },
+        { label: 'Temperatura', value: 'La temperatura está alta' },
+        { label: 'Ruido', value: 'Escucho un ruido extraño' },
+      ],
+    };
+    return [...(byService[id] ?? []), ...common];
+  }
+
+  public addWaLocationPreset(text: string): void {
+    const t = String(text || '').trim();
+    if (!t) return;
+    if (!this.waLocation.trim()) {
+      this.waLocation = t;
+      return;
+    }
+    if (this.waLocation.toLowerCase().includes(t.toLowerCase())) return;
+    this.waLocation = `${this.waLocation.trim()} · ${t}`;
+  }
+
+  public addWaNotePreset(text: string): void {
+    const t = String(text || '').trim();
+    if (!t) return;
+    if (!this.waNotes.trim()) {
+      this.waNotes = t;
+      return;
+    }
+    if (this.waNotes.toLowerCase().includes(t.toLowerCase())) return;
+    this.waNotes = `${this.waNotes.trim()}\n- ${t}`;
+  }
+
+  public useMyLocation(): void {
+    if (!('geolocation' in navigator)) {
+      this.mostrarToast('Tu navegador no soporta ubicación.', 'toast-error');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const maps = `https://maps.google.com/?q=${lat},${lng}`;
+        this.waLocation = `Ubicación GPS: ${maps}`;
+        this.mostrarToast('Ubicación agregada.', 'toast-success');
+      },
+      () => {
+        this.mostrarToast('No se pudo obtener tu ubicación. Activa permisos GPS.', 'toast-error');
+      },
+      { enableHighAccuracy: true, timeout: 9000 }
+    );
+  }
+
+  // -------- Proveedores / repuestos (WhatsApp) --------
+  public get buySelectedCategory(): string {
+    return this.buyCategories.find(c => c.selected)?.label ?? '';
+  }
+
+  public selectBuyCategory(cat: { id: string; label: string; icon: string; selected: boolean }): void {
+    const willSelect = !cat.selected;
+    this.buyCategories.forEach(c => (c.selected = false));
+    cat.selected = willSelect;
+    if (!this.buyExpanded) this.buyExpanded = true;
+    setTimeout(() => this.scrollTo('buy-details'), 50);
+  }
+
+  public get buyCanSend(): boolean {
+    return (
+      this.buyCategories.some(c => c.selected) ||
+      this.buyItem.trim().length > 0 ||
+      this.buyLocation.trim().length > 0 ||
+      this.buyPlate.trim().length > 0 ||
+      this.buyNotes.trim().length > 0
+    );
+  }
+
+  public clearBuy(): void {
+    this.buyCategories.forEach(c => (c.selected = false));
+    this.buyItem = '';
+    this.buyLocation = '';
+    this.buyPlate = this.defaultPlate;
+    this.buyNotes = '';
+    this.buyShowPreview = false;
+    this.buyShowExtra = false;
+  }
+
+  public closeBuy(): void {
+    this.buyExpanded = false;
+    this.buyShowPreview = false;
+    this.buyShowExtra = false;
+    setTimeout(() => this.scrollTo('buy-top'), 50);
+  }
+
+  public toggleBuyPreview(): void {
+    this.buyShowPreview = !this.buyShowPreview;
+    if (this.buyShowPreview) {
+      setTimeout(() => this.scrollTo('buy-preview'), 50);
+    }
+  }
+
+  public toggleBuyExtra(): void {
+    this.buyShowExtra = !this.buyShowExtra;
+    if (this.buyShowExtra) {
+      setTimeout(() => this.scrollTo('buy-extra'), 50);
+    }
+  }
+
+  public addBuyLocationPreset(text: string): void {
+    const t = String(text || '').trim();
+    if (!t) return;
+    if (!this.buyLocation.trim()) {
+      this.buyLocation = t;
+      return;
+    }
+    if (this.buyLocation.toLowerCase().includes(t.toLowerCase())) return;
+    this.buyLocation = `${this.buyLocation.trim()} · ${t}`;
+  }
+
+  public addBuyNotePreset(text: string): void {
+    const t = String(text || '').trim();
+    if (!t) return;
+    if (!this.buyNotes.trim()) {
+      this.buyNotes = t;
+      return;
+    }
+    if (this.buyNotes.toLowerCase().includes(t.toLowerCase())) return;
+    this.buyNotes = `${this.buyNotes.trim()}\n- ${t}`;
+  }
+
+  public useMyLocationForBuy(): void {
+    if (!('geolocation' in navigator)) {
+      this.mostrarToast('Tu navegador no soporta ubicación.', 'toast-error');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const maps = `https://maps.google.com/?q=${lat},${lng}`;
+        this.buyLocation = `Ubicación GPS: ${maps}`;
+        this.mostrarToast('Ubicación agregada.', 'toast-success');
+      },
+      () => {
+        this.mostrarToast('No se pudo obtener tu ubicación. Activa permisos GPS.', 'toast-error');
+      },
+      { enableHighAccuracy: true, timeout: 9000 }
+    );
+  }
+
+  public buildBuyMessage(): string {
+    const membership = this.membershipList?.[0];
+    const cert =
+      this.data_membership?.[0]?.certificate != null
+        ? String(this.data_membership[0].certificate).trim()
+        : this.data_membership?.[0]?.certificado != null
+          ? String(this.data_membership[0].certificado).trim()
+          : '';
+    const plan = membership?.plan_label ?? '';
+    const cat = this.buySelectedCategory;
+
+    const lines = [
+      'Hola, buen día. Quisiera solicitar una compra con proveedor (repuesto).',
+      '',
+      this.username ? `Cliente: ${this.username}` : '',
+      cert ? `Certificado: ${cert}` : '',
+      plan ? `Plan: ${plan}` : '',
+      '',
+      cat ? `Categoría: ${cat}` : '',
+      this.buyItem.trim() ? `Pieza/Repuesto: ${this.buyItem.trim()}` : '',
+      this.buyPlate.trim() ? `Placa: ${this.buyPlate.trim().toUpperCase()}` : '',
+      this.buyLocation.trim() ? `Ubicación: ${this.buyLocation.trim()}` : '',
+      this.buyNotes.trim() ? `\nNotas:\n${this.buyNotes.trim()}` : '',
+    ].filter(Boolean);
+
+    return lines.join('\n');
+  }
+
+  public sendBuyWhatsapp(): void {
+    const msg = this.buildBuyMessage();
+    const url = this.buildWhatsappUrl(msg);
+    if (!url) {
+      this.mostrarToast('No se pudo abrir WhatsApp: número inválido.', 'toast-error');
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  public get waCanSend(): boolean {
+    return (
+      this.waSelectedCount > 0 ||
+      this.waLocation.trim().length > 0 ||
+      this.waPlate.trim().length > 0 ||
+      this.waReference.trim().length > 0 ||
+      this.waNotes.trim().length > 0
+    );
+  }
+
+  public toggleWaExpanded(): void {
+    this.waExpanded = !this.waExpanded;
+    if (this.waExpanded) {
+      setTimeout(() => this.scrollTo('wa-compose'), 50);
+    }
+  }
+
+  public closeWa(): void {
+    this.waExpanded = false;
+    this.waShowPreview = false;
+    this.waShowExtra = false;
+    setTimeout(() => this.scrollTo('wa-top'), 50);
+  }
+
+  public selectWaOption(opt: ServiceOption): void {
+    const before = this.waSelectedCount;
+    const willSelect = !opt.selected;
+    this.waOptions.forEach(o => (o.selected = false));
+    opt.selected = willSelect;
+    const after = this.waSelectedCount;
+
+    if (!this.waExpanded) this.waExpanded = true;
+    if (before === 0 && after > 0) {
+      setTimeout(() => this.scrollTo('wa-details'), 50);
+    }
+  }
+
+  public clearWa(): void {
+    this.waOptions.forEach(o => (o.selected = false));
+    this.waLocation = '';
+    this.waPlate = this.defaultPlate;
+    this.waReference = '';
+    this.waNotes = '';
+    this.waShowPreview = false;
+    this.waShowExtra = false;
+    setTimeout(() => this.scrollTo('wa-top'), 50);
+  }
+
+  public toggleWaExtra(): void {
+    this.waShowExtra = !this.waShowExtra;
+    if (this.waShowExtra) {
+      setTimeout(() => this.scrollTo('wa-extra'), 50);
+    }
+  }
+
+  public toggleWaPreview(): void {
+    this.waShowPreview = !this.waShowPreview;
+    if (this.waShowPreview) {
+      setTimeout(() => this.scrollTo('wa-preview'), 50);
+    }
+  }
+
+
+  private buildWhatsappUrl(text: string): string | null {
+    const raw = environment.contact?.whatsappPhone ?? '';
+    const phone = raw.replace(/\D/g, '');
+    if (phone.length < 10) return null;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  }
+
+  public buildWaMessage(): string {
+    const chosen = this.waSelected?.label ?? '';
+    const membership = this.membershipList?.[0];
+    const cert =
+      this.data_membership?.[0]?.certificate != null
+        ? String(this.data_membership[0].certificate).trim()
+        : this.data_membership?.[0]?.certificado != null
+          ? String(this.data_membership[0].certificado).trim()
+          : '';
+    const plan = membership?.plan_label ?? '';
+
+    const lines = [
+      'Hola, buen día. Quiero solicitar un servicio.',
+      '',
+      this.username ? `Cliente: ${this.username}` : '',
+      cert ? `Certificado: ${cert}` : '',
+      plan ? `Plan: ${plan}` : '',
+      this.waPlate.trim() ? `Placa: ${this.waPlate.trim().toUpperCase()}` : '',
+      this.waLocation.trim() ? `Ubicación: ${this.waLocation.trim()}` : '',
+      this.waReference.trim() ? `Referencia: ${this.waReference.trim()}` : '',
+      '',
+      chosen ? `Servicio: ${chosen}` : '',
+      this.waNotes.trim() ? `\nNotas:\n${this.waNotes.trim()}` : '',
+    ].filter(Boolean);
+    return lines.join('\n');
+  }
+
+  public sendWhatsappFromDashboard(): void {
+    const msg = this.buildWaMessage();
+    const url = this.buildWhatsappUrl(msg);
+    if (!url) {
+      this.mostrarToast('No se pudo abrir WhatsApp: número inválido.', 'toast-error');
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  public scrollTo(id: string): void {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   public formatCreditPayBefore(value?: string): string {
@@ -151,11 +640,48 @@ export class DashboardPage implements OnInit {
     return null;
   }
 
+  private finishIfReady(): void {
+    const ready = this.loadState.membership && this.loadState.meritop && this.loadState.pendingOrders;
+    if (ready) {
+      this.showLoading = false;
+    }
+  }
+
   private loadMeritopSummary() {
+    // Evitar llamadas repetidas: Inicio debe cargar una vez y luego servir desde caché.
+    if (this.loadState.meritop) return;
+
+    // Pre-carga: usar caché si existe para que se vea desde el inicio.
+    try {
+      const raw = sessionStorage.getItem(this.MERITOP_CACHE_KEY);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        const limit = Number(cached?.limit ?? 0) || 0;
+        const available = Number(cached?.available ?? 0) || 0;
+        if (limit > 0) {
+          this.meritopProduct = {
+            limit,
+            available,
+            cardnumber: String(cached?.cardnumber ?? ''),
+            credit_pay_before: cached?.credit_pay_before != null ? String(cached.credit_pay_before) : undefined,
+          };
+          this.meritopSummaryState = 'ready';
+          // Si hay caché válido, consideramos meritop “listo” para la UX.
+          this.loadState.meritop = true;
+          this.finishIfReady();
+          return;
+        }
+      }
+    } catch {
+      // noop
+    }
+
     const identity = this.getIdentity();
     if (!identity) {
       this.meritopSummaryState = 'fallback';
       this.meritopProduct = null;
+      this.loadState.meritop = true;
+      this.finishIfReady();
       return;
     }
 
@@ -176,27 +702,53 @@ export class DashboardPage implements OnInit {
             if (!product) {
               this.meritopSummaryState = 'fallback';
               this.meritopProduct = null;
+              this.loadState.meritop = true;
+              this.finishIfReady();
               return;
             }
             const limit = Number(product.limit ?? 0) || 0;
             const available = Number(product.available ?? 0) || 0;
-            this.meritopProduct = {
+            const summary = {
               limit,
               available,
               cardnumber: String(product.cardnumber ?? ''),
               credit_pay_before: product.credit_pay_before != null ? String(product.credit_pay_before) : undefined,
+              id: product.id != null ? String(product.id) : '',
+              receiving_account: product?.receiving_account ?? null,
+              amount_share_to_pay:
+                product.amount_share_to_pay != null
+                  ? Number(product.amount_share_to_pay)
+                  : product.amount_share_to_pay_converted != null
+                    ? Number(product.amount_share_to_pay_converted)
+                    : undefined,
             };
+            this.meritopProduct = summary;
             this.meritopSummaryState = 'ready';
+            // Persistimos para que quede cargado al entrar en Inicio.
+            try {
+              sessionStorage.setItem(
+                this.MERITOP_CACHE_KEY,
+                JSON.stringify(summary)
+              );
+            } catch {
+              // noop
+            }
+            this.loadState.meritop = true;
+            this.finishIfReady();
           },
           error: () => {
             this.meritopSummaryState = 'fallback';
             this.meritopProduct = null;
+            this.loadState.meritop = true;
+            this.finishIfReady();
           }
         });
       },
       error: () => {
         this.meritopSummaryState = 'fallback';
         this.meritopProduct = null;
+        this.loadState.meritop = true;
+        this.finishIfReady();
       }
     });
   }
@@ -261,22 +813,69 @@ export class DashboardPage implements OnInit {
     this.router.navigate(['/admin/service-request']);
   }
 
-  private async checkPendingOrdersAndRedirect(): Promise<void> {
+  public solicitarServicioRapido(serviceId: string) {
+    this.router.navigate(['/admin/service-request'], {
+      queryParams: { service: serviceId }
+    });
+  }
+
+  public verMovimientos() {
+    this.router.navigate(['/admin/movimientos']);
+  }
+
+  public verOrdenesServicio() {
+    this.router.navigate(['/admin/service-orders/pending']);
+  }
+
+  /** No redirige: solo carga estado para mostrar CTA en el dashboard. */
+  private async checkPendingOrders(): Promise<void> {
     const stored = sessionStorage.getItem('id_member');
     const membershipId = stored ? Number(stored) : NaN;
-    if (Number.isNaN(membershipId) || membershipId <= 0) return;
+    if (Number.isNaN(membershipId) || membershipId <= 0) {
+      this.loadState.pendingOrders = true;
+      this.finishIfReady();
+      return;
+    }
 
     try {
       const res: any = await firstValueFrom(this.serviceOrders.getPendingOrders(membershipId));
       const list = res?.status && Array.isArray(res.data) ? res.data : [];
-      this.hasPendingOrder = list.length > 0;
-      if (this.hasPendingOrder) {
-        this.navCtrl.navigateRoot(['/admin/service-orders/pending']);
+      this.pendingOrdersCount = list.length;
+      this.hasPendingOrder = this.pendingOrdersCount > 0;
+      // Persistimos lista para que esté “precargada” al navegar.
+      try {
+        sessionStorage.setItem(this.PENDING_ORDERS_CACHE_KEY, JSON.stringify(list));
+      } catch {
+        // noop
       }
+      this.loadState.pendingOrders = true;
+      this.finishIfReady();
     } catch {
       // Si falla, no bloqueamos el inicio.
       this.hasPendingOrder = false;
+      this.pendingOrdersCount = 0;
+      this.loadState.pendingOrders = true;
+      this.finishIfReady();
     }
+  }
+
+  get hasAnyCreditLine(): boolean {
+    return this.membershipList.some(m => m.has_credit);
+  }
+
+  get hasAnyDebt(): boolean {
+    return this.membershipList.some(m => m.has_credit && Number(m.credit_limit) > Number(m.available_amount));
+  }
+
+  public pagarDeudaRapido(): void {
+    const debtMembership = this.membershipList.find(
+      m => m.has_credit && Number(m.credit_limit) > Number(m.available_amount)
+    );
+    if (!debtMembership) {
+      this.mostrarToast('No tienes deuda pendiente para abonar.', 'toast-error');
+      return;
+    }
+    this.pagarCredito(debtMembership);
   }
 
   public pagarCredito(membership: any) {
@@ -352,14 +951,41 @@ export class DashboardPage implements OnInit {
 
   ngOnInit() {
     this.showLoading = true;
+    this.loadState = { membership: false, meritop: false, pendingOrders: false };
     const dataUser : any = sessionStorage.getItem('accessToken')
     const decodeData: any = jwtDecode(dataUser)
     console.log(decodeData)
     this.username = decodeData?.name + ' ' + decodeData?.sub_ape
     this.UserVerifyMembership(decodeData.rif)
 
-    // Cargamos Meritop en paralelo para mostrar montos reales en Inicio.
-    this.loadMeritopSummary()
+    // Placa por defecto: preferimos `userData` (localStorage). Fallback: token.
+    try {
+      const raw = localStorage.getItem('userData');
+      const ud = raw ? JSON.parse(raw) : null;
+      const plateFromUserData = String(ud?.plate || ud?.placa || ud?.vehicle_plate || '').trim();
+      const plateFromToken = String(decodeData?.plate || decodeData?.placa || '').trim();
+      const plate = plateFromUserData || plateFromToken;
+      if (plate) {
+        this.defaultPlate = plate;
+        this.waPlate = plate;
+        this.buyPlate = plate;
+      }
+    } catch {
+      // noop
+    }
+
+    // Precarga (si existe) de órdenes pendientes para que el badge/estado esté listo desde el inicio.
+    try {
+      const raw = sessionStorage.getItem(this.PENDING_ORDERS_CACHE_KEY);
+      if (raw) {
+        const list = JSON.parse(raw);
+        const arr = Array.isArray(list) ? list : [];
+        this.pendingOrdersCount = arr.length;
+        this.hasPendingOrder = this.pendingOrdersCount > 0;
+      }
+    } catch {
+      // noop
+    }
 
     const stored = sessionStorage.getItem('id_member')
     const idMember = stored
@@ -372,14 +998,17 @@ export class DashboardPage implements OnInit {
     } else if (decodeData?.email) {
       this.getMembershipByEmail(String(decodeData.email))
     } else {
-      this.showLoading = false
+      this.loadState.membership = true;
+      // Si no hay id/email, no hay órdenes que cargar.
+      this.loadState.pendingOrders = true;
+      this.finishIfReady();
     }
   }
 
   private getMembershipById(idMember: number){
     try{
       this.arys_service.get_membership(idMember).subscribe({
-        next: (result) => {
+        next: async (result) => {
           this.data_membership =
             result?.status && Array.isArray(result.data) ? result.data : [];
           const first = this.data_membership?.[0];
@@ -388,7 +1017,14 @@ export class DashboardPage implements OnInit {
           }
 
           // Si hay orden pendiente, debe verse al iniciar.
-          this.checkPendingOrdersAndRedirect();
+          await this.checkPendingOrders();
+          if (this.hasPendingOrder) {
+            this.router.navigate(['/admin/service-orders/pending']);
+            return;
+          }
+
+          // Solo si NO hay órdenes pendientes, cargamos Meritop.
+          this.loadMeritopSummary();
 
           if (first && (!first.credit_line_id || String(first.credit_line_id).trim() === '')) {
             this.mostrarToast(
@@ -396,11 +1032,19 @@ export class DashboardPage implements OnInit {
               'toast-warning'
             );
           }
-          this.showLoading = false;
+          this.loadState.membership = true;
+          this.finishIfReady();
         },
-        error: (error) => {
+        error: async (error) => {
           this.data_membership = [];
-          this.showLoading = false;
+          await this.checkPendingOrders();
+          if (this.hasPendingOrder) {
+            this.router.navigate(['/admin/service-orders/pending']);
+            return;
+          }
+          this.loadMeritopSummary();
+          this.loadState.membership = true;
+          this.finishIfReady();
           console.log(error);
         }
       })
@@ -412,7 +1056,7 @@ export class DashboardPage implements OnInit {
   private getMembershipByEmail(email: string) {
     try {
       this.arys_service.get_membership_by_email(email).subscribe({
-        next: (result) => {
+        next: async (result) => {
           this.data_membership =
             result?.status && Array.isArray(result.data) ? result.data : [];
           const first = this.data_membership?.[0];
@@ -421,7 +1065,14 @@ export class DashboardPage implements OnInit {
           }
 
           // Si hay orden pendiente, debe verse al iniciar.
-          this.checkPendingOrdersAndRedirect();
+          await this.checkPendingOrders();
+          if (this.hasPendingOrder) {
+            this.router.navigate(['/admin/service-orders/pending']);
+            return;
+          }
+
+          // Solo si NO hay órdenes pendientes, cargamos Meritop.
+          this.loadMeritopSummary();
 
           if (first && (!first.credit_line_id || String(first.credit_line_id).trim() === '')) {
             this.mostrarToast(
@@ -429,16 +1080,28 @@ export class DashboardPage implements OnInit {
               'toast-warning'
             );
           }
-          this.showLoading = false;
+          this.loadState.membership = true;
+          this.finishIfReady();
         },
-        error: () => {
+        error: async () => {
           this.data_membership = [];
-          this.showLoading = false;
+          await this.checkPendingOrders();
+          if (this.hasPendingOrder) {
+            this.router.navigate(['/admin/service-orders/pending']);
+            return;
+          }
+          this.loadMeritopSummary();
+          this.loadState.membership = true;
+          this.finishIfReady();
         }
       })
     } catch (e) {
       console.error(e)
-      this.showLoading = false
+      this.data_membership = [];
+      this.loadState.membership = true;
+      this.loadState.pendingOrders = true;
+      this.loadMeritopSummary();
+      this.finishIfReady();
     }
   }
 

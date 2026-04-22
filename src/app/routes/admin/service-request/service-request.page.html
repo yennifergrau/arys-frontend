@@ -17,7 +17,7 @@
           <div class="title-head">
             <h6 class="font-title mb-1">Solicitar un servicio</h6>
             <p class="title font-15 mb-0">
-              Completa los datos y confirma. Se abrirá WhatsApp con el mensaje listo para enviar.
+              Elige el servicio, agrega tu ubicación y presiona “Abrir WhatsApp y enviar”.
             </p>
           </div>
 
@@ -70,11 +70,11 @@
 
           <div class="card style-2 m-t10" id="sr-step-1">
             <div class="card-header">
-              <h6 class="card-title">1) ¿Qué servicio necesitas?</h6>
+              <h6 class="card-title">1) Elige un servicio</h6>
             </div>
             <div class="card-body">
               <div class="sr-hint">
-                Seleccionados: <strong>{{ selectedCount }}</strong>
+                Selecciona solo uno. Puedes cambiarlo cuando quieras.
               </div>
 
               <div class="ic-list">
@@ -119,11 +119,11 @@
 
           <div class="card style-2 m-t10" id="sr-step-2">
             <div class="card-header">
-              <h6 class="card-title">2) Datos para ubicarte</h6>
+              <h6 class="card-title">2) ¿Dónde estás?</h6>
             </div>
             <div class="card-body">
               <div class="sr-hint">
-                Mientras más detalles, más rápido se procesa tu orden.
+                Tip: indica ciudad, zona y un punto de referencia.
               </div>
               <div class="m-b15 input-group input-lg input-rounded">
                 <input
@@ -159,11 +159,11 @@
               </div>
 
               <div class="sr-inline-actions">
-                <button type="button" class="btn btn-sm btn-secondary text-primary" (click)="togglePreview()">
-                  {{ showPreview ? 'Ocultar vista previa' : 'Ver vista previa' }}
-                </button>
                 <button type="button" class="btn btn-sm btn-outline-secondary" (click)="scrollTo('sr-step-1')">
                   Cambiar servicio
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary text-primary" (click)="togglePreview()">
+                  {{ showPreview ? 'Ocultar vista previa' : 'Ver vista previa' }}
                 </button>
               </div>
             </div>
@@ -187,24 +187,24 @@
       </div>
     </main>
 
-    <app-tab />
   </div>
 </div>
 
-<div class="sr-sticky-action">
-  <div class="sr-sticky-action__inner">
-    <button
-      type="button"
-      class="btn btn-lg btn-thin btn-secondary text-primary w-100 rounded-xl"
-      [disabled]="!canSend"
-      (click)="sendWhatsapp()"
-    >
-      <i class="fa-brands fa-whatsapp me-2"></i>
-      Abrir WhatsApp y enviar
-    </button>
-    <div class="sr-sticky-hint">
-      @if (!canSend) { Selecciona un servicio o agrega datos para continuar. }
+@if (canSend) {
+  <div class="sr-sticky-action">
+    <div class="sr-sticky-action__inner">
+      <button
+        type="button"
+        class="btn btn-lg btn-thin btn-secondary text-primary w-100 rounded-xl sr-send"
+        (click)="sendWhatsapp()"
+      >
+        <i class="fa-brands fa-whatsapp me-2"></i>
+        Abrir WhatsApp y enviar
+      </button>
+      <div class="sr-sticky-hint">
+        Revisa tus datos y envía tu solicitud.
+      </div>
     </div>
   </div>
-</div>
+}
 

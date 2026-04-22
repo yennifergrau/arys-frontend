@@ -4,7 +4,7 @@
     <header class="header header-fixed style-1">
       <div class="header-content">
         <div class="left-content"></div>
-        <div class="mid-content"><h5 class="title">Inicio</h5></div>
+        <div class="mid-content"><h5 class="title">Bienvenido</h5></div>
       </div>
     </header>
     <!-- Header -->
@@ -16,7 +16,7 @@
       <div class="container p-tb10 px-2">
         <div class="profile-area">
           <div class="ic-box style-3 m-b10 dashboard-shell">
-            <section class="dashboard-hero">
+            <section class="dashboard-hero" id="wa-top">
               <div class="dashboard-hero__top">
                 <div class="dashboard-hero__identity">
                   <div class="dashboard-hero__avatar">
@@ -28,7 +28,7 @@
                   <div class="dashboard-hero__text">
                     <div class="dashboard-hero__name">¡Hola, {{ username }}!</div>
                     <div class="dashboard-hero__hint">
-                      Gestiona tu membresía y solicita servicios en segundos.
+                      ¿Tienes algún problema con tu vehículo?
                     </div>
                   </div>
                 </div>
@@ -43,119 +43,496 @@
                 </button>
               </div>
 
-              <div class="dashboard-actions">
-                <button
-                  type="button"
-                  class="btn btn-primary dashboard-actions__primary"
-                  (click)="solicitarServicio()"
-                >
-                  <i class="fa-solid fa-wrench me-2"></i>
-                  Solicitar un servicio
-                </button>
-              </div>
-            </section>
-
-            <section class="dashboard-section">
-              <div class="dashboard-section__header">
-                <div>
-                  <div class="dashboard-section__title">Mis Membresías y Créditos</div>
-                  <div class="dashboard-section__subtitle">Saldos, deuda y fecha de pago.</div>
+              <section class="dashboard-section dashboard-section--top">
+                <div class="dashboard-section__header">
+                  <div>
+                    <div class="dashboard-section__title">Mis Membresías y Créditos</div>
+                    <div class="dashboard-section__subtitle">Saldos, deuda y fecha de pago.</div>
+                  </div>
                 </div>
-              </div>
 
-              <ul class="membership-grid">
-                @for(m of membershipList; track m.id_master) {
-                  <li class="membership-card" [class.membership-card--no-credit]="!m.has_credit">
-                    <div class="membership-card__header">
-                      <div class="membership-card__icon">
-                        <i class="fa-solid fa-wallet"></i>
-                      </div>
-                      <div class="membership-card__meta">
-                        <div class="membership-card__name">{{ m.name }}</div>
-                        <div class="membership-card__chip">
-                          @if(m.has_credit) {
-                            <span class="chip chip--success">Línea activa</span>
-                          } @else {
-                            <span class="chip chip--warning">Sin línea</span>
-                          }
+                <ul class="membership-grid">
+                  @for(m of membershipList; track m.id_master) {
+                    <li class="membership-card" [class.membership-card--no-credit]="!m.has_credit">
+                      <div class="membership-card__header">
+                        <div class="membership-card__icon">
+                          <i class="fa-solid fa-wallet"></i>
                         </div>
-                      </div>
-                    </div>
-
-                    @if(m.has_credit) {
-                      <div class="membership-card__metrics">
-                        <div class="metric">
-                          <div class="metric__label">Disponible</div>
-                          <div class="metric__value metric__value--accent">
-                            {{ isHidden ? '********' : (m.available_amount | formatCurrency) }}
-                            <span class="metric__unit">Bs</span>
-                          </div>
-                        </div>
-                        <div class="metric metric--right">
-                          <div class="metric__label">Límite</div>
-                          <div class="metric__value">
-                            {{ isHidden ? '********' : (m.credit_limit | formatCurrency) }}
-                            <span class="metric__unit">Bs</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="membership-card__footer">
-                        <div class="membership-card__status">
-                          @if(m.available_amount < m.credit_limit) {
-                            <div class="debt">
-                              <div class="debt__label">Deuda actual</div>
-                              <div class="debt__value">
-                                {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }}
-                                <span class="metric__unit">Bs</span>
+                        <div class="membership-card__meta">
+                          <div class="membership-card__top">
+                            <div class="membership-card__name">{{ m.name }}</div>
+                            @if (m.plan_label) {
+                              <div class="membership-card__planBadge" [attr.aria-label]="'Plan ' + m.plan_label">
+                                <i class="fa-solid fa-gem"></i>
+                                {{ m.plan_label }}
                               </div>
-                            </div>
-                          } @else {
-                            <span class="chip chip--ok">
-                              <i class="fa-solid fa-check-circle me-1"></i> Al día
-                            </span>
-                          }
-                        </div>
-                        <div class="membership-card__due">
-                          <div class="metric__label">Pague antes de</div>
-                          <div class="membership-card__dueDate">
-                            {{ formatCreditPayBefore(m.credit_pay_before) }}
+                            }
+                          </div>
+                          <div class="membership-card__chip">
+                            @if(m.has_credit) {
+                              <span class="chip chip--success">Línea activa</span>
+                            } @else {
+                              <span class="chip chip--warning">Sin línea</span>
+                            }
                           </div>
                         </div>
                       </div>
 
-                      @if(m.available_amount < m.credit_limit) {
+                      @if(m.has_credit) {
+                        <div class="membership-card__metrics">
+                          <div class="metric">
+                            <div class="metric__label">Disponible</div>
+                            <div class="metric__value metric__value--accent">
+                              @if (isHidden) {
+                                ********
+                              } @else if (meritopReady) {
+                                {{ m.available_amount | formatCurrency }} <span class="metric__unit">Bs</span>
+                              } @else {
+                                <span class="metric__pending">{{ meritopLoading ? 'Cargando…' : '—' }}</span>
+                              }
+                            </div>
+                          </div>
+                          <div class="metric metric--right">
+                            <div class="metric__label">Límite</div>
+                            <div class="metric__value">
+                              @if (isHidden) {
+                                ********
+                              } @else if (meritopReady) {
+                                {{ m.credit_limit | formatCurrency }} <span class="metric__unit">Bs</span>
+                              } @else {
+                                <span class="metric__pending">{{ meritopLoading ? 'Cargando…' : '—' }}</span>
+                              }
+                            </div>
+                          </div>
+                        </div>
+
+                        @if (meritopReady) {
+                          <div class="membership-card__progress" [attr.aria-label]="'Uso de crédito ' + creditUsagePercent(m) + '%'" role="img">
+                            <div class="membership-card__progressTop">
+                              <div class="membership-card__progressLabel">Uso</div>
+                              <div class="membership-card__progressValue">{{ creditUsagePercent(m) }}%</div>
+                            </div>
+                            <div class="membership-card__bar">
+                              <div class="membership-card__barFill" [style.width.%]="creditUsagePercent(m)"></div>
+                            </div>
+                          </div>
+                        }
+
+                        <div class="membership-card__footer">
+                          <div class="membership-card__status">
+                            @if(!meritopReady) {
+                              <span class="chip chip--warning">
+                                {{ meritopLoading ? 'Cargando saldo…' : 'Saldo no disponible' }}
+                              </span>
+                            } @else if(m.available_amount < m.credit_limit) {
+                              <div class="debt">
+                                <div class="debt__label">Deuda actual</div>
+                                <div class="debt__value">
+                                  {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }}
+                                  <span class="metric__unit">Bs</span>
+                                </div>
+                              </div>
+                            } @else {
+                              <span class="chip chip--ok">
+                                <i class="fa-solid fa-check-circle me-1"></i> Al día
+                              </span>
+                            }
+                          </div>
+                          <div class="membership-card__due">
+                            <div class="metric__label">Pague antes de</div>
+                            <div class="membership-card__dueDate">
+                              @if (meritopReady) {
+                                {{ formatCreditPayBefore(m.credit_pay_before) }}
+                              } @else {
+                                —
+                              }
+                            </div>
+                          </div>
+                        </div>
+
+                        @if(meritopReady && (m.available_amount < m.credit_limit)) {
+                          <button
+                            type="button"
+                            class="btn btn-success w-100 membership-card__cta"
+                            (click)="pagarCredito(m)"
+                          >
+                            Pagar
+                          </button>
+                        }
+                      } @else {
+                        <div class="membership-card__empty">
+                          Abre tu línea de crédito para solicitar servicios con financiamiento.
+                        </div>
                         <button
                           type="button"
-                          class="btn btn-success w-100 membership-card__cta"
-                          (click)="pagarCredito(m)"
+                          class="btn btn-outline-primary w-100 membership-card__cta"
+                          (click)="solicitarCredito(m)"
                         >
-                          Pagar
+                          <i class="fa-solid fa-plus me-2"></i>
+                          Abrir línea de crédito
                         </button>
                       }
-                    } @else {
+                    </li>
+                  } @empty {
+                    <li class="membership-card membership-card--empty">
                       <div class="membership-card__empty">
-                        Abre tu línea de crédito para solicitar servicios con financiamiento.
+                        No se encontraron membresías. Abre «Mis membresías» en la barra inferior o vuelve a iniciar sesión si acabas de registrar tu póliza.
                       </div>
+                    </li>
+                  }
+                </ul>
+              </section>
+
+              <div class="dashboard-actions">
+                <div class="dashboard-actions__title">
+                  <span class="dashboard-actions__titleIcon">
+                    <i class="fa-brands fa-whatsapp"></i>
+                  </span>
+                  Solicitar un servicio
+                </div>
+
+                <div class="dashboard-actions__micro">
+                  Elige un servicio, agrega tu ubicación y envía por WhatsApp para generar tu orden.
+                </div>
+
+                <div class="dashboard-quick">
+                  <button
+                    type="button"
+                    class="dashboard-quick__btn"
+                    [class.dashboard-quick__btn--active]="waSelected?.id === 'grua'"
+                    (click)="selectWaOption(waOptions[0])"
+                  >
+                    <span class="dashboard-quick__icon"><i class="fa-solid fa-truck-pickup"></i></span>
+                    <span class="dashboard-quick__text">Grúa</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="dashboard-quick__btn"
+                    [class.dashboard-quick__btn--active]="waSelected?.id === 'bateria'"
+                    (click)="selectWaOption(waOptions[1])"
+                  >
+                    <span class="dashboard-quick__icon"><i class="fa-solid fa-car-battery"></i></span>
+                    <span class="dashboard-quick__text">Batería</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="dashboard-quick__btn"
+                    [class.dashboard-quick__btn--active]="waSelected?.id === 'caucho'"
+                    (click)="selectWaOption(waOptions[2])"
+                  >
+                    <span class="dashboard-quick__icon"><i class="fa-solid fa-circle-dot"></i></span>
+                    <span class="dashboard-quick__text">Caucho</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="dashboard-quick__btn"
+                    [class.dashboard-quick__btn--active]="waSelected?.id === 'gasolina'"
+                    (click)="selectWaOption(waOptions[3])"
+                  >
+                    <span class="dashboard-quick__icon"><i class="fa-solid fa-gas-pump"></i></span>
+                    <span class="dashboard-quick__text">Gasolina</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="dashboard-quick__btn"
+                    [class.dashboard-quick__btn--active]="waSelected?.id === 'cerrajero'"
+                    (click)="selectWaOption(waOptions[4])"
+                  >
+                    <span class="dashboard-quick__icon"><i class="fa-solid fa-key"></i></span>
+                    <span class="dashboard-quick__text">Cerrajero</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="dashboard-quick__btn"
+                    [class.dashboard-quick__btn--active]="waSelected?.id === 'mecanica'"
+                    (click)="selectWaOption(waOptions[5])"
+                  >
+                    <span class="dashboard-quick__icon"><i class="fa-solid fa-screwdriver-wrench"></i></span>
+                    <span class="dashboard-quick__text">Mecánica</span>
+                  </button>
+                </div>
+
+                @if (waExpanded) {
+                  <div class="wa-compose" id="wa-compose">
+                    <div class="wa-compose__header">
+                      <div class="wa-compose__title">
+                        <span class="wa-step">Paso 1</span>
+                        @if (waSelected) {
+                          <span class="wa-step__text">Servicio</span>
+                          <span class="wa-compose__pill">
+                            <i class="fa-solid" [ngClass]="waSelected.icon"></i>
+                            {{ waSelected.label }}
+                          </span>
+                          <span class="wa-compose__subhint">Para cambiar, toca otro servicio arriba.</span>
+                        } @else {
+                          <span class="wa-step__text">Elige el servicio</span>
+                        }
+                      </div>
+                      <div class="wa-compose__actions">
+                        <button type="button" class="wa-action" (click)="clearWa()" aria-label="Limpiar">
+                          <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                        <button type="button" class="wa-action" (click)="closeWa()" aria-label="Cerrar">
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <button type="button" class="wa-action" (click)="toggleWaPreview()" [attr.aria-label]="waShowPreview ? 'Ocultar vista previa' : 'Ver vista previa'">
+                          <i class="fa-solid" [ngClass]="waShowPreview ? 'fa-eye-slash' : 'fa-eye'"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    @if (!waSelected) {
+                      <div class="wa-options" id="wa-options">
+                        @for (opt of waOptions; track opt.id) {
+                          <button
+                            type="button"
+                            class="wa-option"
+                            [class.wa-option--active]="opt.selected"
+                            (click)="selectWaOption(opt)"
+                          >
+                            <span class="wa-option__icon">
+                              <i class="fa-solid" [ngClass]="opt.icon"></i>
+                            </span>
+                            <span class="wa-option__content">
+                              <span class="wa-option__title">{{ opt.label }}</span>
+                              <span class="wa-option__subtitle">{{ opt.description }}</span>
+                            </span>
+                            <span class="wa-option__right">
+                              @if (opt.selected) {
+                                <span class="wa-check"><i class="fa-solid fa-check"></i></span>
+                              }
+                            </span>
+                          </button>
+                        }
+                      </div>
+                    }
+
+                    <div class="wa-details" id="wa-details">
+                      <div class="wa-compose__title">2) Cuéntanos lo que pasó</div>
+
+                      <div class="wa-fast">
+                        <div class="wa-fast__row">
+                          <button type="button" class="wa-fast__btn wa-fast__btn--gps" (click)="useMyLocation()">
+                            <i class="fa-solid fa-location-crosshairs me-2"></i>
+                            Usar mi ubicación
+                          </button>
+                          <div class="wa-fast__hint">Toca chips para llenar rápido.</div>
+                        </div>
+
+                        <div class="wa-fast__group">
+                          <div class="wa-fast__label">Ubicación rápida</div>
+                          <div class="wa-chips">
+                            @for (c of waLocationChips; track c.value) {
+                              <button type="button" class="wa-chip" (click)="addWaLocationPreset(c.value)">{{ c.label }}</button>
+                            }
+                          </div>
+                        </div>
+
+                        <div class="wa-fast__group">
+                          <div class="wa-fast__label">Describe sin escribir</div>
+                          <div class="wa-chips">
+                            @for (c of waNoteChips; track c.value) {
+                              <button type="button" class="wa-chip" (click)="addWaNotePreset(c.value)">{{ c.label }}</button>
+                            }
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="wa-form">
+                        <div class="wa-form__row">
+                          <div class="wa-field">
+                            <label class="wa-label">Ubicación</label>
+                            <input class="form-control wa-input" [(ngModel)]="waLocation" placeholder="Ej: Av. X, cerca de Y" />
+                          </div>
+                        </div>
+
+                        <button type="button" class="wa-more" (click)="toggleWaExtra()" id="wa-extra">
+                          <span>Agregar detalles (opcional)</span>
+                          <i class="fa-solid" [ngClass]="waShowExtra ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </button>
+
+                        @if (waShowExtra) {
+                          <div class="wa-form__grid">
+                            <div class="wa-field">
+                              <label class="wa-label">Placa</label>
+                              <input class="form-control wa-input" [(ngModel)]="waPlate" placeholder="Ej: AB123CD" />
+                            </div>
+                            <div class="wa-field">
+                              <label class="wa-label">Referencia</label>
+                              <input class="form-control wa-input" [(ngModel)]="waReference" placeholder="Edificio, punto de referencia, etc." />
+                            </div>
+                          </div>
+
+                          <div class="wa-field">
+                            <label class="wa-label">Describe el problema</label>
+                            <textarea
+                              class="form-control wa-textarea"
+                              rows="3"
+                              [(ngModel)]="waNotes"
+                              placeholder="Ej: Se apagó el carro, no enciende, estoy en vía..."
+                            ></textarea>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    @if (waShowPreview) {
+                      <div class="wa-preview" id="wa-preview">
+                        <div class="wa-compose__title">3) Vista previa</div>
+                        <pre class="wa-preview__box">{{ buildWaMessage() }}</pre>
+                      </div>
+                    }
+
+                    @if (waCanSend) {
                       <button
                         type="button"
-                        class="btn btn-outline-primary w-100 membership-card__cta"
-                        (click)="solicitarCredito(m)"
+                        class="btn btn-success w-100 wa-send"
+                        (click)="sendWhatsappFromDashboard()"
                       >
-                        <i class="fa-solid fa-plus me-2"></i>
-                        Abrir línea de crédito
+                        <i class="fa-brands fa-whatsapp me-2"></i>
+                        Abrir WhatsApp y enviar
                       </button>
                     }
-                  </li>
-                } @empty {
-                  <li class="membership-card membership-card--empty">
-                    <div class="membership-card__empty">
-                      No se encontraron membresías. Abre «Mis membresías» en la barra inferior o vuelve a iniciar sesión si acabas de registrar tu póliza.
-                    </div>
-                  </li>
+                  </div>
                 }
-              </ul>
+              </div>
             </section>
+
+            <section class="dashboard-hero buy-hero" id="buy-top">
+              <div class="dashboard-actions">
+                <div class="dashboard-actions__title">
+                  <span class="dashboard-actions__titleIcon dashboard-actions__titleIcon--buy">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                  </span>
+                  Solicitar a proveedores
+                </div>
+
+                <div class="dashboard-actions__micro">
+                  Elige una categoría, escribe el repuesto y envía por WhatsApp para cotizar/coordinar la compra.
+                </div>
+
+                <div class="dashboard-quick dashboard-quick--buy">
+                  @for (c of buyCategories; track c.id) {
+                    <button
+                      type="button"
+                      class="dashboard-quick__btn"
+                      [class.dashboard-quick__btn--active]="c.selected"
+                      (click)="selectBuyCategory(c)"
+                    >
+                      <span class="dashboard-quick__icon"><i class="fa-solid" [ngClass]="c.icon"></i></span>
+                      <span class="dashboard-quick__text">{{ c.label }}</span>
+                    </button>
+                  }
+                </div>
+
+                @if (buyExpanded) {
+                  <div class="wa-compose buy-compose" id="buy-compose">
+                    <div class="wa-compose__header">
+                      <div class="wa-compose__title">
+                        <span class="wa-step">Compra</span>
+                        @if (buySelectedCategory) {
+                          <span class="wa-step__text">Categoría</span>
+                          <span class="wa-compose__pill">
+                            <i class="fa-solid fa-cart-shopping"></i>
+                            {{ buySelectedCategory }}
+                          </span>
+                        }
+                      </div>
+                      <div class="wa-compose__actions">
+                        <button type="button" class="wa-action" (click)="clearBuy()" aria-label="Limpiar compra">
+                          <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                        <button type="button" class="wa-action" (click)="closeBuy()" aria-label="Cerrar">
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <button type="button" class="wa-action" (click)="toggleBuyPreview()" [attr.aria-label]="buyShowPreview ? 'Ocultar vista previa' : 'Ver vista previa'">
+                          <i class="fa-solid" [ngClass]="buyShowPreview ? 'fa-eye-slash' : 'fa-eye'"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="wa-details" id="buy-details">
+                      <div class="wa-form">
+                        <div class="wa-form__row">
+                          <div class="wa-field">
+                            <label class="wa-label">Repuesto / pieza</label>
+                            <input class="form-control wa-input" [(ngModel)]="buyItem" placeholder="Ej: Pastillas de freno, batería 12V..." />
+                          </div>
+                        </div>
+
+                        <div class="wa-fast">
+                          <div class="wa-fast__row">
+                            <button type="button" class="wa-fast__btn wa-fast__btn--gps" (click)="useMyLocationForBuy()">
+                              <i class="fa-solid fa-location-crosshairs me-2"></i>
+                              Usar mi ubicación
+                            </button>
+                            <div class="wa-fast__hint">Toca chips para llenar rápido.</div>
+                          </div>
+
+                          <div class="wa-fast__group">
+                            <div class="wa-fast__label">Ubicación rápida</div>
+                            <div class="wa-chips">
+                              @for (c of waLocationChips; track c.value) {
+                                <button type="button" class="wa-chip" (click)="addBuyLocationPreset(c.value)">{{ c.label }}</button>
+                              }
+                            </div>
+                          </div>
+
+                          <div class="wa-fast__group">
+                            <div class="wa-fast__label">Notas rápidas</div>
+                            <div class="wa-chips">
+                              <button type="button" class="wa-chip" (click)="addBuyNotePreset('Necesito precio y disponibilidad')">Precio y disponibilidad</button>
+                              <button type="button" class="wa-chip" (click)="addBuyNotePreset('Es para hoy')">Para hoy</button>
+                              <button type="button" class="wa-chip" (click)="addBuyNotePreset('Si no hay, dame alternativas')">Alternativas</button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="wa-form__row">
+                          <div class="wa-field">
+                            <label class="wa-label">Ubicación</label>
+                            <input class="form-control wa-input" [(ngModel)]="buyLocation" placeholder="Ej: Av. X, cerca de Y" />
+                          </div>
+                        </div>
+
+                        <button type="button" class="wa-more" (click)="toggleBuyExtra()" id="buy-extra">
+                          <span>Agregar datos del vehículo (opcional)</span>
+                          <i class="fa-solid" [ngClass]="buyShowExtra ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </button>
+
+                        @if (buyShowExtra) {
+                          <div class="wa-form__grid">
+                            <div class="wa-field">
+                              <label class="wa-label">Placa</label>
+                              <input class="form-control wa-input" [(ngModel)]="buyPlate" placeholder="Ej: AB123CD" />
+                            </div>
+                            <div class="wa-field">
+                              <label class="wa-label">Notas</label>
+                              <input class="form-control wa-input" [(ngModel)]="buyNotes" placeholder="Marca/modelo/año, medidas, etc." />
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    @if (buyShowPreview) {
+                      <div class="wa-preview" id="buy-preview">
+                        <div class="wa-compose__title">Vista previa</div>
+                        <pre class="wa-preview__box">{{ buildBuyMessage() }}</pre>
+                      </div>
+                    }
+
+                    @if (buyCanSend) {
+                      <button type="button" class="btn btn-success w-100 wa-send" (click)="sendBuyWhatsapp()">
+                        <i class="fa-brands fa-whatsapp me-2"></i>
+                        Abrir WhatsApp y enviar
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            </section>
+
             <!-- <div class="ic-list m-b20">
               <ul class="ic-list-group">
                 <li class="list-group-items">

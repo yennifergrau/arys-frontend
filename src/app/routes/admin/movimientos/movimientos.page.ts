@@ -34,6 +34,7 @@ export class MovimientosPage implements OnInit {
   public minPayAmount = 0;
   public creditPayBefore = '';
   public cardNumber = '';
+  private readonly MERITOP_CACHE_KEY = 'meritop_summary_v1';
 
   private docId: number | null = null;
   private docType = '';
@@ -140,7 +141,47 @@ export class MovimientosPage implements OnInit {
     this.productLoaded = false;
     this.initializeDateRange();
     this.loadMembershipSummary();
-    this.loadCustomerProduct();
+    const usedCache = this.hydrateMeritopFromCache();
+    if (!usedCache) {
+      this.loadCustomerProduct();
+    } else {
+      this.productLoaded = true;
+      this.updateSummaryReady();
+      // Solo cargamos listas de movimientos (no re-consultamos products).
+      this.fetchTransactions();
+    }
+  }
+
+  private hydrateMeritopFromCache(): boolean {
+    try {
+      const raw = sessionStorage.getItem(this.MERITOP_CACHE_KEY);
+      if (!raw) return false;
+      const cached = JSON.parse(raw);
+      const limit = this.toNumber(cached?.limit ?? 0);
+      const available = this.toNumber(cached?.available ?? 0);
+      if (limit <= 0) return false;
+      const used = Math.max(0, limit - available);
+      this.limitAmount = limit;
+      this.debtAmount = used;
+      this.minPayAmount =
+        cached?.amount_share_to_pay != null
+          ? this.toNumber(cached.amount_share_to_pay)
+          : this.resolveMeritopMinPayment({ amount_used: used });
+      this.creditPayBefore = cached?.credit_pay_before != null ? String(cached.credit_pay_before) : '';
+      this.cardNumber = cached?.cardnumber != null ? String(cached.cardnumber) : this.cardNumber;
+      this.productId = cached?.id != null ? String(cached.id) : this.productId;
+
+      // Si no viene productId en caché, no podemos pedir movimientos.
+      if (!this.productId) return false;
+
+      const identity = this.getIdentity();
+      if (!identity) return false;
+      this.docType = identity.doctype;
+      this.docId = identity.docid;
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private loadMembershipSummary() {

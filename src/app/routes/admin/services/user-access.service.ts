@@ -60,10 +60,18 @@ export class UserAccessService {
 
   async ensureLoaded(force = false): Promise<UserAccessState> {
     const current = this.state;
-    if (!force && current.loaded) return current;
-
+    // Si ya está cargado, normalmente devolvemos caché. Pero si el caché dice "sin membresía"
+    // y tenemos un id_member en sesión, reintentamos para evitar redirecciones falsas.
     const stored = sessionStorage.getItem('id_member');
     const storedIdMember = stored && !Number.isNaN(Number(stored)) ? Number(stored) : null;
+    if (!force && current.loaded) {
+      if (!current.hasMembership && storedIdMember != null && storedIdMember > 0) {
+        // Reintento (puede haberse guardado false por un error temporal).
+      } else {
+        return current;
+      }
+    }
+
     const tokenIdentity = this.getTokenIdentity();
     const idMember = storedIdMember ?? tokenIdentity.id_member ?? null;
     const email = tokenIdentity.email ?? null;
@@ -102,10 +110,15 @@ export class UserAccessService {
       this.setState(next);
       return next;
     } catch {
-      // Si falla la consulta, no bloqueamos toda la app; dejamos estado "loaded" pero sin permisos.
+      // Si falla la consulta, NO degradamos permisos a "sin membresía" (evita redirecciones falsas).
+      // Preferimos el último estado conocido; si no existe, asumimos solo membresía si hay `id_member` guardado.
+      if (current.loaded) {
+        return current;
+      }
+      const fallbackHasMembership = idMember != null && !Number.isNaN(idMember) && idMember > 0;
       const next: UserAccessState = {
         loaded: true,
-        hasMembership: false,
+        hasMembership: fallbackHasMembership,
         hasCreditLine: false,
         idMember,
       };
