@@ -112,74 +112,96 @@ export class AuthPage implements OnInit {
 
   public async onSubmit() {
     this.showSpinner = true;
-    if (this.FormVerify.valid) {
+    try {
+      if (!this.FormVerify.valid) {
+        this.FormVerify.markAllAsTouched();
+        this.mostrarToast('La cédula es obligatoria', 'toast-error');
+        return;
+      }
+
       const clientData = {
         cedula: this.FormVerify.get('rif')?.value,
       };
 
       this.emission.userIsActive(clientData).subscribe({
         next: async (response: any) => {
-          console.log(response);
+          try {
+            console.log(response);
 
-          if (response.estatus_gene1 === 'ACTIVO') {
-            this.emissionDetails.userData = response;
-            const user = this.getAccessToken();
+            const status = response?.estatus_gene1 != null ? String(response.estatus_gene1).trim() : '';
 
-            try {
-              const stored = sessionStorage.getItem('id_member');
-              const idMember = stored
-                ? Number(stored)
-                : user.id_member != null
-                  ? Number(user.id_member)
+            if (status === 'ACTIVO') {
+              this.emissionDetails.userData = response;
+              const user = this.getAccessToken();
+
+              try {
+                const stored = sessionStorage.getItem('id_member');
+                const idMember = stored
+                  ? Number(stored)
+                  : user.id_member != null
+                    ? Number(user.id_member)
+                    : null;
+
+                const membershipResult = idMember
+                  ? await firstValueFrom(this.arysService.get_membership(idMember))
+                  : user.email
+                    ? await firstValueFrom(
+                        this.arysService.get_membership_by_email(String(user.email))
+                      )
+                    : null;
+
+                const rows =
+                  membershipResult?.status && Array.isArray(membershipResult.data)
+                    ? membershipResult.data
+                    : [];
+
+                // Si el status trae certificado, seleccionamos la membresía cuyo certificate coincida.
+                const certFromStatus = String(response?.certificado ?? '').trim();
+                const matched = certFromStatus
+                  ? rows.find(
+                      (r: any) => String(r?.certificate ?? '').trim() === certFromStatus
+                    ) ?? null
                   : null;
+                const picked = matched ?? rows[0] ?? null;
 
-              const membershipResult = idMember
-                ? await firstValueFrom(this.arysService.get_membership(idMember))
-                : user.email
-                  ? await firstValueFrom(
-                      this.arysService.get_membership_by_email(String(user.email))
-                    )
-                  : null;
+                if (picked?.id_master != null) {
+                  sessionStorage.setItem('id_member', String(picked.id_master));
+                }
 
-              const first = membershipResult?.data?.[0];
-              if (first?.id_master != null) {
-                sessionStorage.setItem('id_member', String(first.id_master));
+                // Nuevo flujo: el inicio es el Dashboard.
+                this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
+              } catch {
+                this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
               }
-
-              const hasCreditLine =
-                !!first && !!first.credit_line_id;
-
-              // Nuevo flujo: el inicio es el Dashboard (ahí se decide
-              // si redirigir a orden pendiente o mostrar acciones).
-              this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
-            } catch {
-              this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
+              return;
             }
-          } else if (
-            response.estatus_gene1 === '' ||
-            response.estatus_gene1 === null
-          ) {
-            this.navCtrl.navigateRoot(['/admin/planes/home/user']);
-          }
 
-          this.showSpinner = false;
+            // No activo / no encontrado / respuesta inesperada: no nos quedamos “colgados”.
+            if (status === '' || status === '0') {
+              this.mostrarToast('Usuario no encontrado o inválido.', 'toast-error');
+              return;
+            }
+            if (status === 'INACTIVO') {
+              this.mostrarToast('Tu cuenta está inactiva. Contacta soporte.', 'toast-error');
+              return;
+            }
+            this.mostrarToast(`No se pudo validar estatus (${status || 'desconocido'}).`, 'toast-error');
+          } finally {
+            this.showSpinner = false;
+          }
         },
         error: (err: any) => {
           console.log(err);
-          this.mostrarToast(
-            'No se pudo verificar la actividad del usuario',
-            'toast-error'
-          );
+          this.mostrarToast('No se pudo verificar la actividad del usuario', 'toast-error');
           this.showSpinner = false;
         },
       });
-    } else {
-      this.FormVerify.markAllAsTouched();
-      this.mostrarToast(
-        'La cédula es obligatoria',
-        'toast-error'
-      );
-      this.showSpinner = false;
+    } finally {
+      // Si el subscribe aún no responde, el spinner seguirá activo por los handlers de arriba.
+      // Este finally solo cubre validaciones síncronas.
+      if (!this.FormVerify.valid) {
+        this.showSpinner = false;
+      }
     }
   }
 
