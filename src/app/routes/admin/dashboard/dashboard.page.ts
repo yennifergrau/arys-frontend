@@ -565,7 +565,7 @@ export class DashboardPage implements OnInit {
       'Hola, buen día. Quiero solicitar un servicio.',
       '',
       this.username ? `Cliente: ${this.username}` : '',
-      cert ? `Certificado: ${cert}` : '',
+      cert ? `Membresia: ${cert}` : '',
       plan ? `Plan: ${plan}` : '',
       this.waPlate.trim() ? `Placa: ${this.waPlate.trim().toUpperCase()}` : '',
       this.waLocation.trim() ? `Ubicación: ${this.waLocation.trim()}` : '',
