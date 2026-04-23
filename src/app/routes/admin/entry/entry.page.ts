@@ -9,6 +9,7 @@ import { TabComponent } from 'src/app/shared/components/tab/tab.component';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { DataArysService } from '../services/data-arys.service';
 import { ServiceOrderService } from '../services/service-order.service';
+import { EmissionDetailsService } from '../services/emission-details.service';
 
 @Component({
   selector: 'app-entry',
@@ -21,6 +22,7 @@ import { ServiceOrderService } from '../services/service-order.service';
 export class EntryPage implements OnInit {
   private readonly arys = inject(DataArysService);
   private readonly serviceOrders = inject(ServiceOrderService);
+  private readonly emissionDetails = inject(EmissionDetailsService);
 
   public showLoading = false;
   public username = '';
@@ -132,6 +134,9 @@ export class EntryPage implements OnInit {
     this.showLoading = true;
 
     this.membership = await this.loadMembership();
+    if (this.membership) {
+      this.emissionDetails.mergeUserDataFromMembership(this.membership);
+    }
     if (!this.membership) {
       this.showLoading = false;
       this.navCtrl.navigateRoot(['/admin/planes/home/user']);

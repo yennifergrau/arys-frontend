@@ -112,12 +112,10 @@ export class DashboardPage implements OnInit {
   private defaultPlate: string = '';
 
   public waOptions: ServiceOption[] = [
-    { id: 'grua', label: 'Grúa', description: 'Remolque / traslado', icon: 'fa-truck-pickup', selected: false },
-    { id: 'bateria', label: 'Batería', description: 'Paso de corriente / asistencia', icon: 'fa-car-battery', selected: false },
-    { id: 'caucho', label: 'Cambio de caucho', description: 'Asistencia por pinchazo', icon: 'fa-circle-dot', selected: false },
-    { id: 'gasolina', label: 'Suministro de gasolina', description: 'Asistencia por combustible', icon: 'fa-gas-pump', selected: false },
-    { id: 'cerrajero', label: 'Cerrajero', description: 'Apertura de vehículo', icon: 'fa-key', selected: false },
-    { id: 'mecanica', label: 'Mecánica ligera', description: 'Revisión básica', icon: 'fa-screwdriver-wrench', selected: false },
+    { id: 'grua', label: 'Grúa', description: 'Remolque o traslado', icon: 'fa-truck-pickup', selected: false },
+    { id: 'bateria', label: 'Batería', description: 'Paso de corriente o cambio', icon: 'fa-car-battery', selected: false },
+    { id: 'cachos', label: 'Cachos', description: 'Neumáticos o asistencia en vía', icon: 'fa-circle-dot', selected: false },
+    { id: 'repuesto', label: 'Repuesto', description: 'Pieza o refacción', icon: 'fa-gears', selected: false },
   ];
 
   // Resumen Meritop para mostrar montos reales en Inicio
@@ -192,7 +190,9 @@ export class DashboardPage implements OnInit {
         (row.product_id != null ? Number(row.product_id) : null) ??
         (row.id_product != null ? Number(row.id_product) : null) ??
         null;
-      const plan_label = this.resolvePlanLabel(productId);
+      const planFromApi =
+        row?.plan != null && String(row.plan).trim() !== '' ? String(row.plan).trim() : undefined;
+      const plan_label = planFromApi ?? this.resolvePlanLabel(productId);
 
       return {
         id_master: row.id_master,
@@ -290,24 +290,15 @@ export class DashboardPage implements OnInit {
         { label: 'Arranque lento', value: 'El arranque está lento' },
         { label: 'Luces débiles', value: 'Las luces están débiles' },
       ],
-      caucho: [
+      cachos: [
         { label: 'Pinchazo', value: 'Tengo un pinchazo' },
-        { label: 'Sin repuesto', value: 'No tengo caucho de repuesto' },
+        { label: 'Sin repuesto', value: 'No tengo cacho de repuesto' },
         { label: 'Rueda trancada', value: 'La rueda está trancada' },
       ],
-      gasolina: [
-        { label: 'Sin gasolina', value: 'Me quedé sin gasolina' },
-        { label: 'No sé combustible', value: 'No estoy seguro del tipo de combustible' },
-      ],
-      cerrajero: [
-        { label: 'Llaves adentro', value: 'Dejé las llaves dentro del vehículo' },
-        { label: 'Perdí llaves', value: 'Perdí las llaves' },
-        { label: 'Cerradura bloqueada', value: 'La cerradura está bloqueada' },
-      ],
-      mecanica: [
-        { label: 'Se apagó', value: 'Se apagó y no enciende' },
-        { label: 'Temperatura', value: 'La temperatura está alta' },
-        { label: 'Ruido', value: 'Escucho un ruido extraño' },
+      repuesto: [
+        { label: 'Cotización', value: 'Necesito cotización y disponibilidad' },
+        { label: 'Pieza específica', value: 'Busco una pieza específica (detallo en notas)' },
+        { label: 'Entrega', value: 'Necesito coordinar entrega o retiro' },
       ],
     };
     return [...(byService[id] ?? []), ...common];
@@ -1005,6 +996,14 @@ export class DashboardPage implements OnInit {
     }
   }
 
+  /** Sincroniza `localStorage.userData` con la fila actual del API de membresía (certificado, plan, crédito, etc.). */
+  private syncUserDataFromMembershipRows(): void {
+    const first = this.data_membership?.[0];
+    if (first) {
+      this._emisionService.mergeUserDataFromMembership(first);
+    }
+  }
+
   private getMembershipById(idMember: number){
     try{
       this.arys_service.get_membership(idMember).subscribe({
@@ -1016,14 +1015,8 @@ export class DashboardPage implements OnInit {
             sessionStorage.setItem('id_member', String(first.id_master));
           }
 
-          // Si hay orden pendiente, debe verse al iniciar.
           await this.checkPendingOrders();
-          if (this.hasPendingOrder) {
-            this.router.navigate(['/admin/service-orders/pending']);
-            return;
-          }
-
-          // Solo si NO hay órdenes pendientes, cargamos Meritop.
+          this.syncUserDataFromMembershipRows();
           this.loadMeritopSummary();
 
           this.loadState.membership = true;
@@ -1032,10 +1025,7 @@ export class DashboardPage implements OnInit {
         error: async (error) => {
           this.data_membership = [];
           await this.checkPendingOrders();
-          if (this.hasPendingOrder) {
-            this.router.navigate(['/admin/service-orders/pending']);
-            return;
-          }
+          this.syncUserDataFromMembershipRows();
           this.loadMeritopSummary();
           this.loadState.membership = true;
           this.finishIfReady();
@@ -1058,14 +1048,8 @@ export class DashboardPage implements OnInit {
             sessionStorage.setItem('id_member', String(first.id_master));
           }
 
-          // Si hay orden pendiente, debe verse al iniciar.
           await this.checkPendingOrders();
-          if (this.hasPendingOrder) {
-            this.router.navigate(['/admin/service-orders/pending']);
-            return;
-          }
-
-          // Solo si NO hay órdenes pendientes, cargamos Meritop.
+          this.syncUserDataFromMembershipRows();
           this.loadMeritopSummary();
 
           this.loadState.membership = true;
@@ -1074,10 +1058,7 @@ export class DashboardPage implements OnInit {
         error: async () => {
           this.data_membership = [];
           await this.checkPendingOrders();
-          if (this.hasPendingOrder) {
-            this.router.navigate(['/admin/service-orders/pending']);
-            return;
-          }
+          this.syncUserDataFromMembershipRows();
           this.loadMeritopSummary();
           this.loadState.membership = true;
           this.finishIfReady();
@@ -1096,8 +1077,8 @@ export class DashboardPage implements OnInit {
   public solicitarCredito(membership: any) {
   console.log('Iniciando solicitud para:', membership.name);
   // Aquí rediriges a la pantalla de solicitud de crédito de Meritop
-  this.router.navigate(['admin/Customer/create/sarys/meritop'], { 
-    queryParams: { id: membership.id_master } 
+  this.router.navigate(['/admin/Customer/create/sarys/meritop'], {
+    queryParams: { id: membership.id_master },
   });
 }
 

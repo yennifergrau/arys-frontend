@@ -6,7 +6,9 @@ import { environment } from 'src/environments/environment';
 interface UserIsActiveRequest {
   placa?: string;
   cedula?: string;
-  id_user?: number; 
+  id_user?: number;
+  /** Certificado de póliza (POST `fechetd/status`; mismo valor que `certificate` en get_membership). */
+  certificado?: string;
 }
 
 interface UserIsActiveResponse {

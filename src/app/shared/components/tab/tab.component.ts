@@ -30,7 +30,7 @@ export class TabComponent  {
   }
   
   goTo(route: string) {
-    this.router.navigate([route]);
+    void this.router.navigateByUrl(route);
   }
 
   logout(ev?: Event): void {

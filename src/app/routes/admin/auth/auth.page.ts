@@ -35,8 +35,12 @@ import { firstValueFrom } from 'rxjs';
   providers: [provideNgxMask(), EmissionService],
 })
 export class AuthPage implements OnInit {
+  /** Cédula usada en verificación automática (sin formulario). */
+  private readonly defaultVerifyDocument = '28317753';
+
   public FormVerify!: FormGroup;
   public showSpinner: boolean = false;
+  public autoVerifyInProgress = false;
   private emission = inject(EmissionService);
   private emissionDetails = inject(EmissionDetailsService);
   private arysService = inject(DataArysService);
@@ -51,7 +55,7 @@ export class AuthPage implements OnInit {
 
   private generateForm(): void {
     this.FormVerify = this.fb.group({
-      rif: new FormControl('', Validators.required),
+      rif: new FormControl(this.defaultVerifyDocument, Validators.required),
       // placa: new FormControl('', [
       //   Validators.required,
       //   Validators.pattern(/^[A-Z0-9]{3}-[A-Z0-9]{3,4}$/),
@@ -110,31 +114,50 @@ export class AuthPage implements OnInit {
     }, 6000);
   }
 
-  public async onSubmit() {
-    this.showSpinner = true;
-    try {
-      if (!this.FormVerify.valid) {
-        this.FormVerify.markAllAsTouched();
-        this.mostrarToast('La cédula es obligatoria', 'toast-error');
-        return;
-      }
+  /** Membresía desde BD (token) antes de `userIsActive`, para enviar `certificado` en el POST y alinear filas. */
+  private async prefetchMembership(): Promise<{ rows: any[]; picked: any | null }> {
+    const user = this.getAccessToken();
+    const stored = sessionStorage.getItem('id_member');
+    const idMember = stored
+      ? Number(stored)
+      : user.id_member != null
+        ? Number(user.id_member)
+        : null;
 
-      const clientData = {
-        cedula: this.FormVerify.get('rif')?.value,
-      };
+    let membershipResult: any = null;
+    if (idMember != null && !Number.isNaN(idMember) && idMember > 0) {
+      membershipResult = await firstValueFrom(this.arysService.get_membership(idMember));
+    } else if (user.email) {
+      membershipResult = await firstValueFrom(
+        this.arysService.get_membership_by_email(String(user.email))
+      );
+    }
 
-      this.emission.userIsActive(clientData).subscribe({
-        next: async (response: any) => {
-          try {
-            console.log(response);
+    const rows =
+      membershipResult?.status && Array.isArray(membershipResult.data)
+        ? membershipResult.data
+        : [];
+    const picked = rows[0] ?? null;
+    return { rows, picked };
+  }
 
-            const status = response?.estatus_gene1 != null ? String(response.estatus_gene1).trim() : '';
+  private callUserIsActive(
+    clientData: { cedula: string; certificado?: string },
+    pre: { rows: any[]; picked: any | null } | null
+  ): void {
+    this.emission.userIsActive(clientData).subscribe({
+      next: async (response: any) => {
+        try {
+          const status = response?.estatus_gene1 != null ? String(response.estatus_gene1).trim() : '';
 
-            if (status === 'ACTIVO') {
-              this.emissionDetails.userData = response;
-              const user = this.getAccessToken();
+          if (status === 'ACTIVO') {
+            const user = this.getAccessToken();
 
-              try {
+            try {
+              let rows = pre?.rows ?? [];
+              let picked = pre?.picked ?? null;
+
+              if (!rows.length) {
                 const stored = sessionStorage.getItem('id_member');
                 const idMember = stored
                   ? Number(stored)
@@ -150,59 +173,120 @@ export class AuthPage implements OnInit {
                       )
                     : null;
 
-                const rows =
+                rows =
                   membershipResult?.status && Array.isArray(membershipResult.data)
                     ? membershipResult.data
                     : [];
-
-                // Si el status trae certificado, seleccionamos la membresía cuyo certificate coincida.
-                const certFromStatus = String(response?.certificado ?? '').trim();
-                const matched = certFromStatus
-                  ? rows.find(
-                      (r: any) => String(r?.certificate ?? '').trim() === certFromStatus
-                    ) ?? null
-                  : null;
-                const picked = matched ?? rows[0] ?? null;
-
-                if (picked?.id_master != null) {
-                  sessionStorage.setItem('id_member', String(picked.id_master));
-                }
-
-                // Nuevo flujo: el inicio es el Dashboard.
-                this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
-              } catch {
-                this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
               }
-              return;
-            }
 
-            // No activo / no encontrado / respuesta inesperada: no nos quedamos “colgados”.
-            if (status === '' || status === '0') {
-              this.mostrarToast('Usuario no encontrado o inválido.', 'toast-error');
-              return;
+              const certFromStatus = String(response?.certificado ?? '').trim();
+              const matched = certFromStatus
+                ? rows.find((r: any) => String(r?.certificate ?? '').trim() === certFromStatus) ??
+                  null
+                : null;
+              picked = matched ?? picked ?? rows[0] ?? null;
+
+              if (picked?.id_master != null) {
+                sessionStorage.setItem('id_member', String(picked.id_master));
+              }
+
+              this.emissionDetails.persistUserDataAfterVerification(response, picked);
+
+              this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
+            } catch {
+              this.emissionDetails.userData = response;
+              this.navCtrl.navigateRoot(['/admin/dashboard/sarys']);
             }
-            if (status === 'INACTIVO') {
-              this.mostrarToast('Tu cuenta está inactiva. Contacta soporte.', 'toast-error');
-              return;
-            }
-            this.mostrarToast(`No se pudo validar estatus (${status || 'desconocido'}).`, 'toast-error');
-          } finally {
-            this.showSpinner = false;
+            return;
           }
-        },
-        error: (err: any) => {
-          console.log(err);
-          this.mostrarToast('No se pudo verificar la actividad del usuario', 'toast-error');
+
+          if (status === '' || status === '0') {
+            this.mostrarToast('Usuario no encontrado o inválido.', 'toast-error');
+            return;
+          }
+          if (status === 'INACTIVO') {
+            this.mostrarToast('Tu cuenta está inactiva. Contacta soporte.', 'toast-error');
+            return;
+          }
+          this.mostrarToast(`No se pudo validar estatus (${status || 'desconocido'}).`, 'toast-error');
+        } finally {
           this.showSpinner = false;
-        },
-      });
+          this.autoVerifyInProgress = false;
+        }
+      },
+      error: (err: any) => {
+        console.log(err);
+        this.mostrarToast('No se pudo verificar la actividad del usuario', 'toast-error');
+        this.showSpinner = false;
+        this.autoVerifyInProgress = false;
+      },
+    });
+  }
+
+  public async onSubmit() {
+    try {
+      if (!this.FormVerify.valid) {
+        this.FormVerify.markAllAsTouched();
+        this.mostrarToast('La cédula es obligatoria', 'toast-error');
+        return;
+      }
+
+      this.showSpinner = true;
+      const cedula = String(this.FormVerify.get('rif')?.value ?? '').trim();
+      let pre: { rows: any[]; picked: any | null } | null = null;
+      try {
+        pre = await this.prefetchMembership();
+      } catch {
+        pre = null;
+      }
+
+      const cert =
+        pre?.picked?.certificate != null ? String(pre.picked.certificate).trim() : '';
+      const clientData: { cedula: string; certificado?: string } = { cedula };
+      if (cert) {
+        clientData.certificado = cert;
+      }
+
+      this.callUserIsActive(clientData, pre);
     } finally {
-      // Si el subscribe aún no responde, el spinner seguirá activo por los handlers de arriba.
-      // Este finally solo cubre validaciones síncronas.
       if (!this.FormVerify.valid) {
         this.showSpinner = false;
       }
     }
+  }
+
+  private async runAutomatedVerification(): Promise<void> {
+    const token = sessionStorage.getItem('accessToken');
+    if (!token?.trim()) {
+      this.mostrarToast('Inicia sesión para continuar.', 'toast-error');
+      await this.navCtrl.navigateRoot(['/login']);
+      return;
+    }
+
+    this.autoVerifyInProgress = true;
+    this.showSpinner = true;
+    this.FormVerify.patchValue({
+      prefix: 'V',
+      rif: this.defaultVerifyDocument,
+    });
+
+    let pre: { rows: any[]; picked: any | null } | null = null;
+    try {
+      pre = await this.prefetchMembership();
+    } catch (e) {
+      console.warn('prefetchMembership', e);
+      pre = null;
+    }
+
+    const cert = pre?.picked?.certificate != null ? String(pre.picked.certificate).trim() : '';
+    const clientData: { cedula: string; certificado?: string } = {
+      cedula: this.defaultVerifyDocument,
+    };
+    if (cert) {
+      clientData.certificado = cert;
+    }
+
+    this.callUserIsActive(clientData, pre);
   }
 
   formatPlaca(event: any): void {
@@ -258,9 +342,7 @@ export class AuthPage implements OnInit {
       });
     }
 
-  ngOnInit() {
-    // this.showSpinner = true;
-    // const user = this.getAccessToken()
-    // this.UserVerifyMembership(user.id_user)
+  ngOnInit(): void {
+    void this.runAutomatedVerification();
   }
 }

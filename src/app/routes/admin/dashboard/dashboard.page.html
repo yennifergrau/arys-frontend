@@ -196,60 +196,17 @@
                 </div>
 
                 <div class="dashboard-quick">
-                  <button
-                    type="button"
-                    class="dashboard-quick__btn"
-                    [class.dashboard-quick__btn--active]="waSelected?.id === 'grua'"
-                    (click)="selectWaOption(waOptions[0])"
-                  >
-                    <span class="dashboard-quick__icon"><i class="fa-solid fa-truck-pickup"></i></span>
-                    <span class="dashboard-quick__text">Grúa</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="dashboard-quick__btn"
-                    [class.dashboard-quick__btn--active]="waSelected?.id === 'bateria'"
-                    (click)="selectWaOption(waOptions[1])"
-                  >
-                    <span class="dashboard-quick__icon"><i class="fa-solid fa-car-battery"></i></span>
-                    <span class="dashboard-quick__text">Batería</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="dashboard-quick__btn"
-                    [class.dashboard-quick__btn--active]="waSelected?.id === 'caucho'"
-                    (click)="selectWaOption(waOptions[2])"
-                  >
-                    <span class="dashboard-quick__icon"><i class="fa-solid fa-circle-dot"></i></span>
-                    <span class="dashboard-quick__text">Caucho</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="dashboard-quick__btn"
-                    [class.dashboard-quick__btn--active]="waSelected?.id === 'gasolina'"
-                    (click)="selectWaOption(waOptions[3])"
-                  >
-                    <span class="dashboard-quick__icon"><i class="fa-solid fa-gas-pump"></i></span>
-                    <span class="dashboard-quick__text">Gasolina</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="dashboard-quick__btn"
-                    [class.dashboard-quick__btn--active]="waSelected?.id === 'cerrajero'"
-                    (click)="selectWaOption(waOptions[4])"
-                  >
-                    <span class="dashboard-quick__icon"><i class="fa-solid fa-key"></i></span>
-                    <span class="dashboard-quick__text">Cerrajero</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="dashboard-quick__btn"
-                    [class.dashboard-quick__btn--active]="waSelected?.id === 'mecanica'"
-                    (click)="selectWaOption(waOptions[5])"
-                  >
-                    <span class="dashboard-quick__icon"><i class="fa-solid fa-screwdriver-wrench"></i></span>
-                    <span class="dashboard-quick__text">Mecánica</span>
-                  </button>
+                  @for (opt of waOptions; track opt.id) {
+                    <button
+                      type="button"
+                      class="dashboard-quick__btn"
+                      [class.dashboard-quick__btn--active]="waSelected?.id === opt.id"
+                      (click)="selectWaOption(opt)"
+                    >
+                      <span class="dashboard-quick__icon"><i class="fa-solid" [ngClass]="opt.icon"></i></span>
+                      <span class="dashboard-quick__text">{{ opt.label }}</span>
+                    </button>
+                  }
                 </div>
 
                 @if (waExpanded) {
@@ -390,142 +347,7 @@
                         (click)="sendWhatsappFromDashboard()"
                       >
                         <i class="fa-brands fa-whatsapp me-2"></i>
-                        Abrir WhatsApp y enviar
-                      </button>
-                    }
-                  </div>
-                }
-              </div>
-            </section>
-
-            <section class="dashboard-hero buy-hero" id="buy-top">
-              <div class="dashboard-actions">
-                <div class="dashboard-actions__title">
-                  <span class="dashboard-actions__titleIcon dashboard-actions__titleIcon--buy">
-                    <i class="fa-solid fa-cart-shopping"></i>
-                  </span>
-                  Solicitar a proveedores
-                </div>
-
-                <div class="dashboard-actions__micro">
-                  Elige una categoría, escribe el repuesto y envía por WhatsApp para cotizar/coordinar la compra.
-                </div>
-
-                <div class="dashboard-quick dashboard-quick--buy">
-                  @for (c of buyCategories; track c.id) {
-                    <button
-                      type="button"
-                      class="dashboard-quick__btn"
-                      [class.dashboard-quick__btn--active]="c.selected"
-                      (click)="selectBuyCategory(c)"
-                    >
-                      <span class="dashboard-quick__icon"><i class="fa-solid" [ngClass]="c.icon"></i></span>
-                      <span class="dashboard-quick__text">{{ c.label }}</span>
-                    </button>
-                  }
-                </div>
-
-                @if (buyExpanded) {
-                  <div class="wa-compose buy-compose" id="buy-compose">
-                    <div class="wa-compose__header">
-                      <div class="wa-compose__title">
-                        <span class="wa-step">Compra</span>
-                        @if (buySelectedCategory) {
-                          <span class="wa-step__text">Categoría</span>
-                          <span class="wa-compose__pill">
-                            <i class="fa-solid fa-cart-shopping"></i>
-                            {{ buySelectedCategory }}
-                          </span>
-                        }
-                      </div>
-                      <div class="wa-compose__actions">
-                        <button type="button" class="wa-action" (click)="clearBuy()" aria-label="Limpiar compra">
-                          <i class="fa-solid fa-rotate-left"></i>
-                        </button>
-                        <button type="button" class="wa-action" (click)="closeBuy()" aria-label="Cerrar">
-                          <i class="fa-solid fa-xmark"></i>
-                        </button>
-                        <button type="button" class="wa-action" (click)="toggleBuyPreview()" [attr.aria-label]="buyShowPreview ? 'Ocultar vista previa' : 'Ver vista previa'">
-                          <i class="fa-solid" [ngClass]="buyShowPreview ? 'fa-eye-slash' : 'fa-eye'"></i>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div class="wa-details" id="buy-details">
-                      <div class="wa-form">
-                        <div class="wa-form__row">
-                          <div class="wa-field">
-                            <label class="wa-label">Repuesto / pieza</label>
-                            <input class="form-control wa-input" [(ngModel)]="buyItem" placeholder="Ej: Pastillas de freno, batería 12V..." />
-                          </div>
-                        </div>
-
-                        <div class="wa-fast">
-                          <div class="wa-fast__row">
-                            <button type="button" class="wa-fast__btn wa-fast__btn--gps" (click)="useMyLocationForBuy()">
-                              <i class="fa-solid fa-location-crosshairs me-2"></i>
-                              Usar mi ubicación
-                            </button>
-                            <div class="wa-fast__hint">Toca chips para llenar rápido.</div>
-                          </div>
-
-                          <div class="wa-fast__group">
-                            <div class="wa-fast__label">Ubicación rápida</div>
-                            <div class="wa-chips">
-                              @for (c of waLocationChips; track c.value) {
-                                <button type="button" class="wa-chip" (click)="addBuyLocationPreset(c.value)">{{ c.label }}</button>
-                              }
-                            </div>
-                          </div>
-
-                          <div class="wa-fast__group">
-                            <div class="wa-fast__label">Notas rápidas</div>
-                            <div class="wa-chips">
-                              <button type="button" class="wa-chip" (click)="addBuyNotePreset('Necesito precio y disponibilidad')">Precio y disponibilidad</button>
-                              <button type="button" class="wa-chip" (click)="addBuyNotePreset('Es para hoy')">Para hoy</button>
-                              <button type="button" class="wa-chip" (click)="addBuyNotePreset('Si no hay, dame alternativas')">Alternativas</button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="wa-form__row">
-                          <div class="wa-field">
-                            <label class="wa-label">Ubicación</label>
-                            <input class="form-control wa-input" [(ngModel)]="buyLocation" placeholder="Ej: Av. X, cerca de Y" />
-                          </div>
-                        </div>
-
-                        <button type="button" class="wa-more" (click)="toggleBuyExtra()" id="buy-extra">
-                          <span>Agregar datos del vehículo (opcional)</span>
-                          <i class="fa-solid" [ngClass]="buyShowExtra ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                        </button>
-
-                        @if (buyShowExtra) {
-                          <div class="wa-form__grid">
-                            <div class="wa-field">
-                              <label class="wa-label">Placa</label>
-                              <input class="form-control wa-input" [(ngModel)]="buyPlate" placeholder="Ej: AB123CD" />
-                            </div>
-                            <div class="wa-field">
-                              <label class="wa-label">Notas</label>
-                              <input class="form-control wa-input" [(ngModel)]="buyNotes" placeholder="Marca/modelo/año, medidas, etc." />
-                            </div>
-                          </div>
-                        }
-                      </div>
-                    </div>
-
-                    @if (buyShowPreview) {
-                      <div class="wa-preview" id="buy-preview">
-                        <div class="wa-compose__title">Vista previa</div>
-                        <pre class="wa-preview__box">{{ buildBuyMessage() }}</pre>
-                      </div>
-                    }
-
-                    @if (buyCanSend) {
-                      <button type="button" class="btn btn-success w-100 wa-send" (click)="sendBuyWhatsapp()">
-                        <i class="fa-brands fa-whatsapp me-2"></i>
-                        Abrir WhatsApp y enviar
+                        Enviar solicitud
                       </button>
                     }
                   </div>

@@ -126,8 +126,35 @@ export class EmissionDetailsService {
     localStorage.setItem('paymentData',JSON.stringify(value))
   }
 
-  set userData(value: string) {
+  set userData(value: any) {
     localStorage.setItem('userData', JSON.stringify(value));
+  }
+
+  /**
+   * Tras `userIsActive`: guarda verificación + fila de `get_membership` (la API manda certificado, plan, crédito, vehículo…).
+   * La membresía sobrescribe claves homónimas de la verificación.
+   */
+  persistUserDataAfterVerification(statusResponse: any, membershipRow: any | null | undefined): void {
+    if (membershipRow != null && typeof membershipRow === 'object') {
+      this.userData = { ...(statusResponse ?? {}), ...membershipRow };
+      return;
+    }
+    if (statusResponse != null) {
+      this.userData = statusResponse;
+    }
+  }
+
+  /** Actualiza `userData` con la última membresía sin borrar rif/estatus ya guardados. */
+  mergeUserDataFromMembership(membershipRow: any | null | undefined): void {
+    if (membershipRow == null || typeof membershipRow !== 'object') return;
+    let prev: Record<string, any> = {};
+    try {
+      const raw = localStorage.getItem('userData');
+      if (raw) prev = JSON.parse(raw);
+    } catch {
+      prev = {};
+    }
+    this.userData = { ...prev, ...membershipRow };
   }
 
   set vehicle_id_arys(value:string){

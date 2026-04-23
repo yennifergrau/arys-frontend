@@ -17,8 +17,11 @@
             <div class="section-head">
               <h3 class="title">Estatus de la Cuenta</h3>
               <p>
-                Completa el formulario para averiguar si ya tienes un vehículo
-                registrado para gozar de nuestros servicios.
+                @if (autoVerifyInProgress) {
+                  Verificando tu cuenta con los datos de tu membresía…
+                } @else {
+                  Puedes ajustar el documento y pulsar Verificar, o espera la verificación automática.
+                }
               </p>
             </div>
             <form class="ic-form-group" [formGroup]="FormVerify">
