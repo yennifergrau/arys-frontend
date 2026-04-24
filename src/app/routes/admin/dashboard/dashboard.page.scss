@@ -1,4 +1,4 @@
-/* Dashboard UI refresh (alineado al theme existente) */
+/* Dashboard UI refresh — paleta corporativa ARYS (ámbar + navy), sin azul/verde “Bootstrap” */
 
 .dashboard-shell {
   background: var(--bg-white);
@@ -9,7 +9,7 @@
 .dashboard-hero {
   padding: 12px 12px 10px;
   border-radius: 12px;
-  background: linear-gradient(180deg, var(--rgba-primary-1), rgba(255, 255, 255, 0));
+  background: linear-gradient(180deg, rgba(255, 176, 0, 0.12), rgba(255, 255, 255, 0));
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
@@ -28,9 +28,9 @@
 }
 
 .dashboard-hero__avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   background: var(--bg-white);
   border: 1px solid rgba(0, 0, 0, 0.06);
   display: grid;
@@ -39,8 +39,8 @@
 }
 
 .dashboard-hero__avatar img {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
 }
 
@@ -117,15 +117,15 @@
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: rgba(36, 161, 72, 0.12);
-  border: 1px solid rgba(36, 161, 72, 0.18);
-  color: rgba(36, 161, 72, 0.92);
+  background: rgba(255, 176, 0, 0.16);
+  border: 1px solid rgba(255, 176, 0, 0.38);
+  color: var(--secondary);
 }
 
 .dashboard-actions__titleIcon--buy{
-  background: rgba(25, 118, 210, 0.10);
-  border-color: rgba(25, 118, 210, 0.18);
-  color: rgba(25, 118, 210, 0.92);
+  background: rgba(19, 25, 33, 0.08);
+  border-color: rgba(19, 25, 33, 0.14);
+  color: var(--secondary);
 }
 
 .buy-hero{
@@ -133,13 +133,14 @@
 }
 
 .dashboard-quick--buy .dashboard-quick__icon{
-  background: rgba(25, 118, 210, 0.10);
-  color: rgba(25, 118, 210, 0.92);
+  background: rgba(19, 25, 33, 0.08);
+  color: var(--secondary);
 }
 
 .buy-compose .wa-compose__pill{
-  background: rgba(25, 118, 210, 0.10);
-  color: rgba(25, 118, 210, 0.92);
+  color: #5c3800;
+  background: linear-gradient(145deg, rgba(255, 200, 120, 0.45) 0%, rgba(255, 176, 0, 0.2) 100%);
+  border: 1px solid rgba(255, 149, 0, 0.5);
 }
 .dashboard-actions__micro{
   margin-top: 8px;
@@ -216,9 +217,9 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 900;
-  color: var(--primary);
-  background: var(--rgba-primary-1);
-  border: 1px solid rgba(0,0,0,0.06);
+  color: #5c3800;
+  background: linear-gradient(145deg, rgba(255, 200, 120, 0.45) 0%, rgba(255, 176, 0, 0.2) 100%);
+  border: 1px solid rgba(255, 149, 0, 0.5);
   white-space: nowrap;
 }
 
@@ -280,19 +281,35 @@
 }
 
 .wa-option--active{
-  border-color: rgba(24, 157, 66, 0.24);
-  box-shadow: 0 10px 22px rgba(24, 157, 66, 0.12);
+  border-color: rgba(255, 149, 0, 0.62);
+  background: linear-gradient(165deg, rgba(255, 210, 150, 0.38) 0%, rgba(255, 176, 0, 0.12) 42%, #fff 100%);
+  box-shadow: 0 12px 28px rgba(255, 149, 0, 0.2);
+}
+
+.wa-option--active .wa-option__title{
+  color: #5c3800;
+}
+
+.wa-option--active .wa-option__subtitle{
+  color: rgba(92, 56, 0, 0.82);
 }
 
 .wa-option__icon{
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  background: var(--rgba-primary-1);
-  color: var(--primary);
-  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255, 176, 0, 0.14);
+  color: var(--secondary);
+  border: 1px solid rgba(255, 176, 0, 0.22);
   display: grid;
   place-items: center;
+}
+
+.wa-option--active .wa-option__icon{
+  background: linear-gradient(145deg, #ffb000 0%, #ff9500 100%);
+  color: #fff;
+  border-color: rgba(255, 140, 0, 0.45);
+  box-shadow: 0 6px 14px rgba(255, 149, 0, 0.35);
 }
 
 .wa-option__icon i{
@@ -321,9 +338,10 @@
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(24, 157, 66, 0.12);
-  border: 1px solid rgba(24, 157, 66, 0.18);
-  color: #189D42;
+  background: linear-gradient(145deg, #ffb000 0%, #f08800 100%);
+  border: 1px solid rgba(255, 140, 0, 0.55);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.35);
 }
 
 .wa-details{
@@ -363,8 +381,8 @@
 
 .wa-input:focus,
 .wa-textarea:focus{
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.10);
-  border-color: rgba(25, 118, 210, 0.35);
+  box-shadow: 0 0 0 3px rgba(255, 176, 0, 0.18);
+  border-color: rgba(255, 176, 0, 0.55);
 }
 
 .wa-textarea{
@@ -439,9 +457,9 @@
 }
 
 .wa-fast__btn--gps{
-  border-color: rgba(25, 118, 210, 0.22);
-  background: rgba(25, 118, 210, 0.06);
-  color: rgba(25, 118, 210, 0.92);
+  border-color: rgba(18, 43, 124, 0.22);
+  background: rgba(18, 43, 124, 0.06);
+  color: var(--blue-arys);
 }
 
 .wa-fast__hint{
@@ -520,7 +538,7 @@
   border-radius: 12px;
   padding: 12px 14px;
   font-weight: 900;
-  box-shadow: 0 14px 28px rgba(36, 161, 72, 0.18);
+  box-shadow: 0 14px 28px rgba(255, 176, 0, 0.22);
   position: static;
 }
 
@@ -557,22 +575,29 @@
 }
 
 .dashboard-quick__btn--active{
-  border-color: rgba(25, 118, 210, 0.26);
-  box-shadow: 0 12px 24px rgba(25, 118, 210, 0.14);
+  border-color: rgba(255, 149, 0, 0.58);
+  background: linear-gradient(165deg, rgba(255, 210, 150, 0.42) 0%, rgba(255, 176, 0, 0.14) 40%, #fff 100%);
+  box-shadow: 0 14px 30px rgba(255, 149, 0, 0.22);
 }
 
 .dashboard-quick__btn--active .dashboard-quick__icon{
-  background: rgba(25, 118, 210, 0.10);
-  color: rgba(25, 118, 210, 0.95);
+  background: linear-gradient(145deg, #ffb000 0%, #ff9500 100%);
+  color: #fff;
+  border-color: rgba(255, 140, 0, 0.4);
+  box-shadow: 0 6px 16px rgba(255, 149, 0, 0.32);
+}
+
+.dashboard-quick__btn--active .dashboard-quick__text{
+  color: #5c3800;
 }
 
 .dashboard-quick__icon{
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  background: var(--rgba-primary-1);
-  color: var(--primary);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 176, 0, 0.12);
+  color: var(--secondary);
+  border: 1px solid rgba(255, 176, 0, 0.2);
   display: grid;
   place-items: center;
 }
@@ -652,8 +677,8 @@
   width: 40px;
   height: 40px;
   border-radius: 14px;
-  background: var(--rgba-primary-1);
-  color: var(--primary);
+  background: rgba(255, 176, 0, 0.14);
+  color: var(--secondary);
   display: grid;
   place-items: center;
 }
@@ -706,7 +731,7 @@
 
 .membership-card__planBadge i{
   font-size: 12px;
-  color: rgba(25, 118, 210, 0.95);
+  color: var(--primary);
 }
 
 @media (max-width: 520px){
@@ -751,9 +776,9 @@
 }
 
 .chip--success {
-  color: #189D42;
-  background: rgba(24, 157, 66, 0.12);
-  border-color: rgba(24, 157, 66, 0.18);
+  color: #6b4e00;
+  background: rgba(255, 176, 0, 0.16);
+  border-color: rgba(255, 176, 0, 0.38);
 }
 
 .chip--warning {
@@ -763,9 +788,9 @@
 }
 
 .chip--ok {
-  color: #189D42;
-  background: rgba(24, 157, 66, 0.12);
-  border-color: rgba(24, 157, 66, 0.18);
+  color: var(--secondary);
+  background: rgba(19, 25, 33, 0.06);
+  border-color: rgba(19, 25, 33, 0.12);
 }
 
 .membership-card__metrics {
@@ -814,7 +839,7 @@
 .membership-card__barFill{
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(25,118,210,0.95), rgba(36,161,72,0.90));
+  background: linear-gradient(90deg, #ffb000 0%, #e09600 55%, #c27f00 100%);
   width: 0%;
   transition: width 220ms ease;
 }
@@ -840,7 +865,7 @@
 }
 
 .metric__value--accent {
-  color: #c0841a;
+  color: #b37400;
 }
 
 .metric__unit {
@@ -900,8 +925,29 @@
   font-weight: 900;
 }
 
-/* Mantener compatibilidad visual del botón "Pagar" */
-.btn-success {
-  background-color: #24a148 !important;
-  border: none;
+/* CTAs “éxito” del dashboard: ámbar + texto navy (marca), no verde Bootstrap */
+.dashboard-shell .btn-success {
+  background: linear-gradient(180deg, #ffc42d 0%, #ffb000 45%, #e09600 100%) !important;
+  border: 1px solid rgba(19, 25, 33, 0.12) !important;
+  color: var(--secondary) !important;
+  font-weight: 900;
+}
+
+.dashboard-shell .btn-success:active,
+.dashboard-shell .btn-success:focus-visible {
+  filter: brightness(0.97);
+  color: var(--secondary) !important;
+}
+
+.dashboard-shell .membership-card__cta.btn-outline-primary {
+  border-color: rgba(255, 176, 0, 0.55);
+  color: var(--secondary);
+  background: rgba(255, 255, 255, 0.96);
+  font-weight: 900;
+}
+
+.dashboard-shell .membership-card__cta.btn-outline-primary:hover {
+  background: rgba(255, 176, 0, 0.12);
+  border-color: rgba(255, 176, 0, 0.75);
+  color: var(--secondary);
 }
