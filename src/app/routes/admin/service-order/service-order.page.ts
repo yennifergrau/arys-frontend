@@ -88,13 +88,9 @@ export class ServiceOrderPage implements OnInit {
     return Number.isFinite(parsed) ? parsed : 0
   }
 
-  /**
-   * Pago mínimo en customer/products: Meritop puede enviar el monto en varias claves
-   * o solo en `amount_share_to_pay_converted`; si no hay valor, se usa 15% de la deuda.
-   */
+  /** Pago mínimo: solo campos de Meritop; si no envía monto, 0. */
   private resolveMeritopMinPayment(product: any): number {
     if (!product || typeof product !== 'object') return 0
-    const debt = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0)
     const candidates = [
       product.amount_share_to_pay,
       product.amount_share_to_pay_converted,
@@ -106,7 +102,6 @@ export class ServiceOrderPage implements OnInit {
       const n = this.toNumber(c)
       if (n > 0) return parseFloat(n.toFixed(2))
     }
-    if (debt > 0) return parseFloat((debt * 0.15).toFixed(2))
     return 0
   }
 
@@ -122,6 +117,83 @@ export class ServiceOrderPage implements OnInit {
     } catch (e) {
       console.error('Token invalido en service-order', e)
     }
+  }
+
+  /** Alinea `meritop_summary_v1` con Inicio / pagar deuda / movimientos. */
+  private persistMeritopCacheFromProduct(product: any): void {
+    try {
+      const limit = Number(product.limit ?? 0) || 0
+      const available = Number(product.available ?? 0) || 0
+      if (limit <= 0) return
+      const summary = {
+        limit,
+        available,
+        cardnumber: String(product.cardnumber ?? ''),
+        credit_pay_before: product.credit_pay_before != null ? String(product.credit_pay_before) : undefined,
+        id: product.id != null ? String(product.id) : '',
+        receiving_account: product?.receiving_account ?? null,
+        amount_share_to_pay:
+          product.amount_share_to_pay != null
+            ? Number(product.amount_share_to_pay)
+            : undefined,
+        amount_share_to_pay_converted:
+          product.amount_share_to_pay_converted != null
+            ? Number(product.amount_share_to_pay_converted)
+            : undefined,
+        min_pay: product.min_pay != null ? Number(product.min_pay) : undefined,
+        minimum_payment: product.minimum_payment != null ? Number(product.minimum_payment) : undefined,
+        share_to_pay: product.share_to_pay != null ? Number(product.share_to_pay) : undefined,
+      }
+      sessionStorage.setItem(this.MERITOP_CACHE_KEY, JSON.stringify(summary))
+    } catch {
+      // noop
+    }
+  }
+
+  /**
+   * Tras consumo (addPurchased): vuelve a leer Meritop y actualiza caché sin poner la pantalla en “loading”.
+   */
+  private refreshMeritopProductSilent(): void {
+    const identity = this.getCustomerIdentity()
+    if (!identity) return
+    const payload = {
+      bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
+      channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
+      terminal: '0',
+      ip: '127.0.0.1',
+      clientid: {
+        doctype: identity.doctype,
+        docid: identity.docid,
+      },
+    }
+    this.meritopService.getAccessToken().subscribe({
+      next: () => {
+        this.meritopService.customerProduct(payload).subscribe({
+          next: (result: any) => {
+            const product = result?.products?.[0]
+            if (!product) return
+            this.customerProduct = {
+              id: String(product.id ?? ''),
+              cardnumber: String(product.cardnumber ?? ''),
+              limit: Number(product.limit ?? 0),
+              available: Number(product.available ?? 0),
+              amount_used: this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0),
+              amount_share_to_pay: this.resolveMeritopMinPayment(product),
+              credit_pay_before: String(product.credit_pay_before ?? ''),
+            }
+            this.customerProductFetchReason = ''
+            this.summaryState = 'ready'
+            this.persistMeritopCacheFromProduct(product)
+          },
+          error: () => {
+            void this.presentToast('No se pudo refrescar el saldo Meritop.', 'warning')
+          },
+        })
+      },
+      error: () => {
+        void this.presentToast('No se pudo refrescar el saldo Meritop.', 'warning')
+      },
+    })
   }
 
   private hydrateFromCache(): { meritop: boolean; pending: boolean } {
@@ -140,7 +212,13 @@ export class ServiceOrderPage implements OnInit {
             limit,
             available,
             amount_used: this.toNumber(cached?.amount_used ?? 0),
-            amount_share_to_pay: this.toNumber(cached?.amount_share_to_pay ?? 0),
+            amount_share_to_pay: this.resolveMeritopMinPayment({
+              amount_share_to_pay: cached?.amount_share_to_pay,
+              amount_share_to_pay_converted: cached?.amount_share_to_pay_converted,
+              min_pay: cached?.min_pay,
+              minimum_payment: cached?.minimum_payment,
+              share_to_pay: cached?.share_to_pay,
+            }),
             credit_pay_before: String(cached?.credit_pay_before ?? ''),
           }
           this.summaryState = 'ready'
@@ -487,6 +565,8 @@ export class ServiceOrderPage implements OnInit {
             : 'Transacción creada exitosamente';
           this.presentToast(msg, 'success');
           this.applyResult = { ...result, message: msg };
+          this.refreshMeritopProductSilent();
+          this.loadMembershipSummary();
         } else {
           this.applyResult = result;
         }
@@ -612,6 +692,7 @@ export class ServiceOrderPage implements OnInit {
               }
               this.customerProductFetchReason = ''
               this.summaryState = 'ready'
+              this.persistMeritopCacheFromProduct(product)
             },
             error: (error) => {
               this.customerProduct = null

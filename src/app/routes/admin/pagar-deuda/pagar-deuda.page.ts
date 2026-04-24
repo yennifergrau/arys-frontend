@@ -7,7 +7,7 @@ import { addPayment } from '../interface/meritop.interface';
 import { TabComponent } from 'src/app/shared/components/tab/tab.component';
 import { RouterLink } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
-import { finalize } from 'rxjs';
+import { catchError, concatMap, finalize, map, of, tap } from 'rxjs';
 import { DataArysService } from '../services/data-arys.service';
 
 @Component({
@@ -96,11 +96,11 @@ export class PagarDeudaPage implements OnInit {
   }
 
   /**
-   * Pago mínimo en customer/products: varias claves posibles; si no viene, 15% de la deuda.
+   * Pago mínimo: solo lo que envía Meritop en customer/products (varias claves posibles).
+   * Si no viene ningún monto, 0 (no se calcula nada en el cliente).
    */
   private resolveMeritopMinPayment(product: any): number {
     if (!product || typeof product !== 'object') return 0;
-    const debt = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
     const candidates = [
       product.amount_share_to_pay,
       product.amount_share_to_pay_converted,
@@ -112,7 +112,6 @@ export class PagarDeudaPage implements OnInit {
       const n = this.toNumber(c);
       if (n > 0) return parseFloat(n.toFixed(2));
     }
-    if (debt > 0) return parseFloat((debt * 0.15).toFixed(2));
     return 0;
   }
 
@@ -148,6 +147,8 @@ export class PagarDeudaPage implements OnInit {
     this.summaryReady = false;
     this.membershipLoaded = false;
     this.productLoaded = false;
+    /** Siempre: sin esto, la ruta con caché omite `loadCustomerProduct` y docType/docId quedan vacíos. */
+    this.syncIdentityFromToken();
     this.loadMembershipSummary();
     // Si Inicio ya precargó Meritop, no lo volvemos a pedir aquí.
     const usedCache = this.hydrateMeritopFromCache();
@@ -170,7 +171,13 @@ export class PagarDeudaPage implements OnInit {
       const debt = Math.max(0, limit - available);
       this.limitAmount = limit;
       this.debtAmount = debt;
-      this.minPayAmount = this.resolveMeritopMinPayment({ amount_used: debt });
+      this.minPayAmount = this.resolveMeritopMinPayment({
+        amount_share_to_pay: cached?.amount_share_to_pay,
+        amount_share_to_pay_converted: cached?.amount_share_to_pay_converted,
+        min_pay: cached?.min_pay,
+        minimum_payment: cached?.minimum_payment,
+        share_to_pay: cached?.share_to_pay,
+      });
       this.creditPayBefore = cached?.credit_pay_before != null ? String(cached.credit_pay_before) : '';
       this.cardNumber = cached?.cardnumber != null ? String(cached.cardnumber) : this.cardNumber;
       // Guardado desde Inicio: permite mostrar Pago móvil sin refetch.
@@ -249,6 +256,83 @@ export class PagarDeudaPage implements OnInit {
     return null;
   }
 
+  /** Rellena docType/docId desde token o userData (necesario aunque Meritop venga solo de caché). */
+  private syncIdentityFromToken(): void {
+    const identity = this.getIdentity();
+    if (!identity) return;
+    this.docType = identity.doctype;
+    this.docId = identity.docid;
+  }
+
+  private persistMeritopCacheFromProduct(product: any): void {
+    try {
+      const limit = Number(product.limit ?? 0) || 0;
+      const available = Number(product.available ?? 0) || 0;
+      if (limit <= 0) return;
+      const summary = {
+        limit,
+        available,
+        cardnumber: String(product.cardnumber ?? ''),
+        credit_pay_before: product.credit_pay_before != null ? String(product.credit_pay_before) : undefined,
+        id: product.id != null ? String(product.id) : '',
+        receiving_account: product?.receiving_account ?? null,
+        amount_share_to_pay:
+          product.amount_share_to_pay != null
+            ? Number(product.amount_share_to_pay)
+            : undefined,
+        amount_share_to_pay_converted:
+          product.amount_share_to_pay_converted != null
+            ? Number(product.amount_share_to_pay_converted)
+            : undefined,
+        min_pay: product.min_pay != null ? Number(product.min_pay) : undefined,
+        minimum_payment: product.minimum_payment != null ? Number(product.minimum_payment) : undefined,
+        share_to_pay: product.share_to_pay != null ? Number(product.share_to_pay) : undefined,
+      };
+      sessionStorage.setItem(this.MERITOP_CACHE_KEY, JSON.stringify(summary));
+    } catch {
+      // noop
+    }
+  }
+
+  private applyMeritopProductFromResponse(result: any): void {
+    const product = result?.products?.[0];
+    if (!product) return;
+    this.debtAmount = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
+    this.limitAmount = this.toNumber(product.limit ?? 0);
+    this.cardNumber = String(product.cardnumber ?? '');
+    this.minPayAmount = this.resolveMeritopMinPayment(product);
+    this.mapReceivingAccount(product);
+    this.creditPayBefore = String(product.credit_pay_before ?? '');
+    this.persistMeritopCacheFromProduct(product);
+  }
+
+  /**
+   * Vuelve a pedir `customer/products` y persiste caché (misma fuente que Inicio / órdenes).
+   * Encadenado tras addPayment para que el saldo refleje lo último antes de cerrar el loading.
+   */
+  private refreshMeritopFromServer$() {
+    const identity = this.getIdentity();
+    if (!identity) {
+      return of(undefined);
+    }
+    const payload = {
+      bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
+      channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
+      terminal: '0',
+      ip: '127.0.0.1',
+      clientid: identity
+    };
+    return this.meritopService.getAccessToken().pipe(
+      concatMap(() => this.meritopService.customerProduct(payload)),
+      tap((result: any) => this.applyMeritopProductFromResponse(result)),
+      map(() => undefined),
+      catchError(() => {
+        void this.showToast('No se pudo actualizar el saldo desde Meritop.', 'warning');
+        return of(undefined);
+      })
+    );
+  }
+
   private loadCustomerProduct() {
     const identity = this.getIdentity();
     if (!identity) {
@@ -278,15 +362,7 @@ export class PagarDeudaPage implements OnInit {
           }))
           .subscribe({
             next: (result: any) => {
-              const product = result?.products?.[0];
-              if (!product) return;
-
-              this.debtAmount = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
-              this.limitAmount = this.toNumber(product.limit ?? 0);
-              this.cardNumber = String(product.cardnumber ?? '');
-              this.minPayAmount = this.resolveMeritopMinPayment(product);
-              this.mapReceivingAccount(product);
-              this.creditPayBefore = String(product.credit_pay_before ?? '');
+              this.applyMeritopProductFromResponse(result);
             },
             error: () => {
               this.showToast('No se pudo cargar la informacion de tu tarjeta.', 'warning');
@@ -380,12 +456,20 @@ export class PagarDeudaPage implements OnInit {
     };
 
     this.meritopService.addPayment(paymentData)
-      .pipe(finalize(() => this.showLoading = false))
-      .subscribe({
-        next: (res) => {
-          console.log('Pago exitoso:', res);
+      .pipe(
+        tap((res) => console.log('Pago exitoso:', res)),
+        tap(() => {
           this.showSuccess = true;
           this.updateLocalBalance();
+        }),
+        concatMap(() => this.refreshMeritopFromServer$()),
+        finalize(() => {
+          this.showLoading = false;
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.loadMembershipSummary();
         },
         error: (err) => {
           console.error('Error en pago:', err);
@@ -395,7 +479,18 @@ export class PagarDeudaPage implements OnInit {
   }
 
   private updateLocalBalance() {
-    this.debtAmount = Math.max(0, this.debtAmount - Number(this.payAmount));
+    const paid = Number(this.payAmount);
+    if (!Number.isFinite(paid) || paid <= 0) return;
+    this.debtAmount = Math.max(0, this.debtAmount - paid);
+    if (this.membershipSummary && typeof this.membershipSummary === 'object') {
+      const used = this.toNumber(this.membershipSummary.credit_used);
+      if (used > 0) {
+        this.membershipSummary = {
+          ...this.membershipSummary,
+          credit_used: Math.max(0, used - paid)
+        };
+      }
+    }
   }
 
   public goBack() {

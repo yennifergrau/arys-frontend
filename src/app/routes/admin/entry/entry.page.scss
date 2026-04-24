@@ -1,3 +1,11 @@
+.entry-solicitar-wrap {
+  padding: 12px 10px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 176, 0, 0.14) 0%, rgba(255, 255, 255, 0.65) 50%, rgba(255, 255, 255, 0.95) 100%);
+  border: 1px solid rgba(255, 149, 0, 0.28);
+  box-shadow: 0 8px 18px rgba(255, 149, 0, 0.08);
+}
+
 .toast-container{
   position: fixed;
   top: 16px;

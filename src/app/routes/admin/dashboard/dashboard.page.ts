@@ -709,9 +709,14 @@ export class DashboardPage implements OnInit {
               amount_share_to_pay:
                 product.amount_share_to_pay != null
                   ? Number(product.amount_share_to_pay)
-                  : product.amount_share_to_pay_converted != null
-                    ? Number(product.amount_share_to_pay_converted)
-                    : undefined,
+                  : undefined,
+              amount_share_to_pay_converted:
+                product.amount_share_to_pay_converted != null
+                  ? Number(product.amount_share_to_pay_converted)
+                  : undefined,
+              min_pay: product.min_pay != null ? Number(product.min_pay) : undefined,
+              minimum_payment: product.minimum_payment != null ? Number(product.minimum_payment) : undefined,
+              share_to_pay: product.share_to_pay != null ? Number(product.share_to_pay) : undefined,
             };
             this.meritopProduct = summary;
             this.meritopSummaryState = 'ready';

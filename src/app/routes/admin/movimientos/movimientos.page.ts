@@ -69,9 +69,9 @@ export class MovimientosPage implements OnInit {
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
+  /** Pago mínimo: solo campos de Meritop; si no envía monto, 0. */
   private resolveMeritopMinPayment(product: any): number {
     if (!product || typeof product !== 'object') return 0;
-    const debt = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
     const candidates = [
       product.amount_share_to_pay,
       product.amount_share_to_pay_converted,
@@ -83,7 +83,6 @@ export class MovimientosPage implements OnInit {
       const n = this.toNumber(c);
       if (n > 0) return parseFloat(n.toFixed(2));
     }
-    if (debt > 0) return parseFloat((debt * 0.15).toFixed(2));
     return 0;
   }
 
@@ -163,10 +162,13 @@ export class MovimientosPage implements OnInit {
       const used = Math.max(0, limit - available);
       this.limitAmount = limit;
       this.debtAmount = used;
-      this.minPayAmount =
-        cached?.amount_share_to_pay != null
-          ? this.toNumber(cached.amount_share_to_pay)
-          : this.resolveMeritopMinPayment({ amount_used: used });
+      this.minPayAmount = this.resolveMeritopMinPayment({
+        amount_share_to_pay: cached?.amount_share_to_pay,
+        amount_share_to_pay_converted: cached?.amount_share_to_pay_converted,
+        min_pay: cached?.min_pay,
+        minimum_payment: cached?.minimum_payment,
+        share_to_pay: cached?.share_to_pay,
+      });
       this.creditPayBefore = cached?.credit_pay_before != null ? String(cached.credit_pay_before) : '';
       this.cardNumber = cached?.cardnumber != null ? String(cached.cardnumber) : this.cardNumber;
       this.productId = cached?.id != null ? String(cached.id) : this.productId;
@@ -193,7 +195,11 @@ export class MovimientosPage implements OnInit {
       ? this.dataArysService.get_membership(idMember)
       : email ? this.dataArysService.get_membership_by_email(email) : null;
 
-    if (!req) return;
+    if (!req) {
+      this.membershipLoaded = true;
+      this.updateSummaryReady();
+      return;
+    }
 
     req.subscribe({
       next: (res: any) => {

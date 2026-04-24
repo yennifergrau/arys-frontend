@@ -11,6 +11,18 @@
   background: var(--bg-white);
 }
 
+.sr-title-highlight {
+  padding: 12px 12px 10px;
+  margin: -4px -4px 0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 176, 0, 0.14) 0%, rgba(255, 255, 255, 0.55) 55%, transparent 100%);
+  border: 1px solid rgba(255, 149, 0, 0.22);
+}
+
+.sr-title-highlight .font-title {
+  color: #5c3800;
+}
+
 .sr-progress{
   margin-top: 10px;
 }
