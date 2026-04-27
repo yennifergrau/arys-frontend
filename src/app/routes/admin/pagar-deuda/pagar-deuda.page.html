@@ -182,24 +182,112 @@
 
           <div class="form-group mb-3">
             <label class="form-label fw-bold text-muted small">Monto a pagar</label>
-            <input type="number" class="form-control custom-input" [(ngModel)]="payAmount" placeholder="Ej. 50">
+            <input
+              type="text"
+              class="form-control custom-input"
+              [value]="payAmountDisplay"
+              (input)="onPayAmountInput($event)"
+              (blur)="onPayAmountBlur()"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="Ej. 0,00">
           </div>
 
           <div class="row gx-2 mb-3">
             <div class="col-6">
               <label class="form-label fw-bold text-muted small">Banco origen</label>
-              <input type="text" class="form-control custom-input" [(ngModel)]="bankCode" maxlength="4">
+              <button
+                type="button"
+                class="form-control custom-input bank-select-trigger"
+                (click)="openBankPicker()"
+              >
+                <span class="bank-select-trigger__text">
+                  {{ selectedBankName || 'Selecciona un banco' }}
+                </span>
+                <span class="bank-select-trigger__chevron" aria-hidden="true"></span>
+              </button>
             </div>
             <div class="col-6">
-              <label class="form-label fw-bold text-muted small">Telefono pago movil</label>
-              <input type="text" class="form-control custom-input" [(ngModel)]="payPhone">
+              <label class="form-label fw-bold text-muted small">Telefono</label>
+              <input
+                type="text"
+                class="form-control custom-input"
+                [(ngModel)]="payPhone"
+                mask="0000-0000000"
+                inputmode="numeric"
+                placeholder="Ej. 0412-1234567">
             </div>
           </div>
+
+          <ion-modal
+            [isOpen]="bankPickerOpen"
+            (didDismiss)="closeBankPicker()"
+            class="bank-picker-modal"
+          >
+            <ng-template>
+              <div class="bank-picker">
+                <div class="bank-picker__header">
+                  <div class="bank-picker__title">Banco origen</div>
+                  <button type="button" class="bank-picker__close" (click)="closeBankPicker()">Cerrar</button>
+                </div>
+
+                <div class="bank-picker__list">
+                  <button
+                    type="button"
+                    class="bank-picker__item"
+                    *ngFor="let b of banksVE"
+                    (click)="chooseBank(b.code)"
+                    [class.bank-picker__item--active]="bankCode === b.code"
+                  >
+                    <div class="bank-picker__name">{{ b.name }}</div>
+                    <div class="bank-picker__code">{{ b.code }}</div>
+                  </button>
+                </div>
+              </div>
+            </ng-template>
+          </ion-modal>
 
           <div class="row gx-2 mb-3">
             <div class="col-7">
               <label class="form-label fw-bold text-muted small">Fecha y hora del pago</label>
-              <input type="datetime-local" class="form-control custom-input" [(ngModel)]="paidOn">
+              <button
+                type="button"
+                class="form-control custom-input paidon-trigger"
+                (click)="openPaidOnPicker()"
+              >
+                <span class="paidon-trigger__text">
+                  {{ paidOn ? (paidOn | date:'dd/MM/yyyy, HH:mm') : 'Selecciona fecha y hora' }}
+                </span>
+                <span class="paidon-trigger__icon" aria-hidden="true">
+                  <i class="feather icon-calendar"></i>
+                </span>
+              </button>
+
+              <ion-modal
+                [isOpen]="paidOnPickerOpen"
+                (didDismiss)="closePaidOnPicker()"
+                class="paidon-modal"
+              >
+                <ng-template>
+                  <div class="paidon-sheet">
+                    <div class="paidon-sheet__header">
+                      <div class="paidon-sheet__title">Fecha y hora del pago</div>
+                      <div class="paidon-sheet__actions">
+                        <button type="button" class="paidon-sheet__btn" (click)="closePaidOnPicker()">Cancelar</button>
+                        <button type="button" class="paidon-sheet__btn paidon-sheet__btn--primary" (click)="confirmPaidOnPicker()">Listo</button>
+                      </div>
+                    </div>
+
+                    <ion-datetime
+                      presentation="date-time"
+                      hour-cycle="h23"
+                      locale="es-VE"
+                      [value]="paidOnPickerValue"
+                      (ionChange)="paidOnPickerValue = $any($event).detail.value"
+                    ></ion-datetime>
+                  </div>
+                </ng-template>
+              </ion-modal>
             </div>
             <div class="col-5">
               <label class="form-label fw-bold text-muted small">Concepto</label>

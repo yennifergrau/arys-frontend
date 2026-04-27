@@ -557,7 +557,6 @@ export class ServiceOrderPage implements OnInit {
 
     this.meritopService.addPurchased(payload).subscribe({
       next: (result) => {
-        this.isApplyingCredit = false;
         if (result?.status) {
           const txId = result?.transaction_id ?? result?.transactionId ?? result?.id ?? null;
           const msg = txId != null && String(txId).trim() !== ''
@@ -565,9 +564,34 @@ export class ServiceOrderPage implements OnInit {
             : 'Transacción creada exitosamente';
           this.presentToast(msg, 'success');
           this.applyResult = { ...result, message: msg };
-          this.refreshMeritopProductSilent();
-          this.loadMembershipSummary();
+          // Luego del consumo en Meritop, marcamos la orden como pagada con crédito en ARYS
+          // para que salga de pendientes.
+          this.serviceOrderService.payWithCredit(orderId).subscribe({
+            next: () => {
+              try {
+                // Remover de la lista local + persistir caché de pendientes
+                this.pendingOrders = this.pendingOrders.filter((o: any) => String(o?.order_id ?? o?.id ?? '') !== String(orderId));
+                sessionStorage.setItem(this.PENDING_ORDERS_CACHE_KEY, JSON.stringify(this.pendingOrders));
+              } catch {
+                // noop
+              }
+              if (order.order) {
+                order.order.status = 'paid_with_credit' as any;
+              }
+              this.refreshMeritopProductSilent();
+              this.loadMembershipSummary();
+              this.isApplyingCredit = false;
+            },
+            error: (err) => {
+              // El consumo ya pasó en Meritop; si falla ARYS, avisamos para que soporte lo revise.
+              this.presentToast(err?.message || 'No se pudo actualizar la orden como pagada.', 'warning');
+              this.refreshMeritopProductSilent();
+              this.loadMembershipSummary();
+              this.isApplyingCredit = false;
+            }
+          });
         } else {
+          this.isApplyingCredit = false;
           this.applyResult = result;
         }
         // Actualiza el estado de la orden si es necesario

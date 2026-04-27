@@ -9,14 +9,15 @@ import { RouterLink } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
 import { catchError, concatMap, finalize, map, of, tap } from 'rxjs';
 import { DataArysService } from '../services/data-arys.service';
+import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 @Component({
   selector: 'app-pagar-deuda',
   templateUrl: './pagar-deuda.page.html',
   styleUrls: ['./pagar-deuda.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule, TabComponent, RouterLink],
-  providers: [DataArysService]
+  imports: [IonicModule, CommonModule, FormsModule, TabComponent, RouterLink, NgxMaskDirective],
+  providers: [DataArysService, provideNgxMask()]
 })
 export class PagarDeudaPage implements OnInit {
   private meritopService = inject(MeritopService);
@@ -36,10 +37,130 @@ export class PagarDeudaPage implements OnInit {
   private accessTokenData: any = null;
 
   public payAmount: number | null = null;
+  /** Input de monto: se escribe como “céntimos” y se muestra con coma. */
+  public payAmountDisplay = '';
+  private payAmountCents = 0;
   public bankCode = '';
   public payPhone = '';
   public paidOn = '';
   public concept = '';
+  /** Picker de fecha/hora (móvil): se guarda en `paidOn` (YYYY-MM-DDTHH:mm). */
+  public paidOnPickerOpen = false;
+  public paidOnPickerValue = '';
+
+  /** Bancos Venezuela (código pago móvil → nombre). */
+  public readonly banksVE: Array<{ code: string; name: string }> = [
+    { code: '0102', name: 'Banco de Venezuela' },
+    { code: '0104', name: 'Venezolano de Crédito' },
+    { code: '0105', name: 'Banco Mercantil' },
+    { code: '0108', name: 'Banco Provincial' },
+    { code: '0114', name: 'Bancaribe' },
+    { code: '0115', name: 'Banco Exterior' },
+    { code: '0128', name: 'Banco Caroní' },
+    { code: '0134', name: 'Banesco' },
+    { code: '0137', name: 'Banco Sofitasa' },
+    { code: '0138', name: 'Banco Plaza' },
+    { code: '0146', name: 'Banco de la Gente Emprendedora (BANGENTE)' },
+    { code: '0151', name: 'BFC Banco Fondo Común' },
+    { code: '0156', name: '100% Banco' },
+    { code: '0157', name: 'DelSur Banco Universal' },
+    { code: '0163', name: 'Banco del Tesoro' },
+    { code: '0166', name: 'Banco Agrícola de Venezuela' },
+    { code: '0168', name: 'Bancrecer' },
+    { code: '0169', name: 'Mi Banco' },
+    { code: '0171', name: 'Banco Activo' },
+    { code: '0172', name: 'Bancamiga' },
+    { code: '0173', name: 'Banco Internacional de Desarrollo' },
+    { code: '0174', name: 'Banplus' },
+    { code: '0175', name: 'Banco Bicentenario del Pueblo' },
+    { code: '0177', name: 'Banco de la Fuerza Armada Nacional Bolivariana (BANFANB)' },
+    { code: '0190', name: 'Citibank' },
+    { code: '0191', name: 'Banco Nacional de Crédito (BNC)' },
+  ];
+
+  public get selectedBankName(): string {
+    const code = (this.bankCode ?? '').toString().trim();
+    if (!code) return '';
+    return this.banksVE.find(b => b.code === code)?.name ?? '';
+  }
+
+  public bankPickerOpen = false;
+
+  public openBankPicker(): void {
+    this.bankPickerOpen = true;
+  }
+
+  public closeBankPicker(): void {
+    this.bankPickerOpen = false;
+  }
+
+  public chooseBank(code: string): void {
+    this.bankCode = String(code ?? '').trim();
+    this.bankPickerOpen = false;
+  }
+
+  private formatAmountFromCents(cents: number): string {
+    const safe = Number.isFinite(cents) ? Math.max(0, Math.trunc(cents)) : 0;
+    const amount = safe / 100;
+    // es-VE usa coma decimal; incluye separador de miles si aplica.
+    return new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+  }
+
+  public onPayAmountInput(ev: any): void {
+    const raw = (ev?.target?.value ?? '').toString();
+    const digits = raw.replace(/\D/g, '');
+    const cents = digits ? Number(digits) : 0;
+    this.payAmountCents = Number.isFinite(cents) ? cents : 0;
+    this.payAmount = this.payAmountCents > 0 ? this.payAmountCents / 100 : null;
+    this.payAmountDisplay = digits ? this.formatAmountFromCents(this.payAmountCents) : '';
+    try {
+      // Mantener cursor al final en móvil
+      if (ev?.target?.setSelectionRange) {
+        const len = this.payAmountDisplay.length;
+        ev.target.setSelectionRange(len, len);
+      }
+    } catch {
+      // noop
+    }
+  }
+
+  public onPayAmountBlur(): void {
+    // Normaliza display si hay algo escrito
+    if (this.payAmountCents > 0) {
+      this.payAmountDisplay = this.formatAmountFromCents(this.payAmountCents);
+    }
+  }
+
+  private toLocalIsoMinutes(d: Date): string {
+    const offset = d.getTimezoneOffset();
+    const adjusted = new Date(d.getTime() - offset * 60000);
+    return adjusted.toISOString().slice(0, 16);
+  }
+
+  private normalizePaidOn(value: string): string {
+    const raw = (value ?? '').toString().trim();
+    if (!raw) return '';
+    // Si ya viene como "YYYY-MM-DDTHH:mm", lo usamos tal cual.
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(raw)) return raw;
+    // Si viene ISO completo, lo convertimos a local minutos.
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    return this.toLocalIsoMinutes(d);
+  }
+
+  public openPaidOnPicker(): void {
+    this.paidOnPickerValue = this.normalizePaidOn(this.paidOn) || this.toLocalIsoMinutes(new Date());
+    this.paidOnPickerOpen = true;
+  }
+
+  public closePaidOnPicker(): void {
+    this.paidOnPickerOpen = false;
+  }
+
+  public confirmPaidOnPicker(): void {
+    this.paidOn = this.normalizePaidOn(this.paidOnPickerValue);
+    this.paidOnPickerOpen = false;
+  }
 
   public cardNumber = '';
   public docId: string | number = '';
