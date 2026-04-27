@@ -36,6 +36,8 @@ type ServiceOption = {
   id: string;
   label: string;
   description?: string;
+  /** Lista corta de coberturas/ejemplos (se muestra en la ventanita). */
+  details?: string[];
   icon: string;
   selected: boolean;
 };
@@ -90,6 +92,8 @@ export class DashboardPage implements OnInit {
   public waNotes: string = '';
   public waShowPreview: boolean = false;
   public waShowExtra: boolean = false;
+  /** Opción elegida dentro del servicio (ej: Grúa → 1 ocupante). */
+  public waDetailSelected: string | null = null;
 
   // WhatsApp (solicitud a proveedores / repuestos)
   public buyExpanded: boolean = false;
@@ -112,10 +116,34 @@ export class DashboardPage implements OnInit {
   private defaultPlate: string = '';
 
   public waOptions: ServiceOption[] = [
-    { id: 'grua', label: 'Grúa', description: 'Remolque o traslado', icon: 'fa-truck-pickup', selected: false },
-    { id: 'bateria', label: 'Batería', description: 'Paso de corriente o cambio', icon: 'fa-car-battery', selected: false },
-    { id: 'cachos', label: 'Cachos', description: 'Neumáticos o asistencia en vía', icon: 'fa-circle-dot', selected: false },
-    { id: 'repuesto', label: 'Repuesto', description: 'Pieza o refacción', icon: 'fa-gears', selected: false },
+    {
+      id: 'grua',
+      label: 'Grúa',
+      details: ['1 ocupante', '2 o más ocupantes'],
+      icon: 'fa-truck-pickup',
+      selected: false,
+    },
+    {
+      id: 'bateria',
+      label: 'Asistencia Vial',
+      details: ['Cambio de caucho', 'Repuestos', 'Paso de corriente (batería)', 'Asesoría mecánica'],
+      icon: 'fa-car-battery',
+      selected: false,
+    },
+    {
+      id: 'cachos',
+      label: 'Asesoría Legal Telf.',
+      details: ['Imposición de multa', 'Accidentes de tránsito'],
+      icon: 'fa-circle-dot',
+      selected: false,
+    },
+    {
+      id: 'repuesto',
+      label: 'Parabrisas',
+      details: ['Sustitución de vidrio'],
+      icon: 'fa-gears',
+      selected: false,
+    },
   ];
 
   // Resumen Meritop para mostrar montos reales en Inicio
@@ -481,8 +509,14 @@ export class DashboardPage implements OnInit {
   }
 
   public get waCanSend(): boolean {
+    const details = this.waSelected?.details ?? [];
+    const needsDetail = (this.waSelectedCount > 0) && details.length > 0;
+    const hasDetail = !needsDetail || (this.waDetailSelected != null && this.waDetailSelected.trim().length > 0);
+    // Si el usuario eligió un servicio que requiere opción, no permitimos enviar
+    // aunque tenga ubicación/notas, hasta que seleccione la opción.
+    if (needsDetail && !hasDetail) return false;
     return (
-      this.waSelectedCount > 0 ||
+      (this.waSelectedCount > 0 && hasDetail) ||
       this.waLocation.trim().length > 0 ||
       this.waPlate.trim().length > 0 ||
       this.waReference.trim().length > 0 ||
@@ -501,20 +535,38 @@ export class DashboardPage implements OnInit {
     this.waExpanded = false;
     this.waShowPreview = false;
     this.waShowExtra = false;
+    this.waDetailSelected = null;
+    // Cerrar con la X debe colapsar todo (incluida la “opción”).
+    this.waOptions.forEach(o => (o.selected = false));
     setTimeout(() => this.scrollTo('wa-top'), 50);
   }
 
   public selectWaOption(opt: ServiceOption): void {
+    // Si se toca el mismo servicio ya seleccionado, se deselecciona y se cierra el formulario.
+    if (opt.selected) {
+      this.waOptions.forEach(o => (o.selected = false));
+      this.closeWa();
+      return;
+    }
+
     const before = this.waSelectedCount;
-    const willSelect = !opt.selected;
     this.waOptions.forEach(o => (o.selected = false));
-    opt.selected = willSelect;
+    opt.selected = true;
     const after = this.waSelectedCount;
 
+    const details = opt.details ?? [];
+    this.waDetailSelected = details.length === 1 ? details[0] : null;
     if (!this.waExpanded) this.waExpanded = true;
     if (before === 0 && after > 0) {
       setTimeout(() => this.scrollTo('wa-details'), 50);
     }
+  }
+
+  public selectWaDetail(detail: string): void {
+    const d = (detail ?? '').trim();
+    if (!d) return;
+    // Toggle: si toca la misma opción, se desmarca.
+    this.waDetailSelected = this.waDetailSelected === d ? null : d;
   }
 
   public clearWa(): void {
@@ -525,6 +577,7 @@ export class DashboardPage implements OnInit {
     this.waNotes = '';
     this.waShowPreview = false;
     this.waShowExtra = false;
+    this.waDetailSelected = null;
     setTimeout(() => this.scrollTo('wa-top'), 50);
   }
 
@@ -552,6 +605,7 @@ export class DashboardPage implements OnInit {
 
   public buildWaMessage(): string {
     const chosen = this.waSelected?.label ?? '';
+    const detail = (this.waDetailSelected ?? '').trim();
     const membership = this.membershipList?.[0];
     const cert =
       this.data_membership?.[0]?.certificate != null
@@ -572,12 +626,18 @@ export class DashboardPage implements OnInit {
       this.waReference.trim() ? `Referencia: ${this.waReference.trim()}` : '',
       '',
       chosen ? `Servicio: ${chosen}` : '',
+      detail ? `Opción: ${detail}` : '',
       this.waNotes.trim() ? `\nNotas:\n${this.waNotes.trim()}` : '',
     ].filter(Boolean);
     return lines.join('\n');
   }
 
   public sendWhatsappFromDashboard(): void {
+    const details = this.waSelected?.details ?? [];
+    if (this.waSelectedCount > 0 && details.length > 0 && (!this.waDetailSelected || this.waDetailSelected.trim().length === 0)) {
+      this.mostrarToast('Selecciona una opción del servicio (ej: 1 ocupante).', 'toast-warning');
+      return;
+    }
     const msg = this.buildWaMessage();
     const url = this.buildWhatsappUrl(msg);
     if (!url) {

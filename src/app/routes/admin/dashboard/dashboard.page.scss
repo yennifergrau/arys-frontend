@@ -554,6 +554,59 @@
   gap: 12px;
 }
 
+.wa-desc-card{
+  margin-top: 12px;
+  padding: 12px 12px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.07);
+}
+
+.wa-desc-title{
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(17, 24, 39, 0.72);
+}
+
+.wa-desc-hint{
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(17, 24, 39, 0.58);
+}
+
+.wa-desc-options{
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.wa-desc-option{
+  border: 1px solid rgba(0,0,0,0.10);
+  background: rgba(255,255,255,0.95);
+  border-radius: 999px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(17, 24, 39, 0.86);
+  transition: transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.wa-desc-option:active{
+  transform: scale(0.99);
+}
+
+.wa-desc-option--active{
+  border-color: rgba(255, 149, 0, 0.60);
+  background: linear-gradient(165deg, rgba(255, 210, 150, 0.42) 0%, rgba(255, 176, 0, 0.14) 40%, #fff 100%);
+  box-shadow: 0 12px 26px rgba(255, 149, 0, 0.18);
+  color: #5c3800;
+}
+
 @media (min-width: 520px) {
   .dashboard-quick{
     grid-template-columns: repeat(4, minmax(0, 1fr));

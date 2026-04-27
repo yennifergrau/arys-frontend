@@ -209,6 +209,25 @@
                   }
                 </div>
 
+                @if (waSelected) {
+                  <div class="wa-desc-card" aria-label="Descripción del servicio seleccionado">
+                    <div class="wa-desc-title">{{ waSelected.label }}</div>
+                    <div class="wa-desc-hint">Selecciona una opción</div>
+                    <div class="wa-desc-options">
+                      @for (d of (waSelected.details ?? []); track $index) {
+                        <button
+                          type="button"
+                          class="wa-desc-option"
+                          [class.wa-desc-option--active]="waDetailSelected === d"
+                          (click)="selectWaDetail(d)"
+                        >
+                          {{ d }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+
                 @if (waExpanded) {
                   <div class="wa-compose" id="wa-compose">
                     <div class="wa-compose__header">
