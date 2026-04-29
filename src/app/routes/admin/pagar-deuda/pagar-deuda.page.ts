@@ -44,9 +44,6 @@ export class PagarDeudaPage implements OnInit {
   public payPhone = '';
   public paidOn = '';
   public concept = '';
-  /** Picker de fecha/hora (móvil): se guarda en `paidOn` (YYYY-MM-DDTHH:mm). */
-  public paidOnPickerOpen = false;
-  public paidOnPickerValue = '';
 
   /** Bancos Venezuela (código pago móvil → nombre). */
   public readonly banksVE: Array<{ code: string; name: string }> = [
@@ -82,21 +79,6 @@ export class PagarDeudaPage implements OnInit {
     const code = (this.bankCode ?? '').toString().trim();
     if (!code) return '';
     return this.banksVE.find(b => b.code === code)?.name ?? '';
-  }
-
-  public bankPickerOpen = false;
-
-  public openBankPicker(): void {
-    this.bankPickerOpen = true;
-  }
-
-  public closeBankPicker(): void {
-    this.bankPickerOpen = false;
-  }
-
-  public chooseBank(code: string): void {
-    this.bankCode = String(code ?? '').trim();
-    this.bankPickerOpen = false;
   }
 
   private formatAmountFromCents(cents: number): string {
@@ -137,7 +119,7 @@ export class PagarDeudaPage implements OnInit {
     return adjusted.toISOString().slice(0, 16);
   }
 
-  private normalizePaidOn(value: string): string {
+  public normalizePaidOn(value: string): string {
     const raw = (value ?? '').toString().trim();
     if (!raw) return '';
     // Si ya viene como "YYYY-MM-DDTHH:mm", lo usamos tal cual.
@@ -146,20 +128,6 @@ export class PagarDeudaPage implements OnInit {
     const d = new Date(raw);
     if (Number.isNaN(d.getTime())) return '';
     return this.toLocalIsoMinutes(d);
-  }
-
-  public openPaidOnPicker(): void {
-    this.paidOnPickerValue = this.normalizePaidOn(this.paidOn) || this.toLocalIsoMinutes(new Date());
-    this.paidOnPickerOpen = true;
-  }
-
-  public closePaidOnPicker(): void {
-    this.paidOnPickerOpen = false;
-  }
-
-  public confirmPaidOnPicker(): void {
-    this.paidOn = this.normalizePaidOn(this.paidOnPickerValue);
-    this.paidOnPickerOpen = false;
   }
 
   public cardNumber = '';

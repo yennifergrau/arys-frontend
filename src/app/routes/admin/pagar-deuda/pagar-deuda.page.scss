@@ -424,6 +424,39 @@
   box-shadow: 0 0 0 3px rgba(255, 176, 0, 0.14);
 }
 
+/* Select nativo: lista con código, valor seleccionado sin código */
+.bank-native-select {
+  position: relative;
+}
+
+.bank-native-select__value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  pointer-events: none;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #2d2d2f;
+}
+
+.bank-native-select select {
+  position: relative;
+  background: transparent;
+  color: transparent; /* oculta el texto seleccionado (dejamos visible el overlay) */
+  text-shadow: 0 0 0 transparent;
+  appearance: auto;
+}
+
+.bank-native-select select option {
+  color: #111; /* opciones visibles en el dropdown */
+}
+
+.bank-native-select select:focus {
+  color: transparent;
+}
+
 /* Banco origen: “como antes” (pantallita tipo alert), pero selecciona al tocar */
 .bank-select-trigger{
   display: flex;

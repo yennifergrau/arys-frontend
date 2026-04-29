@@ -7,6 +7,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:root": "ng build --configuration production --base-href / --deploy-url /",
+    "build:subdir": "node ./scripts/build-with-basepath.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint"
