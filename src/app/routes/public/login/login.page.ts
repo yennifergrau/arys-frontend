@@ -116,24 +116,33 @@ export class LoginPage implements OnInit {
         this._authService.login(data).subscribe({
           next: (response: any) => {
             console.log(response)
+            this.showSpinner = false;
             this.navCtrl.navigateRoot(['admin/auth-veirify-sarys']);
           },
           error: (err: HttpErrorResponse) => {
-            if (err.error.status === 500) {
-              this.showSpinner = false;
-              this.mostrarToast(
-                `Error de comunicación ${err.status}`,
-                'toast-error'
-              );
-            } else if (
-              err.error.message === 'Contrase�a inv�lida' ||
-              err.error.message === 'Fallo en la autenticación' ||
-              err.error.message === 'invalid to password' ||
-              err.error.message === 'Failed to authenticate'
-            ) {
-              this.showSpinner = false;
-              this.mostrarToast('¡Credenciales inválidas!', 'toast-error');
+            this.showSpinner = false;
+
+            const msg = err?.error?.message != null ? String(err.error.message) : '';
+            const normalized = msg
+              .replace(/\uFFFD/g, '') // caracteres corruptos "�"
+              .toLowerCase();
+
+            if (err?.error?.status === 500 || err.status >= 500) {
+              this.mostrarToast(`Error de comunicación ${err.status || ''}`.trim(), 'toast-error');
+              return;
             }
+
+            if (
+              normalized.includes('contrase') ||
+              normalized.includes('autenticacion') ||
+              normalized.includes('authenticate') ||
+              normalized.includes('invalid')
+            ) {
+              this.mostrarToast('¡Credenciales inválidas!', 'toast-error');
+              return;
+            }
+
+            this.mostrarToast('No se pudo iniciar sesión. Intenta nuevamente.', 'toast-error');
           },
         });
       } else {

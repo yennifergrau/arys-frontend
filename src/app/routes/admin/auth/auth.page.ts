@@ -35,8 +35,8 @@ import { firstValueFrom } from 'rxjs';
   providers: [provideNgxMask(), EmissionService],
 })
 export class AuthPage implements OnInit {
-  /** Cédula usada en verificación automática (sin formulario). */
-  private readonly defaultVerifyDocument = '28317753';
+  /** Cédula por defecto en el input (solo fallback visual). */
+  private readonly defaultVerifyDocument = '';
 
   public FormVerify!: FormGroup;
   public showSpinner: boolean = false;
@@ -112,6 +112,14 @@ export class AuthPage implements OnInit {
     setTimeout(() => {
       this.renderer.removeChild(toastContainer, toast);
     }, 6000);
+  }
+
+  private extractCedulaNumber(raw: any): string {
+    const s = raw != null ? String(raw).trim() : '';
+    if (!s) return '';
+    // Acepta formatos como "V28317753", "E-28.317.753", "J 28317753" → "28317753"
+    const digits = s.replace(/\D/g, '');
+    return digits;
   }
 
   /** Membresía desde BD (token) antes de `userIsActive`, para enviar `certificado` en el POST y alinear filas. */
@@ -232,7 +240,7 @@ export class AuthPage implements OnInit {
       }
 
       this.showSpinner = true;
-      const cedula = String(this.FormVerify.get('rif')?.value ?? '').trim();
+      const cedulaFromForm = this.extractCedulaNumber(this.FormVerify.get('rif')?.value);
       let pre: { rows: any[]; picked: any | null } | null = null;
       try {
         pre = await this.prefetchMembership();
@@ -240,9 +248,14 @@ export class AuthPage implements OnInit {
         pre = null;
       }
 
+      const cedulaFromMembership =
+        this.extractCedulaNumber(pre?.picked?.cedrif_membership);
+
       const cert =
         pre?.picked?.certificate != null ? String(pre.picked.certificate).trim() : '';
-      const clientData: { cedula: string; certificado?: string } = { cedula };
+      const clientData: { cedula: string; certificado?: string } = {
+        cedula: cedulaFromMembership || cedulaFromForm,
+      };
       if (cert) {
         clientData.certificado = cert;
       }
@@ -265,10 +278,7 @@ export class AuthPage implements OnInit {
 
     this.autoVerifyInProgress = true;
     this.showSpinner = true;
-    this.FormVerify.patchValue({
-      prefix: 'V',
-      rif: this.defaultVerifyDocument,
-    });
+    this.FormVerify.patchValue({ prefix: 'V' });
 
     let pre: { rows: any[]; picked: any | null } | null = null;
     try {
@@ -278,10 +288,20 @@ export class AuthPage implements OnInit {
       pre = null;
     }
 
+    const cedulaFromMembership =
+      this.extractCedulaNumber(pre?.picked?.cedrif_membership);
+
+    if (!cedulaFromMembership) {
+      // Si la membresía no trae cédula (null), el usuario debe rellenar el formulario.
+      this.autoVerifyInProgress = false;
+      this.showSpinner = false;
+      return;
+    }
+
+    this.FormVerify.patchValue({ rif: cedulaFromMembership });
+
     const cert = pre?.picked?.certificate != null ? String(pre.picked.certificate).trim() : '';
-    const clientData: { cedula: string; certificado?: string } = {
-      cedula: this.defaultVerifyDocument,
-    };
+    const clientData: { cedula: string; certificado?: string } = { cedula: cedulaFromMembership };
     if (cert) {
       clientData.certificado = cert;
     }
