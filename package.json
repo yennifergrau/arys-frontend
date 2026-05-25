@@ -24,6 +24,7 @@
     "@angular/platform-browser-dynamic": "^19.0.0",
     "@angular/router": "^19.0.0",
     "@aws-sdk/client-textract": "^3.930.0",
+    "@capacitor/android": "^7.6.5",
     "@capacitor/app": "7.0.0",
     "@capacitor/core": "^7.1.0",
     "@capacitor/haptics": "7.0.0",
