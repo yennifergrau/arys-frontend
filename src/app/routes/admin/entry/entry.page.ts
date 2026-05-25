@@ -10,6 +10,7 @@ import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { DataArysService } from '../services/data-arys.service';
 import { ServiceOrderService } from '../services/service-order.service';
 import { EmissionDetailsService } from '../services/emission-details.service';
+import { membershipHasCreditLine } from '../utils/meritop-identity.util';
 
 @Component({
   selector: 'app-entry',
@@ -143,9 +144,7 @@ export class EntryPage implements OnInit {
       return;
     }
 
-    this.hasCreditLine =
-      this.membership?.credit_line_id != null &&
-      String(this.membership.credit_line_id).trim() !== '';
+    this.hasCreditLine = membershipHasCreditLine(this.membership);
 
     this.hasPendingOrder = await this.checkPendingOrders();
     if (this.hasPendingOrder) {

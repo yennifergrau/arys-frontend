@@ -17,6 +17,7 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MeritopService } from '../services/meritop.service';
+import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
 import { JsonLoaderService } from '../services/json-loader.service';
 import { HttpClientModule } from '@angular/common/http';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
@@ -124,15 +125,14 @@ export class AddPaymentPage implements AfterViewInit {
   private async loadCustomer() {
  
     try {
+      const identity = resolveMeritopClientIdentity();
+      if (!identity) return;
       const data = {
         bank: "94932663-923d-48a3-b13a-6b0bea8f3608",
         "channel": "eea602fb-749e-460a-9805-9f993fc0036a",
         "terminal": "0",
         "ip": "127.0.0.1",
-        "clientid": {
-          doctype: this._emisionService.data_user?.prefix || '',
-          docid: +this._emisionService.data_user?.rif || ''
-        }
+        "clientid": identity,
       }
       this.meritopService.customerProduct(data).subscribe({
         next: (result: any) => {

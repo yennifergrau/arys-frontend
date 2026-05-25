@@ -9,6 +9,7 @@ import { MeritopService } from '../services/meritop.service';
 import { HttpClientModule } from '@angular/common/http';
 import { FormatCurrencyPipe } from '../pipes/currency.pipe';
 import { EmissionDetailsService } from '../services/emission-details.service';
+import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
 
 @Component({
   selector: 'app-customer',
@@ -91,15 +92,14 @@ export class CustomerPage implements OnInit {
 
   private async loadCustomer() {
     try {
+      const identity = resolveMeritopClientIdentity();
+      if (!identity) return;
       const data = {
         bank: "94932663-923d-48a3-b13a-6b0bea8f3608",
         "channel": "eea602fb-749e-460a-9805-9f993fc0036a",
         "terminal": "0",
         "ip": "127.0.0.1",
-        "clientid": {
-          doctype: this._emisionService.data_user.prefix || '',
-          docid: +this._emisionService?.data_user?.rif || ''
-        }
+        "clientid": identity,
       }
       this.meritopService.customerProduct(data).subscribe({
         next: (result: any) => {

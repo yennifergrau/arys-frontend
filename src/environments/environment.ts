@@ -59,6 +59,8 @@ export const environment = {
       get_membership: 'data/get/fecht/membership/member',
       get_membership_by_email: 'data/get/fecht/membership/by-email',
       retry_credit_line: 'data/post/fecht/retry/credit-line',
+      validate_credit_line: 'data/post/fecht/validate/credit-line',
+      update_membership_cedrif_credit: 'data/post/fecht/membership',
       update_credit: 'update/credit/data',
       get_pending_orders: 'api/service-orders/pending',
       get_order_details: 'api/service-order',

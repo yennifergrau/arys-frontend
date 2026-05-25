@@ -17,6 +17,9 @@ export class DataArysService {
   private readonly get_membership_url = environment.arys.OtherApis.get_membership
   private readonly get_membership_by_email_url = environment.arys.OtherApis.get_membership_by_email
   private readonly retry_credit_line_url = environment.arys.OtherApis.retry_credit_line
+  private readonly validate_credit_line_url = environment.arys.OtherApis.validate_credit_line
+  private readonly update_membership_cedrif_credit_url =
+    environment.arys.OtherApis.update_membership_cedrif_credit
   private readonly updateCredit = environment.arys.OtherApis.update_credit
   private readonly getPurchased = environment.meritop.addData.get_purchase
 
@@ -86,6 +89,31 @@ export class DataArysService {
         return throwError(() => new Error('Error obtener membresía por email'));
       })
     )
+  }
+
+  public validate_credit_line(payload: { rif: string }) {
+    const rif = String(payload?.rif ?? '').trim();
+    return this.http
+      .post<any>(`${this.baseUrl}/${this.validate_credit_line_url}`, { rif })
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          return throwError(() => new Error('Error al validar línea de crédito'));
+        })
+      );
+  }
+
+  public update_membership_cedrif_credit(id_member: number | string, payload: { rif: string }) {
+    const rif = String(payload?.rif ?? '').trim();
+    return this.http
+      .post<any>(
+        `${this.baseUrl}/${this.update_membership_cedrif_credit_url}/${id_member}/cedrif-credit`,
+        { rif }
+      )
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          return throwError(() => new Error('Error al actualizar cedrif_credit en membresía'));
+        })
+      );
   }
 
   public retry_credit_line(

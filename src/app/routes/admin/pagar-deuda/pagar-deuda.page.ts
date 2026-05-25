@@ -9,6 +9,7 @@ import { jwtDecode } from 'jwt-decode';
 import { catchError, concatMap, finalize, map, of, tap } from 'rxjs';
 import { DataArysService } from '../services/data-arys.service';
 import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
+import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 @Component({
@@ -327,6 +328,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
         }
         this.membershipSummary = {
           credit_line_id: row.credit_line_id != null ? String(row.credit_line_id) : null,
+          cedrif_credit: row.cedrif_credit != null ? String(row.cedrif_credit) : null,
           credit_limit: row.credit_limit,
           credit_available: row.credit_available,
           credit_used: row.credit_used,
@@ -342,31 +344,8 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
     });
   }
 
-  private getIdentity(): { doctype: string; docid: number } | null {
-    const token = sessionStorage.getItem('accessToken');
-    if (token) {
-      const decoded: any = jwtDecode(token);
-      const tokenDocType = String(decoded?.doctype || decoded?.prefix || '').trim();
-      const tokenDocId = Number(decoded?.docid || decoded?.rif || 0);
-
-      if (tokenDocType && tokenDocId > 0) {
-        return { doctype: tokenDocType, docid: tokenDocId };
-      }
-    }
-
-    try {
-      const raw = localStorage.getItem('userData');
-      const userData = raw ? JSON.parse(raw) : null;
-      const docType = String(userData?.doctype || userData?.prefix || userData?.letra_rif || '').trim();
-      const docId = Number(userData?.docid || userData?.rif || 0);
-      if (docType && docId > 0) {
-        return { doctype: docType, docid: docId };
-      }
-    } catch {
-      // noop
-    }
-
-    return null;
+  private getIdentity() {
+    return resolveMeritopClientIdentity({ membershipRow: this.membershipSummary });
   }
 
   /** Rellena docType/docId desde token o userData (necesario aunque Meritop venga solo de caché). */

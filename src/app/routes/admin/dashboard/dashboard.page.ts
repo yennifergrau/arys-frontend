@@ -30,6 +30,10 @@ import { EmissionDetailsService } from '../services/emission-details.service';
 import { DataArysService } from '../services/data-arys.service';
 import { ServiceOrderService } from '../services/service-order.service';
 import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
+import {
+  membershipHasCreditLine,
+  resolveMeritopClientIdentity,
+} from '../utils/meritop-identity.util';
 import { firstValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
@@ -226,7 +230,7 @@ export class DashboardPage implements OnInit, ViewWillEnter {
       const certificate = String(row.certificate ?? row.certificado ?? '').trim();
       // Requisito UX: en el dashboard mostramos únicamente el certificado.
       const label = certificate || 'Certificado';
-      const lineId = row.credit_line_id != null && String(row.credit_line_id).trim() !== '';
+      const lineId = membershipHasCreditLine(row);
 
       // Si el certificado viene en formato "<id_producto>-...", usamos el prefijo para mapear el plan.
       const productIdFromCertificate = (() => {
@@ -690,32 +694,6 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     }).format(d);
   }
 
-  private getIdentity(): { doctype: string; docid: number } | null {
-    try {
-      const token = sessionStorage.getItem('accessToken');
-      if (token) {
-        const decoded: any = jwtDecode(token);
-        const tokenDocType = String(decoded?.doctype || decoded?.prefix || '').trim();
-        const tokenDocId = Number(decoded?.docid || decoded?.rif || 0);
-        if (tokenDocType && tokenDocId > 0) return { doctype: tokenDocType, docid: tokenDocId };
-      }
-    } catch {
-      // noop
-    }
-
-    try {
-      const raw = localStorage.getItem('userData');
-      const userData = raw ? JSON.parse(raw) : null;
-      const docType = String(userData?.doctype || userData?.prefix || userData?.letra_rif || '').trim();
-      const docId = Number(userData?.docid || userData?.rif || 0);
-      if (docType && docId > 0) return { doctype: docType, docid: docId };
-    } catch {
-      // noop
-    }
-
-    return null;
-  }
-
   private finishIfReady(): void {
     const ready = this.loadState.membership && this.loadState.meritop && this.loadState.pendingOrders;
     if (ready) {
@@ -760,7 +738,9 @@ export class DashboardPage implements OnInit, ViewWillEnter {
   }
 
   private fetchMeritopProduct(silentRefresh = false): void {
-    const identity = this.getIdentity();
+    const identity = resolveMeritopClientIdentity({
+      membershipRows: Array.isArray(this.data_membership) ? this.data_membership : undefined,
+    });
     if (!identity) {
       if (!silentRefresh) {
         this.meritopSummaryState = 'fallback';

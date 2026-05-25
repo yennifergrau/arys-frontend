@@ -15,6 +15,7 @@ import {
   MeritopSummaryCacheService,
   PENDING_ORDERS_CACHE_KEY,
 } from '../services/meritop-summary-cache.service';
+import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
 import { IonicModule, ToastController, ViewWillEnter } from '@ionic/angular';
 
 @Component({
@@ -51,6 +52,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   /** Crédito persistido en ARYS (tabla membership); respaldo si Meritop no devuelve producto. */
   public membershipSummary: {
     credit_line_id: string | null;
+    cedrif_credit?: string | null;
     credit_limit: string | number | null;
     credit_available: string | number | null;
     credit_used: string | number | null;
@@ -454,7 +456,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       this.applyResult = {
         status: false,
         message:
-          'No se pudo obtener tu identificación (doctype/docid). Revisa que `userData` esté en localStorage o que el token tenga esos campos.'
+          'No se pudo obtener tu identificación Meritop (`cedrif_credit` en membresía). Verifica tu línea de crédito en ARYS.'
       };
       return;
     }
@@ -602,6 +604,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
         }
         this.membershipSummary = {
           credit_line_id: row.credit_line_id != null ? String(row.credit_line_id) : null,
+          cedrif_credit: row.cedrif_credit != null ? String(row.cedrif_credit) : null,
           credit_limit: row.credit_limit,
           credit_available: row.credit_available,
           credit_used: row.credit_used,
@@ -647,10 +650,10 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       const docid = Number(identity?.docid || 0)
 
       if (!doctype || !docid) {
-        this.customerProductFetchReason = 'Faltan datos de identidad (doctype/docid) para consultar customer/products'
+        this.customerProductFetchReason = 'Falta cedrif_credit en membresía para consultar customer/products'
         this.customerProduct = null
         this.summaryState = 'fallback'
-        this.summaryMessage = 'No se pudo consultar Meritop (faltan doctype/docid). Mostrando saldo de membresía.'
+        this.summaryMessage = 'No se pudo consultar Meritop (falta cedrif_credit). Mostrando saldo de membresía.'
         return
       }
 
@@ -713,26 +716,8 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
     }
   }
 
-  private getCustomerIdentity(): { doctype: string; docid: number } | null {
-    const userData = this.getUserDataFromLocalStorage()
-    const doctype = String(
-      userData?.doctype ||
-      this.accessTokenData?.doctype ||
-      userData?.letra_rif ||
-      userData?.prefix ||
-      this.accessTokenData?.prefix ||
-      ''
-    ).trim()
-    const docid = Number(
-      userData?.docid ||
-      this.accessTokenData?.docid ||
-      userData?.rif ||
-      this.accessTokenData?.rif ||
-      0
-    )
-
-    if (!doctype || !docid) return null
-    return { doctype, docid }
+  private getCustomerIdentity() {
+    return resolveMeritopClientIdentity({ membershipRow: this.membershipSummary });
   }
 
   ngOnInit() {

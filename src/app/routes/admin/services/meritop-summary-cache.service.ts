@@ -2,6 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, concatMap, map } from 'rxjs/operators';
 import { MeritopService } from './meritop.service';
+import {
+  MeritopClientIdentity,
+  resolveMeritopClientIdentity,
+} from '../utils/meritop-identity.util';
 
 export const MERITOP_SUMMARY_CACHE_KEY = 'meritop_summary_v1';
 export const PENDING_ORDERS_CACHE_KEY = 'pending_orders_v1';
@@ -127,13 +131,17 @@ export class MeritopSummaryCacheService {
   }
 
   /** Refresca `customer/products`, persiste caché y devuelve el producto crudo. */
-  refreshFromServer$(identity: { doctype: string; docid: number }): Observable<unknown | null> {
+  refreshFromServer$(identity?: MeritopClientIdentity | null): Observable<unknown | null> {
+    const resolved = identity ?? resolveMeritopClientIdentity();
+    if (!resolved) {
+      return of(null);
+    }
     const payload = {
       bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
       channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
       terminal: '0',
       ip: '127.0.0.1',
-      clientid: identity,
+      clientid: resolved,
     };
     return this.meritopService.getAccessToken().pipe(
       concatMap(() => this.meritopService.customerProduct(payload)),

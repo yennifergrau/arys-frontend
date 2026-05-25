@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { DataArysService } from './data-arys.service';
 import { jwtDecode } from 'jwt-decode';
 import { firstValueFrom } from 'rxjs';
+import { membershipHasCreditLine } from '../utils/meritop-identity.util';
 
 export type UserAccessState = {
   loaded: boolean;
@@ -113,10 +114,7 @@ export class UserAccessService {
         sessionStorage.setItem('id_member', String(resolvedIdMember));
       }
 
-      const hasCreditLine = rows.some((r: any) => {
-        const id = r?.credit_line_id;
-        return id != null && String(id).trim() !== '';
-      });
+      const hasCreditLine = rows.some((r: any) => membershipHasCreditLine(r));
 
       const next: UserAccessState = {
         loaded: true,
