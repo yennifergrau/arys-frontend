@@ -456,7 +456,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       this.applyResult = {
         status: false,
         message:
-          'No se pudo obtener tu identificación Meritop (`cedrif_credit` en membresía). Verifica tu línea de crédito en ARYS.'
+          'No se pudo obtener tu identificación. Verifica tu línea de crédito en ARYS.'
       };
       return;
     }
