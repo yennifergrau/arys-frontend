@@ -42,8 +42,7 @@
             </div>
 
             <div class="card-footer">
-              <span>Tarjeta</span>
-              <span>{{ cardMask }}</span>
+              <span>Club ARYS</span>
             </div>
           </div>
         </div>
@@ -191,6 +190,22 @@
               inputmode="numeric"
               autocomplete="off"
               placeholder="Ej. 0,00">
+            <div class="pay-amount-shortcuts mt-2">
+              <button
+                type="button"
+                class="btn btn-tab-match btn-sm flex-fill"
+                [disabled]="!summaryReady || displayDebtAmount <= 0"
+                (click)="useTotalDebt()">
+                Deuda total
+              </button>
+              <button
+                type="button"
+                class="btn btn-tab-match btn-sm flex-fill"
+                [disabled]="!summaryReady || minPayAmount <= 0"
+                (click)="useMinPay()">
+                Pago mínimo
+              </button>
+            </div>
           </div>
 
           <div class="row gx-2 mb-3">
@@ -236,17 +251,12 @@
             </div>
           </div>
 
-          <button class="btn btn-primary w-100 mt-4 py-3 fw-bold" [disabled]="showLoading || !hasDebt" (click)="confirmPayment()">
+          <button class="btn btn-primary btn-tab-match w-100 mt-4 py-3 fw-bold" [disabled]="showLoading || !hasDebt" (click)="confirmPayment()">
             <ion-spinner name="crescent" *ngIf="showLoading" class="me-2"></ion-spinner>
             Confirmar pago
           </button>
         </div>
 
-        <div class="api-note mt-4 p-3 rounded-4" style="background-color: #fffdf4; border: 1px solid #f1e0a3;">
-          <small class="text-warning-emphasis lh-sm">
-            <strong>Datos que pide addPayment:</strong> client.doctype, client.docid, cardnumber, amount, bankcode, payphone, paidon, concept, channel e ip.
-          </small>
-        </div>
       </div>
 
       <div class="container p-2 pay-success-wrap" *ngIf="showSuccess">
@@ -284,7 +294,7 @@
           </div>
 
           <div class="pay-success__actions">
-            <button type="button" class="btn btn-primary w-100 pay-success__btn-primary" (click)="goBack()">
+            <button type="button" class="btn btn-primary btn-tab-match w-100 pay-success__btn-primary" (click)="goBack()">
               Volver al inicio
             </button>
             <button type="button" class="btn w-100 pay-success__btn-secondary" (click)="goToMovements()">

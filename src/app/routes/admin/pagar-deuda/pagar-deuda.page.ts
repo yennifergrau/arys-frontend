@@ -1,14 +1,14 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController, ToastController } from '@ionic/angular';
+import { IonicModule, NavController, ToastController, ViewWillEnter } from '@ionic/angular';
 import { MeritopService } from '../services/meritop.service';
 import { addPayment } from '../interface/meritop.interface';
 import { TabComponent } from 'src/app/shared/components/tab/tab.component';
-import { RouterLink } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
 import { catchError, concatMap, finalize, map, of, tap } from 'rxjs';
 import { DataArysService } from '../services/data-arys.service';
+import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 @Component({
@@ -16,11 +16,12 @@ import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
   templateUrl: './pagar-deuda.page.html',
   styleUrls: ['./pagar-deuda.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule, TabComponent, RouterLink, NgxMaskDirective],
+  imports: [IonicModule, CommonModule, FormsModule, TabComponent, NgxMaskDirective],
   providers: [DataArysService, provideNgxMask()]
 })
-export class PagarDeudaPage implements OnInit {
+export class PagarDeudaPage implements OnInit, ViewWillEnter {
   private meritopService = inject(MeritopService);
+  private meritopCache = inject(MeritopSummaryCacheService);
   private dataArysService = inject(DataArysService);
   private navCtrl = inject(NavController);
   private toastCtrl = inject(ToastController);
@@ -29,12 +30,15 @@ export class PagarDeudaPage implements OnInit {
   public showSuccess = false;
   public debtAmount = 0;
   public limitAmount = 0;
+  public creditAvailableAmount = 0;
   public minPayAmount = 0;
   public creditPayBefore = '';
 
   public membershipSummary: any = null;
 
   private accessTokenData: any = null;
+  /** Evita doble refetch Meritop en la primera entrada (ngOnInit ya refresca). */
+  private skipNextMeritopViewRefresh = true;
 
   public payAmount: number | null = null;
   /** Input de monto: se escribe como “céntimos” y se muestra con coma. */
@@ -113,6 +117,21 @@ export class PagarDeudaPage implements OnInit {
     }
   }
 
+  private setPayAmountFromBs(amount: number): void {
+    const safe = Math.max(0, this.toNumber(amount));
+    this.payAmountCents = Math.round(safe * 100);
+    this.payAmount = safe > 0 ? safe : null;
+    this.payAmountDisplay = safe > 0 ? this.formatAmountFromCents(this.payAmountCents) : '';
+  }
+
+  public useTotalDebt(): void {
+    this.setPayAmountFromBs(this.displayDebtAmount);
+  }
+
+  public useMinPay(): void {
+    this.setPayAmountFromBs(this.minPayAmount);
+  }
+
   private toLocalIsoMinutes(d: Date): string {
     const offset = d.getTimezoneOffset();
     const adjusted = new Date(d.getTime() - offset * 60000);
@@ -142,7 +161,6 @@ export class PagarDeudaPage implements OnInit {
     phonenumber: string;
   } | null = null;
 
-  private readonly MERITOP_CACHE_KEY = 'meritop_summary_v1';
 
   // Evita “parpadeo” de saldos (membresía -> Meritop)
   public summaryReady = false;
@@ -241,25 +259,31 @@ export class PagarDeudaPage implements OnInit {
     this.loadMembershipSummary();
     // Si Inicio ya precargó Meritop, no lo volvemos a pedir aquí.
     const usedCache = this.hydrateMeritopFromCache();
-    if (!usedCache) {
-      this.loadCustomerProduct();
-    } else {
+    if (usedCache) {
       this.productLoaded = true;
       this.updateSummaryReady();
     }
+    this.loadCustomerProduct(usedCache);
+  }
+
+  ionViewWillEnter(): void {
+    if (this.skipNextMeritopViewRefresh) {
+      this.skipNextMeritopViewRefresh = false;
+      return;
+    }
+    this.refreshMeritopSilent();
   }
 
   private hydrateMeritopFromCache(): boolean {
     try {
-      const raw = sessionStorage.getItem(this.MERITOP_CACHE_KEY);
-      if (!raw) return false;
-      const cached = JSON.parse(raw);
+      const cached = this.meritopCache.read();
+      if (!cached) return false;
       const limit = this.toNumber(cached?.limit ?? 0);
       const available = this.toNumber(cached?.available ?? 0);
       if (limit <= 0) return false;
-      const debt = Math.max(0, limit - available);
       this.limitAmount = limit;
-      this.debtAmount = debt;
+      this.creditAvailableAmount = available;
+      this.debtAmount = this.toNumber(cached?.amount_used ?? 0);
       this.minPayAmount = this.resolveMeritopMinPayment({
         amount_share_to_pay: cached?.amount_share_to_pay,
         amount_share_to_pay_converted: cached?.amount_share_to_pay_converted,
@@ -354,33 +378,7 @@ export class PagarDeudaPage implements OnInit {
   }
 
   private persistMeritopCacheFromProduct(product: any): void {
-    try {
-      const limit = Number(product.limit ?? 0) || 0;
-      const available = Number(product.available ?? 0) || 0;
-      if (limit <= 0) return;
-      const summary = {
-        limit,
-        available,
-        cardnumber: String(product.cardnumber ?? ''),
-        credit_pay_before: product.credit_pay_before != null ? String(product.credit_pay_before) : undefined,
-        id: product.id != null ? String(product.id) : '',
-        receiving_account: product?.receiving_account ?? null,
-        amount_share_to_pay:
-          product.amount_share_to_pay != null
-            ? Number(product.amount_share_to_pay)
-            : undefined,
-        amount_share_to_pay_converted:
-          product.amount_share_to_pay_converted != null
-            ? Number(product.amount_share_to_pay_converted)
-            : undefined,
-        min_pay: product.min_pay != null ? Number(product.min_pay) : undefined,
-        minimum_payment: product.minimum_payment != null ? Number(product.minimum_payment) : undefined,
-        share_to_pay: product.share_to_pay != null ? Number(product.share_to_pay) : undefined,
-      };
-      sessionStorage.setItem(this.MERITOP_CACHE_KEY, JSON.stringify(summary));
-    } catch {
-      // noop
-    }
+    this.meritopCache.persistFromProduct(product);
   }
 
   private applyMeritopProductFromResponse(result: any): void {
@@ -388,6 +386,7 @@ export class PagarDeudaPage implements OnInit {
     if (!product) return;
     this.debtAmount = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
     this.limitAmount = this.toNumber(product.limit ?? 0);
+    this.creditAvailableAmount = this.toNumber(product.available ?? 0);
     this.cardNumber = String(product.cardnumber ?? '');
     this.minPayAmount = this.resolveMeritopMinPayment(product);
     this.mapReceivingAccount(product);
@@ -404,16 +403,10 @@ export class PagarDeudaPage implements OnInit {
     if (!identity) {
       return of(undefined);
     }
-    const payload = {
-      bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
-      channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
-      terminal: '0',
-      ip: '127.0.0.1',
-      clientid: identity
-    };
-    return this.meritopService.getAccessToken().pipe(
-      concatMap(() => this.meritopService.customerProduct(payload)),
-      tap((result: any) => this.applyMeritopProductFromResponse(result)),
+    return this.meritopCache.refreshFromServer$(identity).pipe(
+      tap((product) => {
+        if (product) this.applyMeritopProductFromResponse({ products: [product] });
+      }),
       map(() => undefined),
       catchError(() => {
         void this.showToast('No se pudo actualizar el saldo desde Meritop.', 'warning');
@@ -422,7 +415,17 @@ export class PagarDeudaPage implements OnInit {
     );
   }
 
-  private loadCustomerProduct() {
+  private refreshMeritopSilent(): void {
+    const identity = this.getIdentity();
+    if (!identity) return;
+    this.meritopCache.refreshFromServer$(identity).subscribe({
+      next: (product) => {
+        if (product) this.applyMeritopProductFromResponse({ products: [product] });
+      },
+    });
+  }
+
+  private loadCustomerProduct(silentRefresh = false) {
     const identity = this.getIdentity();
     if (!identity) {
       this.productLoaded = true;
@@ -433,36 +436,19 @@ export class PagarDeudaPage implements OnInit {
     this.docType = identity.doctype;
     this.docId = identity.docid;
 
-    const payload = {
-      bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
-      channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
-      terminal: '0',
-      ip: '127.0.0.1',
-      clientid: identity
-    };
-
-    // `showLoading` aquí NO se usa, porque está reservado para el submit de pago.
-    this.meritopService.getAccessToken().subscribe({
-      next: () => {
-        this.meritopService.customerProduct(payload)
-          .pipe(finalize(() => {
-            this.productLoaded = true;
-            this.updateSummaryReady();
-          }))
-          .subscribe({
-            next: (result: any) => {
-              this.applyMeritopProductFromResponse(result);
-            },
-            error: () => {
-              this.showToast('No se pudo cargar la informacion de tu tarjeta.', 'warning');
-            }
-          });
+    this.meritopCache.refreshFromServer$(identity).subscribe({
+      next: (product) => {
+        if (product) this.applyMeritopProductFromResponse({ products: [product] });
       },
       error: () => {
-        this.showToast('No se pudo obtener token de Meritop.', 'warning');
+        if (!silentRefresh) {
+          void this.showToast('No se pudo cargar la informacion de tu tarjeta.', 'warning');
+        }
+      },
+      complete: () => {
         this.productLoaded = true;
         this.updateSummaryReady();
-      }
+      },
     });
   }
 
@@ -481,8 +467,10 @@ export class PagarDeudaPage implements OnInit {
   }
 
   get availableAmount(): number {
-    const avail = this.displayCreditLimit - this.displayDebtAmount;
-    return Math.max(0, avail);
+    if (this.toNumber(this.limitAmount) > 0) {
+      return this.toNumber(this.creditAvailableAmount);
+    }
+    return this.toNumber(this.membershipSummary?.credit_available);
   }
 
   get hasDebt(): boolean {
@@ -549,7 +537,6 @@ export class PagarDeudaPage implements OnInit {
         tap((res) => console.log('Pago exitoso:', res)),
         tap(() => {
           this.showSuccess = true;
-          this.updateLocalBalance();
         }),
         concatMap(() => this.refreshMeritopFromServer$()),
         finalize(() => {
@@ -565,21 +552,6 @@ export class PagarDeudaPage implements OnInit {
           this.showToast('Error al procesar el pago. Intente de nuevo.', 'danger');
         }
       });
-  }
-
-  private updateLocalBalance() {
-    const paid = Number(this.payAmount);
-    if (!Number.isFinite(paid) || paid <= 0) return;
-    this.debtAmount = Math.max(0, this.debtAmount - paid);
-    if (this.membershipSummary && typeof this.membershipSummary === 'object') {
-      const used = this.toNumber(this.membershipSummary.credit_used);
-      if (used > 0) {
-        this.membershipSummary = {
-          ...this.membershipSummary,
-          credit_used: Math.max(0, used - paid)
-        };
-      }
-    }
   }
 
   public goBack() {

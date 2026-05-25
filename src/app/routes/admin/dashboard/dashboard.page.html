@@ -124,11 +124,11 @@
                               <span class="chip chip--warning">
                                 {{ meritopLoading ? 'Cargando saldo…' : 'Saldo no disponible' }}
                               </span>
-                            } @else if(m.available_amount < m.credit_limit) {
+                            } @else if(m.credit_used > 0) {
                               <div class="debt">
                                 <div class="debt__label">Deuda actual</div>
                                 <div class="debt__value">
-                                  {{ isHidden ? '********' : (m.credit_limit - m.available_amount) | formatCurrency }}
+                                  {{ isHidden ? '********' : (m.credit_used | formatCurrency) }}
                                   <span class="metric__unit">Bs</span>
                                 </div>
                               </div>
@@ -150,7 +150,7 @@
                           </div>
                         </div>
 
-                        @if(meritopReady && (m.available_amount < m.credit_limit)) {
+                        @if(meritopReady && m.credit_used > 0) {
                           <button
                             type="button"
                             class="btn btn-success w-100 membership-card__cta"

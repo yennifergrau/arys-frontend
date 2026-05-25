@@ -227,6 +227,27 @@
   gap: 12px;
 }
 
+/* Mismo estilo que pestaña «Ultimos» activa */
+.btn-tab-match {
+  background-color: var(--primary) !important;
+  border: 2px solid #070707 !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  font-weight: 800;
+
+  &:hover,
+  &:active,
+  &:focus,
+  &:focus-visible {
+    background-color: var(--primary) !important;
+    border-color: #070707 !important;
+    color: #fff !important;
+    filter: brightness(0.95);
+    box-shadow: none !important;
+  }
+}
+
 .mov-no-debt-hint {
   font-size: 0.82rem;
   color: #7a7a80;
@@ -375,6 +396,11 @@
     &.payment {
       background: #f0fff4;
       color: #28a745;
+    }
+
+    &.commission {
+      background: #f8f4ff;
+      color: #6f42c1;
     }
   }
 }

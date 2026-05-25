@@ -10,7 +10,12 @@ import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { ServiceOrder, CreditInfo, ApplyCreditResponse, CustomerProductSummary } from '../interface/service-order.interface';
 import { MeritopService } from '../services/meritop.service';
 import { DataArysService } from '../services/data-arys.service';
-import { IonicModule, ToastController } from '@ionic/angular';
+import {
+  MERITOP_SUMMARY_CACHE_KEY,
+  MeritopSummaryCacheService,
+  PENDING_ORDERS_CACHE_KEY,
+} from '../services/meritop-summary-cache.service';
+import { IonicModule, ToastController, ViewWillEnter } from '@ionic/angular';
 
 @Component({
   selector: 'app-service-order',
@@ -28,11 +33,12 @@ import { IonicModule, ToastController } from '@ionic/angular';
   ],
   providers: [ServiceOrderService, DataArysService]
 })
-export class ServiceOrderPage implements OnInit {
+export class ServiceOrderPage implements OnInit, ViewWillEnter {
 
   private serviceOrderService = inject(ServiceOrderService)
   private meritopService = inject(MeritopService)
   private dataArysService = inject(DataArysService)
+  private meritopCache = inject(MeritopSummaryCacheService)
   private toastCtrl = inject(ToastController)
   id_user!: number
   private id_member: number = 0
@@ -56,8 +62,7 @@ export class ServiceOrderPage implements OnInit {
   // - fallback: Meritop falló; mostramos membresía ARYS si existe
   public summaryState: 'loading' | 'ready' | 'fallback' = 'loading'
   public summaryMessage: string = ''
-  private readonly MERITOP_CACHE_KEY = 'meritop_summary_v1'
-  private readonly PENDING_ORDERS_CACHE_KEY = 'pending_orders_v1'
+  private readonly PENDING_ORDERS_CACHE_KEY = PENDING_ORDERS_CACHE_KEY
 
   public activeOrderId: string | null = null
   public creditInfo: CreditInfo | null = null
@@ -119,35 +124,28 @@ export class ServiceOrderPage implements OnInit {
     }
   }
 
-  /** Alinea `meritop_summary_v1` con Inicio / pagar deuda / movimientos. */
   private persistMeritopCacheFromProduct(product: any): void {
-    try {
-      const limit = Number(product.limit ?? 0) || 0
-      const available = Number(product.available ?? 0) || 0
-      if (limit <= 0) return
-      const summary = {
-        limit,
-        available,
-        cardnumber: String(product.cardnumber ?? ''),
-        credit_pay_before: product.credit_pay_before != null ? String(product.credit_pay_before) : undefined,
-        id: product.id != null ? String(product.id) : '',
-        receiving_account: product?.receiving_account ?? null,
-        amount_share_to_pay:
-          product.amount_share_to_pay != null
-            ? Number(product.amount_share_to_pay)
-            : undefined,
-        amount_share_to_pay_converted:
-          product.amount_share_to_pay_converted != null
-            ? Number(product.amount_share_to_pay_converted)
-            : undefined,
-        min_pay: product.min_pay != null ? Number(product.min_pay) : undefined,
-        minimum_payment: product.minimum_payment != null ? Number(product.minimum_payment) : undefined,
-        share_to_pay: product.share_to_pay != null ? Number(product.share_to_pay) : undefined,
-      }
-      sessionStorage.setItem(this.MERITOP_CACHE_KEY, JSON.stringify(summary))
-    } catch {
-      // noop
+    this.meritopCache.persistFromProduct(product)
+  }
+
+  private mapMeritopProduct(product: any): CustomerProductSummary {
+    return {
+      id: String(product.id ?? ''),
+      cardnumber: String(product.cardnumber ?? ''),
+      limit: this.toNumber(product.limit ?? 0),
+      available: this.toNumber(product.available ?? 0),
+      amount_used: this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0),
+      amount_share_to_pay: this.resolveMeritopMinPayment(product),
+      credit_pay_before: String(product.credit_pay_before ?? ''),
     }
+  }
+
+  private applyMeritopProduct(product: any): void {
+    this.customerProduct = this.mapMeritopProduct(product)
+    this.customerProductFetchReason = ''
+    this.summaryState = 'ready'
+    this.summaryMessage = ''
+    this.persistMeritopCacheFromProduct(product)
   }
 
   /**
@@ -156,39 +154,9 @@ export class ServiceOrderPage implements OnInit {
   private refreshMeritopProductSilent(): void {
     const identity = this.getCustomerIdentity()
     if (!identity) return
-    const payload = {
-      bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
-      channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
-      terminal: '0',
-      ip: '127.0.0.1',
-      clientid: {
-        doctype: identity.doctype,
-        docid: identity.docid,
-      },
-    }
-    this.meritopService.getAccessToken().subscribe({
-      next: () => {
-        this.meritopService.customerProduct(payload).subscribe({
-          next: (result: any) => {
-            const product = result?.products?.[0]
-            if (!product) return
-            this.customerProduct = {
-              id: String(product.id ?? ''),
-              cardnumber: String(product.cardnumber ?? ''),
-              limit: Number(product.limit ?? 0),
-              available: Number(product.available ?? 0),
-              amount_used: this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0),
-              amount_share_to_pay: this.resolveMeritopMinPayment(product),
-              credit_pay_before: String(product.credit_pay_before ?? ''),
-            }
-            this.customerProductFetchReason = ''
-            this.summaryState = 'ready'
-            this.persistMeritopCacheFromProduct(product)
-          },
-          error: () => {
-            void this.presentToast('No se pudo refrescar el saldo Meritop.', 'warning')
-          },
-        })
+    this.meritopCache.refreshFromServer$(identity).subscribe({
+      next: (product) => {
+        if (product) this.applyMeritopProduct(product)
       },
       error: () => {
         void this.presentToast('No se pudo refrescar el saldo Meritop.', 'warning')
@@ -200,7 +168,7 @@ export class ServiceOrderPage implements OnInit {
     let meritopOk = false
     let pendingOk = false
     try {
-      const raw = sessionStorage.getItem(this.MERITOP_CACHE_KEY)
+      const raw = sessionStorage.getItem(MERITOP_SUMMARY_CACHE_KEY)
       if (raw) {
         const cached = JSON.parse(raw)
         const limit = this.toNumber(cached?.limit ?? 0)
@@ -296,31 +264,37 @@ export class ServiceOrderPage implements OnInit {
     return (this.membershipSummary?.credit_line_id ?? '').trim()
   }
 
-  /** Tarjeta Meritop con saldos útiles; si no, usamos membresía ARYS. */
-  private preferMeritopMetrics(): boolean {
-    const c = this.customerProduct
-    if (!c?.cardnumber?.trim()) return false
-    return this.toNumber(c.available) > 0 || this.toNumber(c.limit) > 0
-  }
-
+  /** Límite: Meritop `limit` o, en fallback, membresía ARYS (sin calcular). */
   get displayCreditLimit(): number {
-    if (this.preferMeritopMetrics()) return this.toNumber(this.customerProduct!.limit)
-    const m = this.toNumber(this.membershipSummary?.credit_limit)
-    if (m > 0) return m
-    return this.toNumber(this.customerProduct?.limit)
+    if (this.summaryState === 'ready' && this.customerProduct) {
+      return this.toNumber(this.customerProduct.limit)
+    }
+    if (this.summaryState === 'fallback' && this.membershipSummary) {
+      return this.toNumber(this.membershipSummary.credit_limit)
+    }
+    return 0
   }
 
+  /** Disponible: Meritop `available` o membresía `credit_available`. */
   get displayCreditAvailable(): number {
-    if (this.preferMeritopMetrics()) return this.toNumber(this.customerProduct!.available)
-    const m = this.toNumber(this.membershipSummary?.credit_available)
-    if (m > 0) return m
-    return this.toNumber(this.customerProduct?.available)
+    if (this.summaryState === 'ready' && this.customerProduct) {
+      return this.toNumber(this.customerProduct.available)
+    }
+    if (this.summaryState === 'fallback' && this.membershipSummary) {
+      return this.toNumber(this.membershipSummary.credit_available)
+    }
+    return 0
   }
 
+  /** Deuda: Meritop `amount_used` o membresía `credit_used` (nunca límite − disponible). */
   get displayCreditUsed(): number {
-    if (this.preferMeritopMetrics()) return this.toNumber(this.customerProduct!.amount_used)
-    if (this.membershipSummary) return this.toNumber(this.membershipSummary.credit_used)
-    return this.toNumber(this.customerProduct?.amount_used)
+    if (this.summaryState === 'ready' && this.customerProduct) {
+      return this.toNumber(this.customerProduct.amount_used)
+    }
+    if (this.summaryState === 'fallback' && this.membershipSummary) {
+      return this.toNumber(this.membershipSummary.credit_used)
+    }
+    return 0
   }
 
   get membershipCreditLineHint(): string {
@@ -381,15 +355,14 @@ export class ServiceOrderPage implements OnInit {
       next: (result) => {
         this.isLoadingCreditPanel = false
         if (result.status && result.credit) {
-          const availableFromCustomerProduct = this.toNumber(this.customerProduct?.available)
-          const availableFromMembership = this.toNumber(this.membershipSummary?.credit_available)
-          const availableFromOrderDetails = this.toNumber(result.credit.available)
-          const resolvedAvailable =
-            availableFromCustomerProduct > 0
-              ? availableFromCustomerProduct
-              : availableFromMembership > 0
-                ? availableFromMembership
-                : availableFromOrderDetails
+          let resolvedAvailable: number
+          if (this.summaryState === 'ready' && this.customerProduct) {
+            resolvedAvailable = this.toNumber(this.customerProduct.available)
+          } else if (this.summaryState === 'fallback' && this.membershipSummary) {
+            resolvedAvailable = this.toNumber(this.membershipSummary.credit_available)
+          } else {
+            resolvedAvailable = this.toNumber(result.credit.available)
+          }
 
           this.creditInfo = {
             ...result.credit,
@@ -502,9 +475,6 @@ export class ServiceOrderPage implements OnInit {
       orderId,
       amountToApply,
       identity,
-      cardnumber,
-      membershipSummary: this.membershipSummary,
-      customerProduct: this.customerProduct,
     });
 
     // Usamos los datos de provider_payment_mobile que vienen del endpoint de la orden
@@ -653,6 +623,7 @@ export class ServiceOrderPage implements OnInit {
       this.serviceOrderService.getPendingOrders(membershipId).subscribe({
         next: (result) => {
           this.pendingOrders = result?.status && Array.isArray(result.data) ? result.data : []
+          this.meritopCache.persistPendingOrders(this.pendingOrders)
           this.showLoading = false
         },
         error: (error) => {
@@ -665,9 +636,11 @@ export class ServiceOrderPage implements OnInit {
     }
   }
 
-  private loadCustomerProduct() {
-    this.summaryState = 'loading'
-    this.summaryMessage = ''
+  private loadCustomerProduct(silentRefresh = false) {
+    if (!silentRefresh) {
+      this.summaryState = 'loading'
+      this.summaryMessage = ''
+    }
     try {
       const identity = this.getCustomerIdentity()
       const doctype = identity?.doctype || ''
@@ -705,18 +678,7 @@ export class ServiceOrderPage implements OnInit {
                 return
               }
 
-              this.customerProduct = {
-                id: String(product.id ?? ''),
-                cardnumber: String(product.cardnumber ?? ''),
-                limit: Number(product.limit ?? 0),
-                available: Number(product.available ?? 0),
-                amount_used: this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0),
-                amount_share_to_pay: this.resolveMeritopMinPayment(product),
-                credit_pay_before: String(product.credit_pay_before ?? '')
-              }
-              this.customerProductFetchReason = ''
-              this.summaryState = 'ready'
-              this.persistMeritopCacheFromProduct(product)
+              this.applyMeritopProduct(product)
             },
             error: (error) => {
               this.customerProduct = null
@@ -778,7 +740,13 @@ export class ServiceOrderPage implements OnInit {
     this.summaryMessage = ''
     this.loadMembershipSummary()
     const cached = this.hydrateFromCache()
-    if (!cached.meritop) this.loadCustomerProduct()
-    if (!cached.pending) this.getPendingOrders()
+    this.loadCustomerProduct(cached.meritop)
+    this.getPendingOrders()
+  }
+
+  ionViewWillEnter() {
+    this.refreshMeritopProductSilent()
+    this.getPendingOrders()
+    this.loadMembershipSummary()
   }
 }

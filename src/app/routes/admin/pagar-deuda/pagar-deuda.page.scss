@@ -648,26 +648,50 @@
   border-radius: 12px;
 }
 
-.paidon-sheet__btn--primary{
-  background: linear-gradient(180deg, #ffc42d 0%, #ffb000 45%, #e09600 100%);
-}
-
 .paidon-sheet ion-datetime{
   --background: #fff;
   padding: 6px 10px 14px;
 }
 
-.btn-primary {
-  background-color: var(--primary);
-  border: none;
-  border-radius: 16px;
-  box-shadow: 0 8px 18px rgba(244, 180, 0, 0.22);
-  color: #1f1f20;
+/* Mismo estilo que pestaña «Ultimos» activa en Movimientos */
+.btn-tab-match {
+  background-color: var(--primary) !important;
+  border: 2px solid #070707 !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  font-weight: 800;
 
-  &:disabled {
-    opacity: 0.7;
-    background-color: #ccc;
+  &:hover,
+  &:active,
+  &:focus,
+  &:focus-visible {
+    background-color: var(--primary) !important;
+    border-color: #070707 !important;
+    color: #fff !important;
+    filter: brightness(0.95);
+    box-shadow: none !important;
   }
+
+  &:disabled,
+  &.disabled {
+    opacity: 0.7;
+    background-color: #ccc !important;
+    border-color: transparent !important;
+    color: #666 !important;
+    filter: none;
+  }
+}
+
+.payment-form .btn.btn-primary,
+.btn-primary.btn-tab-match,
+.paidon-sheet__btn--primary {
+  @extend .btn-tab-match;
+}
+
+.pay-amount-shortcuts {
+  display: flex;
+  gap: 8px;
 }
 
 .api-note {
@@ -837,10 +861,9 @@
 }
 
 .pay-success__btn-primary {
-  border-radius: 16px;
+  @extend .btn-tab-match;
   padding-top: 14px;
   padding-bottom: 14px;
-  font-weight: 800;
   letter-spacing: -0.02em;
 }
 

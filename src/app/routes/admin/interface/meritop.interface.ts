@@ -155,7 +155,7 @@ export interface Transaction {
     description: string;
     merchantName?: string;
     date: string;
-    type: 'purchase' | 'payment' | string;
+    type: 'purchase' | 'payment' | 'commission' | string;
     status?: string;
 }
 

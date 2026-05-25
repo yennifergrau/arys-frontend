@@ -25,10 +25,11 @@ import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { FormatCurrencyPipe } from '../pipes/currency.pipe';
 import { jwtDecode } from 'jwt-decode'
 import { EmissionService } from '../services/emission.service';
-import { NavController } from '@ionic/angular';
+import { NavController, ViewWillEnter } from '@ionic/angular';
 import { EmissionDetailsService } from '../services/emission-details.service';
 import { DataArysService } from '../services/data-arys.service';
 import { ServiceOrderService } from '../services/service-order.service';
+import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
 import { firstValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
@@ -43,6 +44,14 @@ type ServiceOption = {
 };
 
 type QuickChip = { label: string; value: string };
+
+type MeritopSummary = {
+  available: number;
+  limit: number;
+  amount_used: number;
+  cardnumber: string;
+  credit_pay_before?: string;
+};
 
 @Component({
   selector: 'app-dashboard',
@@ -59,9 +68,10 @@ type QuickChip = { label: string; value: string };
   ],
   providers: [MeritopService, JsonLoaderService, EmissionService, DataArysService, ServiceOrderService],
 })
-export class DashboardPage implements OnInit {
+export class DashboardPage implements OnInit, ViewWillEnter {
 
   private arys_service = inject(DataArysService)
+  private meritopCache = inject(MeritopSummaryCacheService)
   public isHidden: boolean = true;
   public json_customer: customer[] | any;
   private emission = inject(EmissionService);
@@ -148,7 +158,7 @@ export class DashboardPage implements OnInit {
 
   // Resumen Meritop para mostrar montos reales en Inicio
   private meritopSummaryState: 'idle' | 'loading' | 'ready' | 'fallback' = 'idle';
-  private meritopProduct: { available: number; limit: number; cardnumber: string; credit_pay_before?: string } | null = null;
+  private meritopProduct: MeritopSummary | null = null;
   public get meritopReady(): boolean {
     return this.meritopSummaryState === 'ready' && !!this.meritopProduct && this.meritopProduct.limit > 0;
   }
@@ -157,16 +167,27 @@ export class DashboardPage implements OnInit {
     return this.meritopSummaryState === 'loading' || this.meritopSummaryState === 'idle';
   }
 
-  public creditUsagePercent(m: { credit_limit: number; available_amount: number } | any): number {
+  public creditUsagePercent(m: { credit_limit: number; credit_used: number } | any): number {
     if (!this.meritopReady) return 0;
     const limit = Number(m?.credit_limit) || 0;
-    const available = Number(m?.available_amount) || 0;
+    const used = Number(m?.credit_used) || 0;
     if (limit <= 0) return 0;
-    const used = Math.max(0, Math.min(limit, limit - available));
     return Math.max(0, Math.min(100, Math.round((used / limit) * 100)));
   }
-  private readonly MERITOP_CACHE_KEY = 'meritop_summary_v1';
-  private readonly PENDING_ORDERS_CACHE_KEY = 'pending_orders_v1';
+
+  private toNumber(value: any): number {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      const normalized = trimmed.includes(',')
+        ? trimmed.replace(/\./g, '').replace(',', '.')
+        : trimmed;
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
 
   /** Filas listas para la vista (API `get_membership` → credit_limit / credit_available). */
   get membershipList(): Array<{
@@ -175,6 +196,7 @@ export class DashboardPage implements OnInit {
     plan_label?: string;
     available_amount: number;
     credit_limit: number;
+    credit_used: number;
     has_credit: boolean;
     credit_pay_before?: string;
   }> {
@@ -182,8 +204,9 @@ export class DashboardPage implements OnInit {
     if (!d || !Array.isArray(d)) return [];
     const contractProductId = this.getContractProductId();
     return d.map((row: any) => {
-      let limit = Number(row.credit_limit) || 0;
-      let available = Number(row.credit_available) || 0;
+      let limit = this.toNumber(row.credit_limit);
+      let available = this.toNumber(row.credit_available);
+      let creditUsed = this.toNumber(row.credit_used);
       let creditPayBefore: string | undefined = row?.credit_pay_before != null ? String(row.credit_pay_before) : undefined;
 
       // Si Meritop respondió bien, preferimos esos montos (evita mostrar 300 “fijo” de ARYS).
@@ -194,6 +217,7 @@ export class DashboardPage implements OnInit {
       ) {
         limit = this.meritopProduct.limit;
         available = this.meritopProduct.available;
+        creditUsed = this.meritopProduct.amount_used;
         if (this.meritopProduct.credit_pay_before) {
           creditPayBefore = this.meritopProduct.credit_pay_before;
         }
@@ -228,6 +252,7 @@ export class DashboardPage implements OnInit {
         plan_label,
         available_amount: available,
         credit_limit: limit,
+        credit_used: creditUsed,
         has_credit: !!lineId,
         credit_pay_before: creditPayBefore,
       };
@@ -698,115 +723,95 @@ export class DashboardPage implements OnInit {
     }
   }
 
-  private loadMeritopSummary() {
-    // Evitar llamadas repetidas: Inicio debe cargar una vez y luego servir desde caché.
-    if (this.loadState.meritop) return;
+  private applyMeritopProduct(product: any): void {
+    const limit = this.toNumber(product.limit ?? 0);
+    const available = this.toNumber(product.available ?? 0);
+    const amount_used = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
+    this.meritopProduct = {
+      limit,
+      available,
+      amount_used,
+      cardnumber: String(product.cardnumber ?? ''),
+      credit_pay_before: product.credit_pay_before != null ? String(product.credit_pay_before) : undefined,
+    };
+    this.meritopSummaryState = 'ready';
+    this.meritopCache.persistFromProduct(product);
+  }
 
-    // Pre-carga: usar caché si existe para que se vea desde el inicio.
+  private hydrateMeritopFromCache(): boolean {
     try {
-      const raw = sessionStorage.getItem(this.MERITOP_CACHE_KEY);
-      if (raw) {
-        const cached = JSON.parse(raw);
-        const limit = Number(cached?.limit ?? 0) || 0;
-        const available = Number(cached?.available ?? 0) || 0;
-        if (limit > 0) {
-          this.meritopProduct = {
-            limit,
-            available,
-            cardnumber: String(cached?.cardnumber ?? ''),
-            credit_pay_before: cached?.credit_pay_before != null ? String(cached.credit_pay_before) : undefined,
-          };
-          this.meritopSummaryState = 'ready';
-          // Si hay caché válido, consideramos meritop “listo” para la UX.
-          this.loadState.meritop = true;
-          this.finishIfReady();
-          return;
-        }
-      }
+      const cached = this.meritopCache.read();
+      if (!cached) return false;
+      const limit = this.toNumber(cached?.limit ?? 0);
+      const available = this.toNumber(cached?.available ?? 0);
+      if (limit <= 0) return false;
+      this.meritopProduct = {
+        limit,
+        available,
+        amount_used: this.toNumber(cached?.amount_used ?? 0),
+        cardnumber: String(cached?.cardnumber ?? ''),
+        credit_pay_before: cached?.credit_pay_before != null ? String(cached.credit_pay_before) : undefined,
+      };
+      this.meritopSummaryState = 'ready';
+      return true;
     } catch {
-      // noop
+      return false;
     }
+  }
 
+  private fetchMeritopProduct(silentRefresh = false): void {
     const identity = this.getIdentity();
     if (!identity) {
-      this.meritopSummaryState = 'fallback';
-      this.meritopProduct = null;
+      if (!silentRefresh) {
+        this.meritopSummaryState = 'fallback';
+        this.meritopProduct = null;
+      }
       this.loadState.meritop = true;
       this.finishIfReady();
       return;
     }
 
-    this.meritopSummaryState = 'loading';
-    const payload = {
-      bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
-      channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
-      terminal: '0',
-      ip: '127.0.0.1',
-      clientid: identity
-    };
+    if (!silentRefresh) {
+      this.meritopSummaryState = 'loading';
+    }
 
-    this.meritopService.getAccessToken().subscribe({
-      next: () => {
-        this.meritopService.customerProduct(payload).subscribe({
-          next: (result: any) => {
-            const product = result?.products?.[0];
-            if (!product) {
-              this.meritopSummaryState = 'fallback';
-              this.meritopProduct = null;
-              this.loadState.meritop = true;
-              this.finishIfReady();
-              return;
-            }
-            const limit = Number(product.limit ?? 0) || 0;
-            const available = Number(product.available ?? 0) || 0;
-            const summary = {
-              limit,
-              available,
-              cardnumber: String(product.cardnumber ?? ''),
-              credit_pay_before: product.credit_pay_before != null ? String(product.credit_pay_before) : undefined,
-              id: product.id != null ? String(product.id) : '',
-              receiving_account: product?.receiving_account ?? null,
-              amount_share_to_pay:
-                product.amount_share_to_pay != null
-                  ? Number(product.amount_share_to_pay)
-                  : undefined,
-              amount_share_to_pay_converted:
-                product.amount_share_to_pay_converted != null
-                  ? Number(product.amount_share_to_pay_converted)
-                  : undefined,
-              min_pay: product.min_pay != null ? Number(product.min_pay) : undefined,
-              minimum_payment: product.minimum_payment != null ? Number(product.minimum_payment) : undefined,
-              share_to_pay: product.share_to_pay != null ? Number(product.share_to_pay) : undefined,
-            };
-            this.meritopProduct = summary;
-            this.meritopSummaryState = 'ready';
-            // Persistimos para que quede cargado al entrar en Inicio.
-            try {
-              sessionStorage.setItem(
-                this.MERITOP_CACHE_KEY,
-                JSON.stringify(summary)
-              );
-            } catch {
-              // noop
-            }
-            this.loadState.meritop = true;
-            this.finishIfReady();
-          },
-          error: () => {
-            this.meritopSummaryState = 'fallback';
-            this.meritopProduct = null;
-            this.loadState.meritop = true;
-            this.finishIfReady();
-          }
-        });
-      },
-      error: () => {
-        this.meritopSummaryState = 'fallback';
-        this.meritopProduct = null;
+    this.meritopCache.refreshFromServer$(identity).subscribe({
+      next: (product) => {
+        if (product) {
+          this.applyMeritopProduct(product);
+        } else if (!silentRefresh) {
+          this.meritopSummaryState = 'fallback';
+          this.meritopProduct = null;
+        }
         this.loadState.meritop = true;
         this.finishIfReady();
-      }
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        if (!silentRefresh) {
+          this.meritopSummaryState = 'fallback';
+          this.meritopProduct = null;
+        }
+        this.loadState.meritop = true;
+        this.finishIfReady();
+      },
     });
+  }
+
+  private loadMeritopSummary() {
+    const hadCache = this.hydrateMeritopFromCache();
+    if (hadCache) {
+      this.loadState.meritop = true;
+      this.finishIfReady();
+    }
+    this.fetchMeritopProduct(hadCache);
+  }
+
+  ionViewWillEnter() {
+    if (this.loadState.membership) {
+      this.fetchMeritopProduct(true);
+      void this.checkPendingOrders();
+    }
   }
 
   constructor(
@@ -899,11 +904,7 @@ export class DashboardPage implements OnInit {
       this.pendingOrdersCount = list.length;
       this.hasPendingOrder = this.pendingOrdersCount > 0;
       // Persistimos lista para que esté “precargada” al navegar.
-      try {
-        sessionStorage.setItem(this.PENDING_ORDERS_CACHE_KEY, JSON.stringify(list));
-      } catch {
-        // noop
-      }
+      this.meritopCache.persistPendingOrders(list);
       this.loadState.pendingOrders = true;
       this.finishIfReady();
     } catch {
@@ -920,12 +921,12 @@ export class DashboardPage implements OnInit {
   }
 
   get hasAnyDebt(): boolean {
-    return this.membershipList.some(m => m.has_credit && Number(m.credit_limit) > Number(m.available_amount));
+    return this.membershipList.some(m => m.has_credit && Number(m.credit_used) > 0);
   }
 
   public pagarDeudaRapido(): void {
     const debtMembership = this.membershipList.find(
-      m => m.has_credit && Number(m.credit_limit) > Number(m.available_amount)
+      m => m.has_credit && Number(m.credit_used) > 0
     );
     if (!debtMembership) {
       this.mostrarToast('No tienes deuda pendiente para abonar.', 'toast-error');
@@ -935,9 +936,8 @@ export class DashboardPage implements OnInit {
   }
 
   public pagarCredito(membership: any) {
-    const limit = Number(membership?.credit_limit) || 0;
-    const avail = Number(membership?.available_amount) || 0;
-    if (limit <= avail) {
+    const debt = Number(membership?.credit_used) || 0;
+    if (debt <= 0) {
       this.mostrarToast('No tienes deuda pendiente para abonar.', 'toast-error');
       return;
     }
@@ -1030,17 +1030,10 @@ export class DashboardPage implements OnInit {
       // noop
     }
 
-    // Precarga (si existe) de órdenes pendientes para que el badge/estado esté listo desde el inicio.
-    try {
-      const raw = sessionStorage.getItem(this.PENDING_ORDERS_CACHE_KEY);
-      if (raw) {
-        const list = JSON.parse(raw);
-        const arr = Array.isArray(list) ? list : [];
-        this.pendingOrdersCount = arr.length;
-        this.hasPendingOrder = this.pendingOrdersCount > 0;
-      }
-    } catch {
-      // noop
+    const pendingFromCache = this.meritopCache.readPendingOrders();
+    if (pendingFromCache.length > 0) {
+      this.pendingOrdersCount = pendingFromCache.length;
+      this.hasPendingOrder = true;
     }
 
     const stored = sessionStorage.getItem('id_member')

@@ -43,7 +43,6 @@
 
             <div class="card-footer">
               <span>Movimientos</span>
-              <span>{{ cardMask }}</span>
             </div>
           </div>
         </div>
@@ -93,7 +92,7 @@
               <a
                 *ngIf="hasDebt"
                 routerLink="/admin/pagar-deuda"
-                class="btn btn-success btn-sm px-3 py-2 fw-bold text-decoration-none text-center d-block">
+                class="btn btn-tab-match btn-sm px-3 py-2 fw-bold text-decoration-none text-center d-block">
                 Pagar deuda
               </a>
               <p *ngIf="summaryReady && !hasDebt" class="mov-no-debt-hint mb-0">Sin deuda pendiente</p>
@@ -147,7 +146,7 @@
           <ion-spinner name="crescent"></ion-spinner>
         </div>
 
-        <div class="chat-list mt-4">
+        <div class="chat-list mt-4" *ngIf="!showLoading">
           <div class="transactions-group" *ngFor="let group of groupedTransactions">
             <h6 class="date-header mb-3">{{ group.date }}</h6>
 
@@ -155,11 +154,18 @@
               <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                   <div class="icon-container me-3" [class]="tx.type">
-                    <i class="feather" [ngClass]="tx.type === 'purchase' ? 'icon-shopping-cart' : 'icon-dollar-sign'"></i>
+                    <i class="feather"
+                      [ngClass]="{
+                        'icon-percent': tx.type === 'commission',
+                        'icon-shopping-cart': tx.type === 'purchase',
+                        'icon-dollar-sign': tx.type !== 'commission' && tx.type !== 'purchase'
+                      }"></i>
                   </div>
                   <div class="list-content">
-                    <h6 class="mb-0 font-semibold">{{ tx.merchantName || tx.description }}</h6>
-                    <small class="text-muted">{{ tx.description }}</small>
+                    <h6 class="mb-0 font-semibold">{{ tx.merchantName || tx.description || 'Movimiento' }}</h6>
+                    <small class="text-muted" *ngIf="tx.merchantName && tx.description && tx.merchantName !== tx.description">
+                      {{ tx.description }}
+                    </small>
                     <div class="tx-time-small mt-1">
                       <small class="text-muted">{{ tx.date | date:'dd/MM/yyyy, hh:mm a' }}</small>
                     </div>

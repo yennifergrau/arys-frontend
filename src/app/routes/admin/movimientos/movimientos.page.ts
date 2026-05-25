@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, NavController } from '@ionic/angular';
+import { IonicModule, NavController, ViewWillEnter } from '@ionic/angular';
 import { MeritopService } from '../services/meritop.service';
 import { Transaction } from '../interface/meritop.interface';
 import { TabComponent } from 'src/app/shared/components/tab/tab.component';
@@ -9,6 +9,7 @@ import { RouterLink } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
 import { finalize } from 'rxjs';
 import { DataArysService } from '../services/data-arys.service';
+import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
 
 @Component({
   selector: 'app-movimientos',
@@ -18,8 +19,9 @@ import { DataArysService } from '../services/data-arys.service';
   imports: [IonicModule, CommonModule, FormsModule, TabComponent, RouterLink],
   providers: [DataArysService]
 })
-export class MovimientosPage implements OnInit {
+export class MovimientosPage implements OnInit, ViewWillEnter {
   private meritopService = inject(MeritopService);
+  private meritopCache = inject(MeritopSummaryCacheService);
   private dataArysService = inject(DataArysService);
   private navCtrl = inject(NavController);
 
@@ -31,17 +33,17 @@ export class MovimientosPage implements OnInit {
   public dateTo: string = '';
   public debtAmount = 0;
   public limitAmount = 0;
+  public creditAvailableAmount = 0;
   public minPayAmount = 0;
   public creditPayBefore = '';
   public cardNumber = '';
-  private readonly MERITOP_CACHE_KEY = 'meritop_summary_v1';
-
   private docId: number | null = null;
   private docType = '';
   private productId: string | null = null;
 
   public membershipSummary: any = null;
   private accessTokenData: any = null;
+  private skipNextMeritopViewRefresh = true;
 
   // Evita “parpadeo” de saldos (membresía -> Meritop)
   public summaryReady = false;
@@ -89,23 +91,109 @@ export class MovimientosPage implements OnInit {
   private normalizeTransaction(raw: any): Transaction {
     const date = raw?.date ?? raw?.datetime ?? raw?.created_at ?? raw?.createdAt ?? '';
     const amount = this.toNumber(raw?.amount ?? raw?.monto ?? 0);
+    const description = String(
+      raw?.description ??
+      raw?.concept ??
+      raw?.type_transaction ??
+      raw?.payment_type ??
+      raw?.transaction_desc ??
+      raw?.payment_status ??
+      ''
+    ).trim();
+    const merchantName = String(
+      raw?.merchantName ?? raw?.commerceName ?? raw?.commerce_name ?? raw?.commerce ?? ''
+    ).trim();
+    const isCommission = this.isCommissionFromRaw(raw, amount, description, merchantName);
 
     return {
       transactionId: String(raw?.transactionId ?? raw?.id ?? raw?.reference ?? ''),
       amount,
-      description: String(
-        raw?.description ??
-        raw?.concept ??
-        raw?.type_transaction ??
-        raw?.payment_type ??
-        raw?.payment_status ??
-        ''
-      ),
-      merchantName: String(raw?.merchantName ?? raw?.commerceName ?? raw?.commerce_name ?? raw?.commerce ?? ''),
+      description: isCommission ? 'Comisión' : description,
+      merchantName: isCommission ? 'Comisión' : merchantName,
       date: String(date),
-      type: String(raw?.type ?? (amount < 0 ? 'purchase' : 'payment')),
+      type: isCommission ? 'commission' : String(raw?.type ?? (amount < 0 ? 'purchase' : 'payment')),
       status: String(raw?.status ?? raw?.payment_status ?? '')
     };
+  }
+
+  private isCommissionFromRaw(
+    raw: any,
+    amount: number,
+    description: string,
+    merchantName: string
+  ): boolean {
+    const blob = [
+      raw?.type_transaction,
+      raw?.payment_type,
+      raw?.concept,
+      raw?.description,
+      raw?.transaction_desc,
+      raw?.transaction_type,
+      raw?.tipo,
+      description,
+      merchantName,
+    ]
+      .filter((v) => v != null && String(v).trim() !== '')
+      .join(' ')
+      .toLowerCase();
+
+    if (/comisi[oó]n|commission|\bfee\b|cargo\s*(admin|servicio|bancario)?/i.test(blob)) {
+      return true;
+    }
+    return amount < 0 && !description && !merchantName;
+  }
+
+  private isPagoMovilTx(tx: Transaction): boolean {
+    const text = `${tx.description} ${tx.merchantName}`.toLowerCase();
+    return /pago\s*m[oó]vil|addpurchase|purchase/i.test(text);
+  }
+
+  /** Empareja cargos sin etiqueta (~5% del Pago Móvil del mismo minuto) como comisión. */
+  private labelLinkedCommissions(transactions: Transaction[]): Transaction[] {
+    const minuteKey = (tx: Transaction): string => {
+      const d = this.parseTxDate(tx);
+      if (!d) return `id:${tx.transactionId}`;
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}`;
+    };
+
+    const groups = new Map<string, Transaction[]>();
+    for (const tx of transactions) {
+      const key = minuteKey(tx);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(tx);
+    }
+
+    for (const items of groups.values()) {
+      const pagoMoviles = items.filter((t) => t.type !== 'commission' && this.isPagoMovilTx(t));
+      if (!pagoMoviles.length) continue;
+
+      for (const tx of items) {
+        if (tx.type === 'commission') continue;
+        const desc = `${tx.description} ${tx.merchantName}`.trim();
+        if (desc) continue;
+        if (tx.amount >= 0) continue;
+
+        const absCommission = Math.abs(tx.amount);
+        const linked = pagoMoviles.find((pm) => {
+          const absPm = Math.abs(pm.amount);
+          if (absPm <= 0) return false;
+          const ratio = absCommission / absPm;
+          return ratio >= 0.01 && ratio <= 0.12;
+        });
+        if (!linked) continue;
+
+        tx.type = 'commission';
+        tx.description = 'Comisión';
+        tx.merchantName = 'Comisión';
+      }
+    }
+
+    return transactions;
+  }
+
+  private prepareTransactions(source: any[]): Transaction[] {
+    const mapped = source.map((t: any) => this.normalizeTransaction(t));
+    return this.labelLinkedCommissions(mapped);
   }
 
   private parseTxDate(tx: Transaction): Date | null {
@@ -141,27 +229,32 @@ export class MovimientosPage implements OnInit {
     this.initializeDateRange();
     this.loadMembershipSummary();
     const usedCache = this.hydrateMeritopFromCache();
-    if (!usedCache) {
-      this.loadCustomerProduct();
-    } else {
+    if (usedCache) {
       this.productLoaded = true;
       this.updateSummaryReady();
-      // Solo cargamos listas de movimientos (no re-consultamos products).
       this.fetchTransactions();
     }
+    this.loadCustomerProduct(usedCache);
+  }
+
+  ionViewWillEnter(): void {
+    if (this.skipNextMeritopViewRefresh) {
+      this.skipNextMeritopViewRefresh = false;
+      return;
+    }
+    this.refreshMeritopSilent();
   }
 
   private hydrateMeritopFromCache(): boolean {
     try {
-      const raw = sessionStorage.getItem(this.MERITOP_CACHE_KEY);
-      if (!raw) return false;
-      const cached = JSON.parse(raw);
+      const cached = this.meritopCache.read();
+      if (!cached) return false;
       const limit = this.toNumber(cached?.limit ?? 0);
       const available = this.toNumber(cached?.available ?? 0);
       if (limit <= 0) return false;
-      const used = Math.max(0, limit - available);
       this.limitAmount = limit;
-      this.debtAmount = used;
+      this.creditAvailableAmount = available;
+      this.debtAmount = this.toNumber(cached?.amount_used ?? 0);
       this.minPayAmount = this.resolveMeritopMinPayment({
         amount_share_to_pay: cached?.amount_share_to_pay,
         amount_share_to_pay_converted: cached?.amount_share_to_pay_converted,
@@ -264,7 +357,34 @@ export class MovimientosPage implements OnInit {
     return null;
   }
 
-  private loadCustomerProduct() {
+  private applyMeritopProduct(product: any): void {
+    if (!product) return;
+    this.debtAmount = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
+    this.limitAmount = this.toNumber(product.limit ?? 0);
+    this.creditAvailableAmount = this.toNumber(product.available ?? 0);
+    this.minPayAmount = this.resolveMeritopMinPayment(product);
+    this.creditPayBefore = String(product.credit_pay_before ?? '');
+    this.cardNumber = String(product.cardnumber ?? '');
+    this.productId = String(product.id ?? '');
+    this.meritopCache.persistFromProduct(product);
+  }
+
+  private refreshMeritopSilent(): void {
+    const identity = this.getIdentity();
+    if (!identity) return;
+    this.docType = identity.doctype;
+    this.docId = identity.docid;
+    this.meritopCache.refreshFromServer$(identity).subscribe({
+      next: (product) => {
+        if (product) {
+          this.applyMeritopProduct(product);
+          this.fetchTransactions();
+        }
+      },
+    });
+  }
+
+  private loadCustomerProduct(silentRefresh = false) {
     const identity = this.getIdentity();
     if (!identity) {
       this.transactions = [];
@@ -277,53 +397,26 @@ export class MovimientosPage implements OnInit {
     this.docType = identity.doctype;
     this.docId = identity.docid;
 
-    const payload = {
-      bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
-      channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
-      terminal: '0',
-      ip: '127.0.0.1',
-      clientid: identity
-    };
-
-    // `showLoading` se usa para la lista de movimientos, no para el resumen de saldos.
-    this.meritopService.getAccessToken().subscribe({
-      next: () => {
-        this.meritopService.customerProduct(payload)
-          .pipe(finalize(() => {
-            this.productLoaded = true;
-            this.updateSummaryReady();
-          }))
-          .subscribe({
-            next: (result: any) => {
-              const product = result?.products?.[0];
-              if (!product) {
-                this.transactions = [];
-                this.groupTransactions();
-                return;
-              }
-
-              this.debtAmount = this.toNumber(product.amount_used ?? product.present_debt_amt ?? 0);
-              this.limitAmount = this.toNumber(product.limit ?? 0);
-              this.minPayAmount = this.resolveMeritopMinPayment(product);
-              
-              this.creditPayBefore = String(product.credit_pay_before ?? '');
-              this.cardNumber = String(product.cardnumber ?? '');
-              this.productId = String(product.id ?? '');
-
-              this.fetchTransactions();
-            },
-            error: () => {
-              this.transactions = [];
-              this.groupTransactions();
-            }
-          });
+    this.meritopCache.refreshFromServer$(identity).subscribe({
+      next: (product) => {
+        if (!product) {
+          this.transactions = [];
+          this.groupTransactions();
+          return;
+        }
+        this.applyMeritopProduct(product);
+        this.fetchTransactions();
       },
       error: () => {
-        this.transactions = [];
-        this.groupTransactions();
+        if (!silentRefresh) {
+          this.transactions = [];
+          this.groupTransactions();
+        }
+      },
+      complete: () => {
         this.productLoaded = true;
         this.updateSummaryReady();
-      }
+      },
     });
   }
 
@@ -342,8 +435,10 @@ export class MovimientosPage implements OnInit {
   }
 
   get availableAmount(): number {
-    const avail = this.displayCreditLimit - this.displayDebtAmount;
-    return Math.max(0, avail);
+    if (this.toNumber(this.limitAmount) > 0) {
+      return this.toNumber(this.creditAvailableAmount);
+    }
+    return this.toNumber(this.membershipSummary?.credit_available);
   }
 
   get hasDebt(): boolean {
@@ -375,6 +470,8 @@ export class MovimientosPage implements OnInit {
 
   public fetchTransactions() {
     this.showLoading = true;
+    this.transactions = [];
+    this.groupTransactions();
 
     if (!this.docType || !this.docId || !this.productId) {
       this.transactions = [];
@@ -398,7 +495,7 @@ export class MovimientosPage implements OnInit {
         .subscribe({
           next: (res) => {
             const source = res?.transactions || [];
-            this.transactions = source.map((t: any) => this.normalizeTransaction(t));
+            this.transactions = this.prepareTransactions(source);
             this.groupTransactions();
           },
           error: () => {
@@ -417,8 +514,8 @@ export class MovimientosPage implements OnInit {
         .pipe(finalize(() => this.showLoading = false))
         .subscribe({
           next: (res) => {
-            const source = (res?.transactions || []).map((t: any) => this.normalizeTransaction(t));
-            this.transactions = this.filterTransactionsByDateRange(source);
+            const source = res?.transactions || [];
+            this.transactions = this.filterTransactionsByDateRange(this.prepareTransactions(source));
             this.groupTransactions();
           },
           error: () => {
