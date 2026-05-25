@@ -1,0 +1,37 @@
+---
+description: Arys es una app móvil (teléfono). Diseño, layout y UX mobile-first.
+alwaysApply: true
+---
+
+# Arys — mobile-first (teléfono)
+
+Esta aplicación **se usa en teléfono**. No diseñar para escritorio; en pantallas grandes el shell ya limita el ancho (~600px).
+
+## Stack y patrones existentes
+
+- **Ionic + Angular** (`ion-app`, `ion-router-outlet`).
+- Plantilla móvil: `.page-wrapper` → `.header.header-fixed` → `.page-content` → `<app-tab />` (barra inferior).
+- `.container` tiene `max-width: 600px` en `style.css`.
+- Breakpoint habitual en páginas nuevas: `@media (max-width: 420px)` para apilar grids.
+
+## Reglas al crear o modificar pantallas
+
+1. **Layout**: Reutilizar `page-wrapper` + header fijo + `page-content space-top`. Si hay `<app-tab />`, dejar espacio inferior (clase `p-b70`/`p-b80` o el padding global con `app-tab`).
+2. **Grids**: Preferir `1fr` o columna única; en dos columnas, apilar en `max-width: 420px`.
+3. **Toques**: Botones y enlaces táctiles ≥ 44×44px; evitar hover como única pista.
+4. **Inputs**: `font-size` mínimo **16px** en inputs/select/textarea (evita zoom en iOS).
+5. **Scroll**: No forzar scroll horizontal; usar `min-width: 0` en flex hijos si el texto desborda.
+6. **Tablas**: En móvil usar tarjetas/listas, no tablas anchas sin scroll.
+7. **Imágenes**: `max-width: 100%`, `object-fit` cuando aplique.
+8. **Safe area**: Respetar `env(safe-area-inset-*)` en header y barra inferior.
+
+## Evitar
+
+- Sidebars o layouts de panel dual pensados para desktop.
+- Anchos fijos grandes (`width: 320px` sin `max-width: 100%`).
+- Modales o formularios más anchos que el viewport.
+- Depender de `:hover` para acciones críticas.
+
+## Verificación rápida
+
+Probar en DevTools (375×667 o similar): sin scroll horizontal, contenido no tapado por la barra inferior, textos legibles sin zoom al enfocar campos.

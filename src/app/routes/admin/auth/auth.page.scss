@@ -7,6 +7,11 @@
   height: 100vh;
 }
 
+.ic-authentication-area {
+  min-height: 100vh;
+  justify-content: center;
+}
+
 /* Espacio para el FAB de WhatsApp (fijo abajo a la derecha) sin tapar "Verificar" */
 .ic-authentication-area .bottom-btn.mt-auto {
   padding-bottom: calc(30px + 56px + 20px);

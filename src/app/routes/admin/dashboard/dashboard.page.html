@@ -126,7 +126,7 @@
                               </span>
                             } @else if(m.credit_used > 0) {
                               <div class="debt">
-                                <div class="debt__label">Deuda actual</div>
+                                <div class="debt__label">Deuda</div>
                                 <div class="debt__value">
                                   {{ isHidden ? '********' : (m.credit_used | formatCurrency) }}
                                   <span class="metric__unit">Bs</span>

@@ -96,12 +96,16 @@ export class AuthService {
     return this.expirationTime() !== null && currentTime > this.expirationTime();
   }
 
-  logout(): void {
+  clearSession(): void {
     this.accessToken.set(null);
     this.expirationTime.set(null);
     sessionStorage.removeItem('accessToken');
     sessionStorage.removeItem('tokenExpirationTime');
-    this.navCtrl.navigateBack(['/'])
+  }
+
+  logout(): void {
+    this.clearSession();
+    this.navCtrl.navigateBack(['/']);
   }
   
   private decodeToken(token: string): any {

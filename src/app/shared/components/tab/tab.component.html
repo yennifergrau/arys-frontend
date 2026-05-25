@@ -1,4 +1,8 @@
-<div class="menubar-area footer-fixed">
+@if (session.isLoggingOut()) {
+  <app-spinner message="Cerrando sesión..." />
+}
+
+<div class="menubar-area footer-fixed" [class.is-logging-out]="session.isLoggingOut()">
   <div class="toolbar-inner menubar-nav">
     <!-- Ruta interna: no debe mostrarse en la barra inferior -->
     <!--
@@ -28,7 +32,7 @@
       </a>
     }
 
-    <!-- Pagar deuda se accede solo desde flujos internos -->
+    <!-- Pagar se accede solo desde flujos internos -->
 
     @if(hasCreditLine){
       <a routerLink="/admin/service-orders/pending" (click)="goTo('/admin/service-orders/pending')" [ngClass]="{'item-active': isActive('/admin/service-orders/pending')}" class="nav-link" title="Órdenes">
@@ -47,7 +51,13 @@
 
     <!-- Oculto: /admin/planes/home/user (Membresías) -->
 
-    <a (click)="logout($event)" [ngClass]="{'item-active': false}" class="nav-link" title="Salir">
+    <a
+      (click)="logout($event)"
+      [ngClass]="{'item-active': false}"
+      class="nav-link"
+      title="Salir"
+      [attr.aria-busy]="session.isLoggingOut()"
+      [class.disabled]="session.isLoggingOut()">
       <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="icon-svg"   fill="currentColor" viewBox="-1 1 24 24">
         <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm7.707-3.707a1 1 0 0 0-1.414 1.414L10.586 12l-2.293 2.293a1 1 0 1 0 1.414 1.414L12 13.414l2.293 2.293a1 1 0 0 0 1.414-1.414L13.414 12l2.293-2.293a1 1 0 0 0-1.414-1.414L12 10.586 9.707 8.293Z" clip-rule="evenodd"/>
       </svg>

@@ -7,7 +7,7 @@
             <i class="feather icon-arrow-left"></i>
           </a>
         </div>
-        <div class="mid-content"><h5 class="title">Pagar deuda</h5></div>
+        <div class="mid-content"><h5 class="title">Pagar</h5></div>
         <div class="right-content"></div>
       </div>
     </header>
@@ -17,10 +17,10 @@
 
         <div class="top-row">
           <div class="hello">
-            <h1>Pagar deuda</h1>
+            <h1>Pagar</h1>
             <p>Realiza abonos a tu linea de credito ARYS.</p>
           </div>
-          <div class="chip">PAGAR DEUDA</div>
+          <div class="chip">PAGAR</div>
         </div>
 
         <div class="credit-card">
@@ -59,7 +59,7 @@
                   <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
                 </ng-template>
               </div>
-              <div class="label" style="margin-top:10px">Deuda actual</div>
+              <div class="label" style="margin-top:10px">Deuda</div>
               <div class="value big">
                 <ng-container *ngIf="summaryReady; else summaryLoadingDebt">
                   {{ displayDebtAmount | number:'1.2-2' }} Bs
@@ -157,7 +157,7 @@
 
         <div class="payment-form mt-4 p-3 bg-white rounded-4 border shadow-sm">
           <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Deuda actual</span>
+            <span class="text-muted">Deuda</span>
             <span class="fw-bold text-dark">
               <ng-container *ngIf="summaryReady; else summaryLoadingDebt2">
                 {{ displayDebtAmount | number:'1.2-2' }} Bs

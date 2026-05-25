@@ -1,3 +1,12 @@
+.menubar-area.is-logging-out {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.nav-link.disabled {
+  pointer-events: none;
+}
+
 .icon-svg{
     width: 30px !important;
     height: 30px !important;

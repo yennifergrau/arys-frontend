@@ -59,7 +59,7 @@
                   <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
                 </ng-template>
               </div>
-              <div class="label" style="margin-top:10px">Deuda actual</div>
+              <div class="label" style="margin-top:10px">Deuda</div>
               <div class="value big">
                 <ng-container *ngIf="summaryReady; else summaryLoadingDebt">
                   {{ displayDebtAmount | number:'1.2-2' }} Bs
@@ -93,7 +93,7 @@
                 *ngIf="hasDebt"
                 routerLink="/admin/pagar-deuda"
                 class="btn btn-tab-match btn-sm px-3 py-2 fw-bold text-decoration-none text-center d-block">
-                Pagar deuda
+                Pagar
               </a>
               <p *ngIf="summaryReady && !hasDebt" class="mov-no-debt-hint mb-0">Sin deuda pendiente</p>
             </div>

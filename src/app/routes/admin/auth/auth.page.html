@@ -3,86 +3,76 @@
     <main class="page-content">
       <div class="container pt-0 overflow-hidden">
         <div class="ic-authentication-area ic-flex-box">
-          <!-- Top Area  -->
-          <a class="text-link font-w300 text-underline text-end p-3"></a>
-          <a class="text-link font-w300 text-underline text-end p-3"></a>
-          <a class="text-link font-w300 text-underline text-end p-3"></a>
-          <a class="text-link font-w300 text-underline text-end p-3"></a>
-          <a class="text-link font-w300 text-underline text-end p-3"></a>
-          <!-- Top Area  -->
-          @if(showSpinner){
-          <app-spinner />
+          @if (showSpinner) {
+            <app-spinner message="Verificando tu cuenta..." />
           }
-          <div class="account-section">
-            <div class="section-head">
-              <h3 class="title">Estatus de la Cuenta</h3>
-              <p>
-                @if (autoVerifyInProgress) {
-                  Verificando tu cuenta con los datos de tu membresía…
-                } @else {
-                  Puedes ajustar el documento y pulsar Verificar, o espera la verificación automática.
-                }
-              </p>
-            </div>
-            <form class="ic-form-group" [formGroup]="FormVerify">
-              <div
-                class="m-b20 input-group input-lg input-group-icon input-rounded"
-              >
-                <div class="input-group-text">
-                  <div class="input-icon">
-                    <svg
-                      width="28"
-                      height="28"
-                      viewBox="0 0 28 28"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <circle
-                        cx="14.0002"
-                        cy="9.33334"
-                        r="4.66667"
-                        fill="black"
-                      />
-                      <path
-                        fill-rule="evenodd"
-                        clip-rule="evenodd"
-                        d="M13.9998 15.1667C9.68555 15.1667 6.15265 18.0341 5.85362 21.6668C5.83096 21.942 6.05697 22.1667 6.33312 22.1667H21.6664C21.9426 22.1667 22.1686 21.942 22.1459 21.6668C21.8469 18.0341 18.314 15.1667 13.9998 15.1667Z"
-                        fill="black"
-                        fill-opacity="0.25"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div>
-                  <select id="prefix" name="prefix" formControlName="prefix">
-                    <option value="V">V</option>
-                    <option value="E">E</option>
-                    <option value="J">J</option>
-                  </select>
-                </div>
-                <input
-                  [ngClass]="{'invalid-input': rifControl.invalid && (rifControl.dirty || rifControl.touched)}"
-                  type="text"
-                  formControlName="rif"
-                  value=""
-                  inputmode="numeric"
-                  class="form-control"
-                  placeholder="Documento de identidad"
-                  mask="separator.2"
-                  thousandSeparator="."
-                />
-              </div>
-            </form>
-          </div>
-          <div class="bottom-btn mt-auto">
-            <a
-              (click)="onSubmit()"
-              class="btn btn-primary btn-thin btn-lg w-100 rounded-xl"
-              >Verificar</a
-            >
-          </div>
 
-          <br /><br /><br /><br />
+          @if (showVerifyForm) {
+            <div class="account-section">
+              <div class="section-head">
+                <h3 class="title">Estatus de la Cuenta</h3>
+                <p>
+                  Ingresa tu documento y pulsa Verificar para continuar.
+                </p>
+              </div>
+              <form class="ic-form-group" [formGroup]="FormVerify">
+                <div
+                  class="m-b20 input-group input-lg input-group-icon input-rounded"
+                >
+                  <div class="input-group-text">
+                    <div class="input-icon">
+                      <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 28 28"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <circle
+                          cx="14.0002"
+                          cy="9.33334"
+                          r="4.66667"
+                          fill="black"
+                        />
+                        <path
+                          fill-rule="evenodd"
+                          clip-rule="evenodd"
+                          d="M13.9998 15.1667C9.68555 15.1667 6.15265 18.0341 5.85362 21.6668C5.83096 21.942 6.05697 22.1667 6.33312 22.1667H21.6664C21.9426 22.1667 22.1686 21.942 22.1459 21.6668C21.8469 18.0341 18.314 15.1667 13.9998 15.1667Z"
+                          fill="black"
+                          fill-opacity="0.25"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <select id="prefix" name="prefix" formControlName="prefix">
+                      <option value="V">V</option>
+                      <option value="E">E</option>
+                      <option value="J">J</option>
+                    </select>
+                  </div>
+                  <input
+                    [ngClass]="{'invalid-input': rifControl.invalid && (rifControl.dirty || rifControl.touched)}"
+                    type="text"
+                    formControlName="rif"
+                    value=""
+                    inputmode="numeric"
+                    class="form-control"
+                    placeholder="Documento de identidad"
+                    mask="separator.2"
+                    thousandSeparator="."
+                  />
+                </div>
+              </form>
+            </div>
+            <div class="bottom-btn mt-auto">
+              <a
+                (click)="onSubmit()"
+                class="btn btn-primary btn-thin btn-lg w-100 rounded-xl"
+                >Verificar</a
+              >
+            </div>
+          }
         </div>
       </div>
     </main>

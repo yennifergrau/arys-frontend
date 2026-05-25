@@ -39,7 +39,9 @@ export class AuthPage implements OnInit {
   private readonly defaultVerifyDocument = '';
 
   public FormVerify!: FormGroup;
-  public showSpinner: boolean = false;
+  public showSpinner = false;
+  /** Solo true cuando hace falta que el usuario complete o corrija el documento. */
+  public showVerifyForm = false;
   public autoVerifyInProgress = false;
   private emission = inject(EmissionService);
   private emissionDetails = inject(EmissionDetailsService);
@@ -210,23 +212,24 @@ export class AuthPage implements OnInit {
 
           if (status === '' || status === '0') {
             this.mostrarToast('Usuario no encontrado o inválido.', 'toast-error');
+            this.revealVerifyForm();
             return;
           }
           if (status === 'INACTIVO') {
             this.mostrarToast('Tu cuenta está inactiva. Contacta soporte.', 'toast-error');
+            this.revealVerifyForm();
             return;
           }
           this.mostrarToast(`No se pudo validar estatus (${status || 'desconocido'}).`, 'toast-error');
+          this.revealVerifyForm();
         } finally {
-          this.showSpinner = false;
-          this.autoVerifyInProgress = false;
+          this.finishAutoVerifyUi();
         }
       },
       error: (err: any) => {
         console.log(err);
         this.mostrarToast('No se pudo verificar la actividad del usuario', 'toast-error');
-        this.showSpinner = false;
-        this.autoVerifyInProgress = false;
+        this.revealVerifyForm();
       },
     });
   }
@@ -239,7 +242,9 @@ export class AuthPage implements OnInit {
         return;
       }
 
+      this.showVerifyForm = true;
       this.showSpinner = true;
+      this.autoVerifyInProgress = false;
       const cedulaFromForm = this.extractCedulaNumber(this.FormVerify.get('rif')?.value);
       let pre: { rows: any[]; picked: any | null } | null = null;
       try {
@@ -268,16 +273,26 @@ export class AuthPage implements OnInit {
     }
   }
 
+  private finishAutoVerifyUi(): void {
+    this.showSpinner = false;
+    this.autoVerifyInProgress = false;
+  }
+
+  private revealVerifyForm(): void {
+    this.showVerifyForm = true;
+    this.finishAutoVerifyUi();
+  }
+
   private async runAutomatedVerification(): Promise<void> {
     const token = sessionStorage.getItem('accessToken');
     if (!token?.trim()) {
-      this.mostrarToast('Inicia sesión para continuar.', 'toast-error');
       await this.navCtrl.navigateRoot(['/login']);
       return;
     }
 
     this.autoVerifyInProgress = true;
     this.showSpinner = true;
+    this.showVerifyForm = false;
     this.FormVerify.patchValue({ prefix: 'V' });
 
     let pre: { rows: any[]; picked: any | null } | null = null;
@@ -292,9 +307,7 @@ export class AuthPage implements OnInit {
       this.extractCedulaNumber(pre?.picked?.cedrif_membership);
 
     if (!cedulaFromMembership) {
-      // Si la membresía no trae cédula (null), el usuario debe rellenar el formulario.
-      this.autoVerifyInProgress = false;
-      this.showSpinner = false;
+      this.revealVerifyForm();
       return;
     }
 
@@ -363,6 +376,13 @@ export class AuthPage implements OnInit {
     }
 
   ngOnInit(): void {
+    const hasToken = !!sessionStorage.getItem('accessToken')?.trim();
+    if (!hasToken) {
+      void this.navCtrl.navigateRoot(['/login']);
+      return;
+    }
+    this.showSpinner = true;
+    this.autoVerifyInProgress = true;
     void this.runAutomatedVerification();
   }
 }
