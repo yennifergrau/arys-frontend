@@ -389,6 +389,14 @@
     outline-offset: 2px;
   }
 
+  &--static {
+    cursor: default;
+
+    &:active {
+      transform: none;
+    }
+  }
+
   .transaction-item__main {
     padding: 14px;
   }

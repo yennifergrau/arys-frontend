@@ -152,13 +152,14 @@
 
             <div
               class="transaction-item border rounded-lg shadow-sm bg-white"
+              [class.transaction-item--static]="!hasReceipt(tx)"
               *ngFor="let tx of group.items"
-              role="button"
-              tabindex="0"
-              [attr.aria-label]="'Ver recibo de ' + (tx.merchantName || 'movimiento')"
-              (click)="openReceipt(tx)"
-              (keydown.enter)="openReceipt(tx)"
-              (keydown.space)="$event.preventDefault(); openReceipt(tx)"
+              [attr.role]="hasReceipt(tx) ? 'button' : null"
+              [attr.tabindex]="hasReceipt(tx) ? 0 : null"
+              [attr.aria-label]="hasReceipt(tx) ? 'Ver recibo de ' + (tx.merchantName || 'movimiento') : null"
+              (click)="onTransactionActivate(tx)"
+              (keydown.enter)="onTransactionActivate(tx)"
+              (keydown.space)="onTransactionActivate(tx, $event)"
             >
               <div class="transaction-item__main">
                 <div class="transaction-item__row">
@@ -183,7 +184,11 @@
                     <span class="tx-amount font-bold" [ngClass]="{'text-danger': tx.amount < 0, 'text-success': tx.amount >= 0}">
                       {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number:'1.2-2' }} Bs
                     </span>
-                    <i class="feather icon-chevron-right tx-chevron text-muted" aria-hidden="true"></i>
+                    <i
+                      class="feather icon-chevron-right tx-chevron text-muted"
+                      *ngIf="hasReceipt(tx)"
+                      aria-hidden="true"
+                    ></i>
                   </div>
                 </div>
               </div>
@@ -255,6 +260,21 @@
             <span class="mov-receipt-field__label">Referencia</span>
             <span class="mov-receipt-field__value mov-receipt-field__value--ref">{{ tx.reference }}</span>
           </div>
+
+          <ng-container *ngIf="isPagoReceipt(tx)">
+            <div class="mov-receipt-field">
+              <span class="mov-receipt-field__label">Banco</span>
+              <span class="mov-receipt-field__value">{{ pagoBankName }}</span>
+            </div>
+            <div class="mov-receipt-field">
+              <span class="mov-receipt-field__label">Teléfono</span>
+              <span class="mov-receipt-field__value">{{ pagoBankPhone }}</span>
+            </div>
+            <div class="mov-receipt-field">
+              <span class="mov-receipt-field__label">RIF</span>
+              <span class="mov-receipt-field__value">{{ pagoBankRif }}</span>
+            </div>
+          </ng-container>
 
           <ng-container *ngIf="isConsumoReceipt(tx)">
             <div class="mov-receipt-field">

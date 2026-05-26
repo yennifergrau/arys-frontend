@@ -53,6 +53,11 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   readonly consumoBankPhone = '04144120518';
   readonly consumoBankRif = 'J309920600';
 
+  /** Datos para recibos de pago. */
+  readonly pagoBankName = 'Banco Activo';
+  readonly pagoBankRif = 'J309920600';
+  readonly pagoBankPhone = '04122863934';
+
   // Evita “parpadeo” de saldos (membresía -> Meritop)
   public summaryReady = false;
   private membershipLoaded = false;
@@ -572,8 +577,15 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   }
 
   public openReceipt(tx: Transaction): void {
+    if (!this.hasReceipt(tx)) return;
     this.selectedTransaction = tx;
     this.receiptOpen = true;
+  }
+
+  public onTransactionActivate(tx: Transaction, event?: Event): void {
+    if (!this.hasReceipt(tx)) return;
+    event?.preventDefault();
+    this.openReceipt(tx);
   }
 
   public closeReceipt(): void {
@@ -621,5 +633,16 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
     if (!tx) return false;
     if (tx.type === 'purchase') return true;
     return /consumo/i.test(tx.merchantName ?? '');
+  }
+
+  public isPagoReceipt(tx: Transaction | null): boolean {
+    if (!tx) return false;
+    if (tx.type === 'payment') return true;
+    return /pago/i.test(tx.merchantName ?? '') && !this.isConsumoReceipt(tx);
+  }
+
+  public hasReceipt(tx: Transaction | null): boolean {
+    if (!tx) return false;
+    return tx.type !== 'commission' && !/comisi[oó]n/i.test(tx.merchantName ?? '');
   }
 }
