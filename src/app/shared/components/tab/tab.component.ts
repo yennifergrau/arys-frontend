@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { UserAccessService } from 'src/app/routes/admin/services/user-access.service';
 import { SessionService } from 'src/app/shared/services/session.service';
@@ -13,7 +13,7 @@ import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
   standalone:true,
   imports:[CommonModule, RouterLink, SpinnerComponent]
 })
-export class TabComponent  {
+export class TabComponent implements OnInit, OnDestroy {
   public router = inject(Router);
   private access = inject(UserAccessService);
   readonly session = inject(SessionService);
@@ -21,6 +21,23 @@ export class TabComponent  {
   constructor() {
     // No bloquea la UI; solo prepara flags para ocultar tabs.
     void this.access.ensureLoaded();
+  }
+
+  // Nota: no usamos :has(app-tab) porque algunos WebView Android no lo soportan.
+  ngOnInit(): void {
+    try {
+      document?.body?.classList?.add('has-app-tab');
+    } catch {
+      // noop
+    }
+  }
+
+  ngOnDestroy(): void {
+    try {
+      document?.body?.classList?.remove('has-app-tab');
+    } catch {
+      // noop
+    }
   }
 
   get hasCreditLine(): boolean {

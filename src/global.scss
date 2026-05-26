@@ -107,7 +107,8 @@ ion-router-outlet {
   bottom: calc(10px + var(--arys-safe-bottom));
 }
 
-.page-wrapper:has(app-tab) .page-content:not(.p-b70):not(.p-b80):not(.mov-main) {
+/* Evita depender de :has() (no está en todos los WebView Android). */
+body.has-app-tab .page-content:not(.p-b70):not(.p-b80):not(.mov-main) {
   padding-bottom: var(--arys-tabbar-clearance);
 }
 
