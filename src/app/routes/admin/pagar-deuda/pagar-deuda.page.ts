@@ -6,7 +6,7 @@ import { MeritopService } from '../services/meritop.service';
 import { addPayment } from '../interface/meritop.interface';
 import { TabComponent } from 'src/app/shared/components/tab/tab.component';
 import { jwtDecode } from 'jwt-decode';
-import { catchError, concatMap, finalize, map, of, switchMap, throwError } from 'rxjs';
+import { catchError, finalize, map, of, switchMap, tap, throwError } from 'rxjs';
 import {
   getMeritopOperationMessage,
   isMeritopOperationFailed,
@@ -387,7 +387,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       return of(undefined);
     }
     return this.meritopCache.refreshFromServer$(identity).pipe(
-      tap((product) => {
+      tap((product: unknown) => {
         if (product) this.applyMeritopProductFromResponse({ products: [product] });
       }),
       map(() => undefined),
