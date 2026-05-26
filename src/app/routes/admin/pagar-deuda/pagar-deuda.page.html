@@ -237,9 +237,9 @@
 
           <div class="row gx-2 mb-3">
             <div class="col-7">
-              <label class="form-label fw-bold text-muted small">Fecha y hora del pago</label>
+              <label class="form-label fw-bold text-muted small">Fecha del pago</label>
               <input
-                type="datetime-local"
+                type="date"
                 class="form-control custom-input"
                 [ngModel]="paidOn"
                 (ngModelChange)="paidOn = normalizePaidOn($event)"

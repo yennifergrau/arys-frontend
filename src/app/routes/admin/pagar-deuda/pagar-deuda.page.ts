@@ -137,21 +137,15 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
     this.setPayAmountFromBs(this.minPayAmount);
   }
 
-  private toLocalIsoMinutes(d: Date): string {
-    const offset = d.getTimezoneOffset();
-    const adjusted = new Date(d.getTime() - offset * 60000);
-    return adjusted.toISOString().slice(0, 16);
-  }
-
   public normalizePaidOn(value: string): string {
     const raw = (value ?? '').toString().trim();
     if (!raw) return '';
-    // Si ya viene como "YYYY-MM-DDTHH:mm", lo usamos tal cual.
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(raw)) return raw;
-    // Si viene ISO completo, lo convertimos a local minutos.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
     const d = new Date(raw);
     if (Number.isNaN(d.getTime())) return '';
-    return this.toLocalIsoMinutes(d);
+    const offset = d.getTimezoneOffset();
+    const adjusted = new Date(d.getTime() - offset * 60000);
+    return adjusted.toISOString().slice(0, 10);
   }
 
   public cardNumber = '';
@@ -510,7 +504,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       cardnumber: this.cardNumber,
       amount: this.payAmount,
       payphone: this.payPhone,
-      paidon: this.paidOn,
+      paidon: this.normalizePaidOn(this.paidOn),
       bankcode: this.bankCode,
       concept: this.concept
     };
@@ -527,7 +521,12 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
                 )
             );
           }
-          return this.refreshMeritopFromServer$().pipe(map(() => res));
+          // Pantalla "Abono realizado" en cuanto el POST responde OK (no esperar refresh).
+          this.showSuccess = true;
+          return this.refreshMeritopFromServer$().pipe(
+            map(() => res),
+            catchError(() => of(res))
+          );
         }),
         finalize(() => {
           this.showLoading = false;
@@ -536,7 +535,6 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       .subscribe({
         next: async () => {
           await this.showToast('¡Abono registrado correctamente!', 'success');
-          this.showSuccess = true;
           this.loadMembershipSummary();
         },
         error: async (err) => {
