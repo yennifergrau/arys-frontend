@@ -48,6 +48,11 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   private accessTokenData: any = null;
   private skipNextMeritopViewRefresh = true;
 
+  /** Datos del comercio para recibos de consumo (Pago móvil). */
+  readonly consumoBankName = 'Banco Nacional de Crédito';
+  readonly consumoBankPhone = '04144120518';
+  readonly consumoBankRif = 'J309920600';
+
   // Evita “parpadeo” de saldos (membresía -> Meritop)
   public summaryReady = false;
   private membershipLoaded = false;
@@ -610,5 +615,11 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
     if (/exitoso|activo|aprobado|pagado/.test(label)) return 'is-success';
     if (/cancelado|rechazado|fallido|error/.test(label)) return 'is-danger';
     return 'is-neutral';
+  }
+
+  public isConsumoReceipt(tx: Transaction | null): boolean {
+    if (!tx) return false;
+    if (tx.type === 'purchase') return true;
+    return /consumo/i.test(tx.merchantName ?? '');
   }
 }

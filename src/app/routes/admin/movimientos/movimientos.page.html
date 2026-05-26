@@ -256,34 +256,29 @@
             <span class="mov-receipt-field__value mov-receipt-field__value--ref">{{ tx.reference }}</span>
           </div>
 
-          <div class="mov-receipt-field" *ngIf="tx.paymentType">
-            <span class="mov-receipt-field__label">Medio de pago</span>
-            <span class="mov-receipt-field__value">{{ tx.paymentType }}</span>
-          </div>
+          <ng-container *ngIf="isConsumoReceipt(tx)">
+            <div class="mov-receipt-field">
+              <span class="mov-receipt-field__label">Banco</span>
+              <span class="mov-receipt-field__value">{{ consumoBankName }}</span>
+            </div>
+            <div class="mov-receipt-field">
+              <span class="mov-receipt-field__label">Teléfono</span>
+              <span class="mov-receipt-field__value">{{ consumoBankPhone }}</span>
+            </div>
+            <div class="mov-receipt-field">
+              <span class="mov-receipt-field__label">RIF</span>
+              <span class="mov-receipt-field__value">{{ consumoBankRif }}</span>
+            </div>
+          </ng-container>
 
           <div class="mov-receipt-field" *ngIf="tx.description">
             <span class="mov-receipt-field__label">Concepto</span>
             <span class="mov-receipt-field__value">{{ tx.description }}</span>
           </div>
 
-          <div class="mov-receipt-field">
-            <span class="mov-receipt-field__label">Tarjeta</span>
-            <span class="mov-receipt-field__value">{{ formatCardMask(tx.cardNumber) }}</span>
-          </div>
-
-          <div class="mov-receipt-field" *ngIf="tx.transactionId">
-            <span class="mov-receipt-field__label">Nº movimiento</span>
-            <span class="mov-receipt-field__value">#{{ tx.transactionId }}</span>
-          </div>
-
           <div class="mov-receipt-field" *ngIf="showReceiptConverted(tx)">
             <span class="mov-receipt-field__label">Monto convertido</span>
             <span class="mov-receipt-field__value">{{ (tx.amountConverted ?? 0) | number:'1.2-2' }} USD</span>
-          </div>
-
-          <div class="mov-receipt-field" *ngIf="showReceiptExchangeRate(tx)">
-            <span class="mov-receipt-field__label">Tasa</span>
-            <span class="mov-receipt-field__value">{{ (tx.exchangeRate ?? 0) | number:'1.2-2' }}</span>
           </div>
         </div>
 
