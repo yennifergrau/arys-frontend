@@ -16,6 +16,10 @@ import {
   PENDING_ORDERS_CACHE_KEY,
 } from '../services/meritop-summary-cache.service';
 import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
+import {
+  getMeritopOperationMessage,
+  isMeritopOperationFailed,
+} from '../utils/meritop-feedback.util';
 import { IonicModule, ToastController, ViewWillEnter } from '@ionic/angular';
 
 @Component({
@@ -529,12 +533,12 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
 
     this.meritopService.addPurchased(payload).subscribe({
       next: (result) => {
-        if (result?.status) {
+        if (result?.status && !isMeritopOperationFailed(result)) {
           const txId = result?.transaction_id ?? result?.transactionId ?? result?.id ?? null;
           const msg = txId != null && String(txId).trim() !== ''
             ? `Transacción ${txId} creada exitosamente`
-            : 'Transacción creada exitosamente';
-          this.presentToast(msg, 'success');
+            : 'Pago con crédito realizado correctamente';
+          void this.presentToast(msg, 'success');
           this.applyResult = { ...result, message: msg };
           // Luego del consumo en Meritop, marcamos la orden como pagada con crédito en ARYS
           // para que salga de pendientes.
@@ -550,13 +554,17 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
               if (order.order) {
                 order.order.status = 'paid_with_credit' as any;
               }
+              void this.presentToast('Orden marcada como pagada con crédito.', 'success');
               this.refreshMeritopProductSilent();
               this.loadMembershipSummary();
               this.isApplyingCredit = false;
             },
             error: (err) => {
               // El consumo ya pasó en Meritop; si falla ARYS, avisamos para que soporte lo revise.
-              this.presentToast(err?.message || 'No se pudo actualizar la orden como pagada.', 'warning');
+              void this.presentToast(
+                err?.message || 'El pago en Meritop se aplicó, pero no se pudo cerrar la orden en ARYS.',
+                'warning'
+              );
               this.refreshMeritopProductSilent();
               this.loadMembershipSummary();
               this.isApplyingCredit = false;
@@ -564,7 +572,12 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
           });
         } else {
           this.isApplyingCredit = false;
-          this.applyResult = result;
+          const msg = getMeritopOperationMessage(
+            result,
+            'No se pudo procesar el pago con crédito. Verifica tu saldo e intenta de nuevo.'
+          );
+          this.applyResult = { status: false, message: msg };
+          void this.presentToast(msg, 'danger');
         }
         // Actualiza el estado de la orden si es necesario
         if (order.order && result.status) {
@@ -574,8 +587,9 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       error: (err) => {
         this.isApplyingCredit = false;
         // El mensaje ya viene extraído correctamente desde el CatchError del servicio (MeritopService)
-        this.applyResult = { status: false, message: err.message };
-        this.presentToast(err.message || 'Error al procesar el pago.', 'danger');
+        const msg = err?.message || 'Error al procesar el pago. Intenta de nuevo.';
+        this.applyResult = { status: false, message: msg };
+        void this.presentToast(msg, 'danger');
       }
     });
   }

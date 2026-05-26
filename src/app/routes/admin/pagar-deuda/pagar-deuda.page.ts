@@ -6,7 +6,11 @@ import { MeritopService } from '../services/meritop.service';
 import { addPayment } from '../interface/meritop.interface';
 import { TabComponent } from 'src/app/shared/components/tab/tab.component';
 import { jwtDecode } from 'jwt-decode';
-import { catchError, concatMap, finalize, map, of, tap } from 'rxjs';
+import { catchError, concatMap, finalize, map, of, switchMap, throwError } from 'rxjs';
+import {
+  getMeritopOperationMessage,
+  isMeritopOperationFailed,
+} from '../utils/meritop-feedback.util';
 import { DataArysService } from '../services/data-arys.service';
 import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
 import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
@@ -511,25 +515,38 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       concept: this.concept
     };
 
-    this.meritopService.addPayment(paymentData)
+    this.meritopService
+      .addPayment(paymentData)
       .pipe(
-        tap((res) => console.log('Pago exitoso:', res)),
-        tap(() => {
-          this.showSuccess = true;
+        switchMap((res) => {
+          if (isMeritopOperationFailed(res)) {
+            return throwError(
+              () =>
+                new Error(
+                  getMeritopOperationMessage(res, 'No se pudo registrar el abono. Intenta de nuevo.')
+                )
+            );
+          }
+          return this.refreshMeritopFromServer$().pipe(map(() => res));
         }),
-        concatMap(() => this.refreshMeritopFromServer$()),
         finalize(() => {
           this.showLoading = false;
         })
       )
       .subscribe({
-        next: () => {
+        next: async () => {
+          await this.showToast('¡Abono registrado correctamente!', 'success');
+          this.showSuccess = true;
           this.loadMembershipSummary();
         },
-        error: (err) => {
+        error: async (err) => {
           console.error('Error en pago:', err);
-          this.showToast('Error al procesar el pago. Intente de nuevo.', 'danger');
-        }
+          const msg =
+            err?.message && String(err.message).trim()
+              ? String(err.message)
+              : 'Error al procesar el pago. Intente de nuevo.';
+          await this.showToast(msg, 'danger');
+        },
       });
   }
 
