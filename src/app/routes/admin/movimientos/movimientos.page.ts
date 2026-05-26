@@ -28,6 +28,8 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
 
   public transactions: Transaction[] = [];
   public groupedTransactions: { date: string, items: Transaction[] }[] = [];
+  public selectedTransaction: Transaction | null = null;
+  public receiptOpen = false;
   public showLoading = false;
   public selectedSegment: string = 'ultimos';
   public dateFrom: string = '';
@@ -92,29 +94,40 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   private normalizeTransaction(raw: any): Transaction {
     const date = raw?.date ?? raw?.datetime ?? raw?.created_at ?? raw?.createdAt ?? '';
     const amount = this.toNumber(raw?.amount ?? raw?.monto ?? 0);
-    const description = String(
-      raw?.description ??
-      raw?.concept ??
-      raw?.type_transaction ??
-      raw?.payment_type ??
-      raw?.transaction_desc ??
-      raw?.payment_status ??
-      ''
-    ).trim();
-    const merchantName = String(
-      raw?.merchantName ?? raw?.commerceName ?? raw?.commerce_name ?? raw?.commerce ?? ''
-    ).trim();
-    const isCommission = this.isCommissionFromRaw(raw, amount, description, merchantName);
+    const typeTransaction = String(raw?.type_transaction ?? '').trim();
+    const reference = String(raw?.reference ?? '').trim();
+    const concept = String(raw?.concept ?? raw?.description ?? raw?.transaction_desc ?? '').trim();
+    const displayName = typeTransaction || 'Movimiento';
 
     return {
-      transactionId: String(raw?.transactionId ?? raw?.id ?? raw?.reference ?? ''),
+      transactionId: String(raw?.transactionId ?? raw?.id ?? reference ?? ''),
       amount,
-      description: isCommission ? 'Comisión' : description,
-      merchantName: isCommission ? 'Comisión' : merchantName,
+      description: concept,
+      merchantName: displayName,
+      reference,
       date: String(date),
-      type: isCommission ? 'commission' : String(raw?.type ?? (amount < 0 ? 'purchase' : 'payment')),
-      status: String(raw?.status ?? raw?.payment_status ?? '')
+      type: this.resolveTransactionVisualType(typeTransaction, raw, amount),
+      status: String(raw?.status ?? '').trim(),
+      paymentType: String(raw?.payment_type ?? '').trim(),
+      paymentStatus: String(raw?.payment_status ?? '').trim(),
+      symbol: String(raw?.symbol ?? 'Bs').trim() || 'Bs',
+      cardNumber: String(raw?.cardnumber ?? raw?.cardNumber ?? '').trim(),
+      amountConverted: this.toNumber(raw?.amount_converted ?? 0),
+      exchangeRate: this.toNumber(raw?.exchange_rate ?? 0),
     };
+  }
+
+  private resolveTransactionVisualType(
+    typeTransaction: string,
+    raw: any,
+    amount: number
+  ): string {
+    const t = typeTransaction.toLowerCase();
+    if (/comisi[oó]n|commission/i.test(t)) return 'commission';
+    if (/consumo|purchase/i.test(t)) return 'purchase';
+    if (/pago|payment/i.test(t)) return 'payment';
+    if (this.isCommissionFromRaw(raw, amount, typeTransaction, '')) return 'commission';
+    return amount < 0 ? 'purchase' : 'payment';
   }
 
   private isCommissionFromRaw(
@@ -184,8 +197,9 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
         if (!linked) continue;
 
         tx.type = 'commission';
-        tx.description = 'Comisión';
-        tx.merchantName = 'Comisión';
+        if (!tx.merchantName || tx.merchantName === 'Movimiento') {
+          tx.merchantName = 'Comisión';
+        }
       }
     }
 
@@ -550,5 +564,51 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
 
   public goBack() {
     this.navCtrl.back();
+  }
+
+  public openReceipt(tx: Transaction): void {
+    this.selectedTransaction = tx;
+    this.receiptOpen = true;
+  }
+
+  public closeReceipt(): void {
+    this.receiptOpen = false;
+    this.selectedTransaction = null;
+  }
+
+  public formatCardMask(card?: string): string {
+    const value = (card ?? this.cardNumber ?? '').trim();
+    if (!value) return '----';
+    const digits = value.replace(/\D/g, '');
+    if (digits.length >= 4) return `**** ${digits.slice(-4)}`;
+    return value;
+  }
+
+  public receiptStatusLabel(tx: Transaction | null): string {
+    if (!tx) return '';
+    return (tx.paymentStatus || tx.status || '').trim();
+  }
+
+  public receiptCurrency(tx: Transaction | null): string {
+    return (tx?.symbol ?? 'Bs').trim() || 'Bs';
+  }
+
+  public showReceiptConverted(tx: Transaction | null): boolean {
+    if (!tx) return false;
+    const converted = tx.amountConverted ?? 0;
+    return converted !== 0 && Number.isFinite(converted);
+  }
+
+  public showReceiptExchangeRate(tx: Transaction | null): boolean {
+    if (!tx) return false;
+    const rate = tx.exchangeRate ?? 0;
+    return rate > 0 && Number.isFinite(rate);
+  }
+
+  public receiptStatusClass(tx: Transaction | null): string {
+    const label = this.receiptStatusLabel(tx).toLowerCase();
+    if (/exitoso|activo|aprobado|pagado/.test(label)) return 'is-success';
+    if (/cancelado|rechazado|fallido|error/.test(label)) return 'is-danger';
+    return 'is-neutral';
   }
 }

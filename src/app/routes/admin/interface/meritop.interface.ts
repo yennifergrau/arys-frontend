@@ -154,9 +154,16 @@ export interface Transaction {
     amount: number;
     description: string;
     merchantName?: string;
+    reference?: string;
     date: string;
     type: 'purchase' | 'payment' | 'commission' | string;
     status?: string;
+    paymentType?: string;
+    paymentStatus?: string;
+    symbol?: string;
+    cardNumber?: string;
+    amountConverted?: number;
+    exchangeRate?: number;
 }
 
 export interface TransactionListRequest {

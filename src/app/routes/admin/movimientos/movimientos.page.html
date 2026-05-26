@@ -150,31 +150,41 @@
           <div class="transactions-group" *ngFor="let group of groupedTransactions">
             <h6 class="date-header mb-3">{{ group.date }}</h6>
 
-            <div class="transaction-item border rounded-lg p-3 mb-3 shadow-sm bg-white" *ngFor="let tx of group.items">
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                  <div class="icon-container me-3" [class]="tx.type">
-                    <i class="feather"
-                      [ngClass]="{
-                        'icon-percent': tx.type === 'commission',
-                        'icon-shopping-cart': tx.type === 'purchase',
-                        'icon-dollar-sign': tx.type !== 'commission' && tx.type !== 'purchase'
-                      }"></i>
-                  </div>
-                  <div class="list-content">
-                    <h6 class="mb-0 font-semibold">{{ tx.merchantName || tx.description || 'Movimiento' }}</h6>
-                    <small class="text-muted" *ngIf="tx.merchantName && tx.description && tx.merchantName !== tx.description">
-                      {{ tx.description }}
-                    </small>
-                    <div class="tx-time-small mt-1">
-                      <small class="text-muted">{{ tx.date | date:'dd/MM/yyyy, hh:mm a' }}</small>
+            <div
+              class="transaction-item border rounded-lg shadow-sm bg-white"
+              *ngFor="let tx of group.items"
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="'Ver recibo de ' + (tx.merchantName || 'movimiento')"
+              (click)="openReceipt(tx)"
+              (keydown.enter)="openReceipt(tx)"
+              (keydown.space)="$event.preventDefault(); openReceipt(tx)"
+            >
+              <div class="transaction-item__main">
+                <div class="transaction-item__row">
+                  <div class="transaction-item__left">
+                    <div class="icon-container" [class]="tx.type">
+                      <i class="feather"
+                        [ngClass]="{
+                          'icon-percent': tx.type === 'commission',
+                          'icon-shopping-cart': tx.type === 'purchase',
+                          'icon-dollar-sign': tx.type !== 'commission' && tx.type !== 'purchase'
+                        }"></i>
+                    </div>
+                    <div class="list-content">
+                      <h6 class="mb-0 font-semibold">{{ tx.merchantName || 'Movimiento' }}</h6>
+                      <div class="tx-meta">
+                        <span class="tx-meta__line">{{ tx.date | date:'dd/MM/yyyy' }}</span>
+                        <span class="tx-meta__line">{{ tx.date | date:'hh:mm a' }}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div class="text-end">
-                  <span class="tx-amount font-bold" [ngClass]="{'text-danger': tx.amount < 0, 'text-success': tx.amount >= 0}">
-                    {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number:'1.2-2' }} Bs
-                  </span>
+                  <div class="transaction-item__right">
+                    <span class="tx-amount font-bold" [ngClass]="{'text-danger': tx.amount < 0, 'text-success': tx.amount >= 0}">
+                      {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number:'1.2-2' }} Bs
+                    </span>
+                    <i class="feather icon-chevron-right tx-chevron text-muted" aria-hidden="true"></i>
+                  </div>
                 </div>
               </div>
             </div>
@@ -191,5 +201,100 @@
     </main>
 
     <app-tab />
+  </div>
+
+  <div class="mov-receipt-backdrop" *ngIf="receiptOpen && selectedTransaction as tx" (click)="closeReceipt()">
+    <div
+      class="mov-receipt-sheet"
+      role="dialog"
+      aria-labelledby="mov-receipt-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="mov-receipt-handle" aria-hidden="true"></div>
+
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title mb-0" id="mov-receipt-title">Recibo</h5>
+        <button type="button" class="btn-close" (click)="closeReceipt()" aria-label="Cerrar recibo"></button>
+      </div>
+
+      <div class="mov-receipt-body">
+        <div class="mov-receipt-hero">
+          <div class="mov-receipt-hero__top">
+            <div class="icon-container" [class]="tx.type">
+              <i class="feather"
+                [ngClass]="{
+                  'icon-percent': tx.type === 'commission',
+                  'icon-shopping-cart': tx.type === 'purchase',
+                  'icon-dollar-sign': tx.type !== 'commission' && tx.type !== 'purchase'
+                }"></i>
+            </div>
+            <div class="mov-receipt-hero__info">
+              <h6 class="mov-receipt-hero__type">{{ tx.merchantName || 'Movimiento' }}</h6>
+              <p class="mov-receipt-hero__date">{{ tx.date | date:'dd/MM/yyyy, hh:mm a' }}</p>
+            </div>
+            <span
+              class="mov-receipt-badge"
+              *ngIf="receiptStatusLabel(tx)"
+              [ngClass]="receiptStatusClass(tx)"
+            >
+              {{ receiptStatusLabel(tx) }}
+            </span>
+          </div>
+          <p
+            class="mov-receipt-hero__amount"
+            [ngClass]="{'text-danger': tx.amount < 0, 'text-success': tx.amount >= 0}"
+          >
+            {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number:'1.2-2' }} {{ receiptCurrency(tx) }}
+          </p>
+        </div>
+
+        <div class="mov-receipt-panel">
+          <h6 class="mov-receipt-panel__title">Detalle</h6>
+
+          <div class="mov-receipt-field mov-receipt-field--stack" *ngIf="tx.reference">
+            <span class="mov-receipt-field__label">Referencia</span>
+            <span class="mov-receipt-field__value mov-receipt-field__value--ref">{{ tx.reference }}</span>
+          </div>
+
+          <div class="mov-receipt-field" *ngIf="tx.paymentType">
+            <span class="mov-receipt-field__label">Medio de pago</span>
+            <span class="mov-receipt-field__value">{{ tx.paymentType }}</span>
+          </div>
+
+          <div class="mov-receipt-field" *ngIf="tx.description">
+            <span class="mov-receipt-field__label">Concepto</span>
+            <span class="mov-receipt-field__value">{{ tx.description }}</span>
+          </div>
+
+          <div class="mov-receipt-field">
+            <span class="mov-receipt-field__label">Tarjeta</span>
+            <span class="mov-receipt-field__value">{{ formatCardMask(tx.cardNumber) }}</span>
+          </div>
+
+          <div class="mov-receipt-field" *ngIf="tx.transactionId">
+            <span class="mov-receipt-field__label">Nº movimiento</span>
+            <span class="mov-receipt-field__value">#{{ tx.transactionId }}</span>
+          </div>
+
+          <div class="mov-receipt-field" *ngIf="showReceiptConverted(tx)">
+            <span class="mov-receipt-field__label">Monto convertido</span>
+            <span class="mov-receipt-field__value">{{ (tx.amountConverted ?? 0) | number:'1.2-2' }} USD</span>
+          </div>
+
+          <div class="mov-receipt-field" *ngIf="showReceiptExchangeRate(tx)">
+            <span class="mov-receipt-field__label">Tasa</span>
+            <span class="mov-receipt-field__value">{{ (tx.exchangeRate ?? 0) | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary w-100 mov-receipt-close-btn"
+          (click)="closeReceipt()"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
   </div>
 </div>
