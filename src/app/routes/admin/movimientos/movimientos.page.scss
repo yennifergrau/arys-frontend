@@ -11,7 +11,7 @@
 }
 
 .page-wrapper {
-  padding-bottom: 30px;
+  padding-bottom: 0;
 }
 
 .mov-main {
@@ -24,7 +24,7 @@
 
 .mov-scroll-area {
   overflow: visible;
-  padding-bottom: 80px; /* margen para el tab bar */
+  padding-bottom: var(--arys-tabbar-clearance, 110px);
 }
 
 .back-btn {

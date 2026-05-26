@@ -73,9 +73,21 @@
  * Mobile-first: Arys está pensada para teléfono (Ionic + shell ~600px).
  * -------------------------------------------------------------------------- */
 :root {
-  --arys-safe-top: env(safe-area-inset-top, 0px);
-  --arys-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --arys-tabbar-clearance: calc(88px + var(--arys-safe-bottom));
+  --arys-headheight: 60px;
+  /* En WebView Android env() suele ser 0: reservamos mínimo para status + nav del sistema */
+  --arys-safe-top: max(env(safe-area-inset-top, 0px), 0px);
+  --arys-safe-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+  --arys-header-clearance: calc(var(--arys-headheight) + var(--arys-safe-top));
+  /* Barra flotante (~85px) + offset inferior (10px) + margen */
+  --arys-tabbar-clearance: calc(110px + var(--arys-safe-bottom));
+}
+
+body.arys-native {
+  /* Botones de navegación Android (3 botones / gestos): ~48–56px */
+  --arys-safe-top: max(env(safe-area-inset-top, 0px), 28px);
+  --arys-safe-bottom: max(env(safe-area-inset-bottom, 0px), 56px);
+  --arys-header-clearance: calc(var(--arys-headheight) + var(--arys-safe-top));
+  --arys-tabbar-clearance: calc(118px + var(--arys-safe-bottom));
 }
 
 html {
@@ -103,13 +115,34 @@ ion-router-outlet {
   padding-top: var(--arys-safe-top);
 }
 
-.menubar-area.footer-fixed {
-  bottom: calc(10px + var(--arys-safe-bottom));
+/* style.css del template pone bottom:10px; !important para respetar nav del sistema */
+body.has-app-tab .menubar-area.footer-fixed,
+body.arys-native .menubar-area.footer-fixed {
+  bottom: calc(12px + var(--arys-safe-bottom)) !important;
+  z-index: 1000;
+}
+
+.page-content.space-top {
+  padding-top: var(--arys-header-clearance) !important;
+  scroll-padding-top: var(--arys-header-clearance);
 }
 
 /* Evita depender de :has() (no está en todos los WebView Android). */
-body.has-app-tab .page-content:not(.p-b70):not(.p-b80):not(.mov-main) {
-  padding-bottom: var(--arys-tabbar-clearance);
+body.has-app-tab .page-content {
+  padding-bottom: var(--arys-tabbar-clearance) !important;
+  scroll-padding-bottom: var(--arys-tabbar-clearance);
+}
+
+body.has-app-tab .mov-root,
+body.has-app-tab .page-wrapper {
+  scroll-padding-bottom: var(--arys-tabbar-clearance);
+}
+
+/* El header fijo ya muestra el título; evita duplicado tapado arriba */
+@media (max-width: 600px) {
+  body.has-app-tab .page-content.space-top .top-row .hello h1 {
+    display: none;
+  }
 }
 
 input,
