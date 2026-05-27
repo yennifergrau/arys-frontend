@@ -28,7 +28,7 @@
             <span class="title" align="center">Monto</span>
             <p class="sub_title">{{amount}} BS</p>
             <span class="title" align="center">Referencia</span>
-            <p class="sub_title">002415604619</p>
+            <p class="sub_title">{{ reference || '--' }}</p>
           </div>
           <a [routerLink]="['/admin/payment/recibe/purchased']" class="btn px-3 btn-thin rounded btn-secondary w-100"><i class="fa-sharp text-primary fa-solid fa-share-alt font-20 s"></i>
            Compartir Recibo</a>	

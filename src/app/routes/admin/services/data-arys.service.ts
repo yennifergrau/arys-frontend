@@ -20,6 +20,8 @@ export class DataArysService {
   private readonly validate_credit_line_url = environment.arys.OtherApis.validate_credit_line
   private readonly update_membership_cedrif_credit_url =
     environment.arys.OtherApis.update_membership_cedrif_credit
+  private readonly save_credit_payment_url = environment.arys.OtherApis.save_credit_payment
+  private readonly get_credit_payment_by_id_url = environment.arys.OtherApis.get_credit_payment_by_id
   private readonly updateCredit = environment.arys.OtherApis.update_credit
   private readonly getPurchased = environment.meritop.addData.get_purchase
 
@@ -63,6 +65,28 @@ export class DataArysService {
         return throwError(() => new Error('Error añadir pago'));
       })
     )
+  }
+
+  public save_credit_payment(payload: { payment_id: string; bank: string; phone: string }) {
+    const payment_id = String(payload?.payment_id ?? '').trim();
+    const bank = String(payload?.bank ?? '').trim();
+    const phone = String(payload?.phone ?? '').trim();
+    return this.http
+      .post<any>(`${this.baseUrl}/${this.save_credit_payment_url}`, { payment_id, bank, phone })
+      .pipe(
+        catchError(() => {
+          return throwError(() => new Error('Error al guardar pago de crédito'));
+        })
+      );
+  }
+
+  public get_credit_payment_by_id(payment_id: string) {
+    const id = encodeURIComponent(String(payment_id ?? '').trim());
+    return this.http.get<any>(`${this.baseUrl}/${this.get_credit_payment_by_id_url}/${id}`).pipe(
+      catchError(() => {
+        return throwError(() => new Error('Error al consultar pago de crédito'));
+      })
+    );
   }
 
   public add_membership(data: any) {

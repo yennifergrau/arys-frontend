@@ -61,6 +61,8 @@ export const environment = {
       retry_credit_line: 'data/post/fecht/retry/credit-line',
       validate_credit_line: 'data/post/fecht/validate/credit-line',
       update_membership_cedrif_credit: 'data/post/fecht/membership',
+      save_credit_payment: 'data/post/fecht/credit/payment',
+      get_credit_payment_by_id: 'data/get/fecht/credit/payment',
       update_credit: 'update/credit/data',
       get_pending_orders: 'api/service-orders/pending',
       get_order_details: 'api/service-order',

@@ -31,6 +31,8 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   public selectedTransaction: Transaction | null = null;
   public receiptOpen = false;
   public showLoading = false;
+  public receiptPaymentLoading = false;
+  public receiptPaymentData: any | null = null;
   public selectedSegment: string = 'ultimos';
   public dateFrom: string = '';
   public dateTo: string = '';
@@ -53,10 +55,60 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   readonly consumoBankPhone = '04144120518';
   readonly consumoBankRif = 'J309920600';
 
-  /** Datos para recibos de pago. */
-  readonly pagoBankName = 'Banco Activo';
-  readonly pagoBankRif = 'J309920600';
-  readonly pagoBankPhone = '04122863934';
+  /** Bancos Venezuela (código pago móvil → nombre). */
+  public readonly banksVE: Array<{ code: string; name: string }> = [
+    { code: '0102', name: 'Banco de Venezuela' },
+    { code: '0104', name: 'Venezolano de Crédito' },
+    { code: '0105', name: 'Banco Mercantil' },
+    { code: '0108', name: 'Banco Provincial' },
+    { code: '0114', name: 'Bancaribe' },
+    { code: '0115', name: 'Banco Exterior' },
+    { code: '0128', name: 'Banco Caroní' },
+    { code: '0134', name: 'Banesco' },
+    { code: '0137', name: 'Banco Sofitasa' },
+    { code: '0138', name: 'Banco Plaza' },
+    { code: '0146', name: 'Banco de la Gente Emprendedora (BANGENTE)' },
+    { code: '0151', name: 'BFC Banco Fondo Común' },
+    { code: '0156', name: '100% Banco' },
+    { code: '0157', name: 'DelSur Banco Universal' },
+    { code: '0163', name: 'Banco del Tesoro' },
+    { code: '0166', name: 'Banco Agrícola de Venezuela' },
+    { code: '0168', name: 'Bancrecer' },
+    { code: '0169', name: 'Mi Banco' },
+    { code: '0171', name: 'Banco Activo' },
+    { code: '0172', name: 'Bancamiga' },
+    { code: '0173', name: 'Banco Internacional de Desarrollo' },
+    { code: '0174', name: 'Banplus' },
+    { code: '0175', name: 'Banco Bicentenario del Pueblo' },
+    { code: '0177', name: 'BANFANB' },
+    { code: '0190', name: 'Citibank' },
+    { code: '0191', name: 'Banco Nacional de Crédito (BNC)' },
+  ];
+
+  /** Datos retornados por ARYS para recibos de pago (si existe). */
+  private resolveBankNameFromCode(codeOrName: string): string {
+    const raw = String(codeOrName ?? '').trim();
+    if (!raw) return '';
+    // Si no parece código (4 dígitos), asumimos que ya es “nombre” u otro identificador.
+    if (!/^\d{4}$/.test(raw)) return raw;
+    return this.banksVE.find(b => b.code === raw)?.name ?? raw;
+  }
+  public get pagoOrigenBanco(): string {
+    return String(this.receiptPaymentData?.bank ?? this.receiptPaymentData?.payment_orig?.bankcode ?? '').trim();
+  }
+  public get pagoOrigenBancoLabel(): string {
+    return this.resolveBankNameFromCode(this.pagoOrigenBanco);
+  }
+  public get pagoOrigenTelefono(): string {
+    return String(this.receiptPaymentData?.phone ?? this.receiptPaymentData?.payment_orig?.phonenumber ?? '').trim();
+  }
+  public get pagoReferencia(): string {
+    return String(
+      this.receiptPaymentData?.payment_orig?.payment_reference ??
+      this.receiptPaymentData?.payment_reference ??
+      ''
+    ).trim();
+  }
 
   // Evita “parpadeo” de saldos (membresía -> Meritop)
   public summaryReady = false;
@@ -580,6 +632,29 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
     if (!this.hasReceipt(tx)) return;
     this.selectedTransaction = tx;
     this.receiptOpen = true;
+
+    // Si es Pago: consulta ARYS por payment_id (= id de transacción/payid)
+    this.receiptPaymentData = null;
+    this.receiptPaymentLoading = false;
+    if (this.isPagoReceipt(tx)) {
+      const paymentId = String(tx.transactionId ?? '').trim();
+      if (paymentId) {
+        this.receiptPaymentLoading = true;
+        this.dataArysService.get_credit_payment_by_id(paymentId).pipe(
+          finalize(() => {
+            this.receiptPaymentLoading = false;
+          })
+        ).subscribe({
+          next: (res: any) => {
+            // tolerante: a veces viene {status,data} y otras el objeto directo
+            this.receiptPaymentData = res?.data ?? res ?? null;
+          },
+          error: () => {
+            this.receiptPaymentData = null;
+          }
+        });
+      }
+    }
   }
 
   public onTransactionActivate(tx: Transaction, event?: Event): void {
@@ -591,6 +666,8 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   public closeReceipt(): void {
     this.receiptOpen = false;
     this.selectedTransaction = null;
+    this.receiptPaymentData = null;
+    this.receiptPaymentLoading = false;
   }
 
   public formatCardMask(card?: string): string {

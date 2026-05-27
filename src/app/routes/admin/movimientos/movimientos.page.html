@@ -264,15 +264,36 @@
           <ng-container *ngIf="isPagoReceipt(tx)">
             <div class="mov-receipt-field">
               <span class="mov-receipt-field__label">Banco</span>
-              <span class="mov-receipt-field__value">{{ pagoBankName }}</span>
+              <span class="mov-receipt-field__value">
+                <ng-container *ngIf="!receiptPaymentLoading; else pagoLoadingBank">
+                  {{ pagoOrigenBancoLabel || '--' }}
+                </ng-container>
+                <ng-template #pagoLoadingBank>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </span>
             </div>
             <div class="mov-receipt-field">
               <span class="mov-receipt-field__label">Teléfono</span>
-              <span class="mov-receipt-field__value">{{ pagoBankPhone }}</span>
+              <span class="mov-receipt-field__value">
+                <ng-container *ngIf="!receiptPaymentLoading; else pagoLoadingPhone">
+                  {{ pagoOrigenTelefono || '--' }}
+                </ng-container>
+                <ng-template #pagoLoadingPhone>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </span>
             </div>
-            <div class="mov-receipt-field">
-              <span class="mov-receipt-field__label">RIF</span>
-              <span class="mov-receipt-field__value">{{ pagoBankRif }}</span>
+            <div class="mov-receipt-field" *ngIf="pagoReferencia || receiptPaymentLoading">
+              <span class="mov-receipt-field__label">Referencia</span>
+              <span class="mov-receipt-field__value mov-receipt-field__value--ref">
+                <ng-container *ngIf="!receiptPaymentLoading; else pagoLoadingRef">
+                  {{ pagoReferencia || '--' }}
+                </ng-container>
+                <ng-template #pagoLoadingRef>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </span>
             </div>
           </ng-container>
 

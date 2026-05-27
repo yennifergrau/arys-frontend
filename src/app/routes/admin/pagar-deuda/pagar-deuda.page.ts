@@ -523,9 +523,25 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
           }
           // Pantalla "Abono realizado" en cuanto el POST responde OK (no esperar refresh).
           this.showSuccess = true;
-          return this.refreshMeritopFromServer$().pipe(
-            map(() => res),
-            catchError(() => of(res))
+
+          const paymentId = res?.payid != null ? String(res.payid).trim() : '';
+          const bank = String(res?.payment_orig?.bankcode ?? paymentData.bankcode ?? '').trim();
+          const phone = String(res?.payment_orig?.phonenumber ?? paymentData.payphone ?? '').trim();
+
+          // Persistencia adicional en ARYS: no bloquea la UI si falla.
+          const save$ = paymentId
+            ? this.dataArysService.save_credit_payment({ payment_id: paymentId, bank, phone }).pipe(
+                catchError(() => of(null))
+              )
+            : of(null);
+
+          return save$.pipe(
+            switchMap(() =>
+              this.refreshMeritopFromServer$().pipe(
+                map(() => res),
+                catchError(() => of(res))
+              )
+            )
           );
         }),
         finalize(() => {

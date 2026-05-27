@@ -111,6 +111,10 @@ export const ADMIN_ROUTES: Routes = [
     component: ReportPage,
   },
   {
+    path: 'report/credit/payment/:payment_id',
+    component: ReportPage,
+  },
+  {
     path: 'membresia/user',
     component: MembresiasPage,
   },
