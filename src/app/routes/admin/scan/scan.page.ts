@@ -2,11 +2,6 @@ import { Component, OnInit, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AwsService } from 'src/app/shared/services/aws.service';
-import {
-  DetectDocumentTextCommand,
-  TextractClient,
-} from '@aws-sdk/client-textract';
-import { environment } from 'src/environments/environment';
 import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 import { TabComponent } from 'src/app/shared/components/tab/tab.component';
@@ -35,7 +30,6 @@ export class ScanPage {
   public capturedImage: string | null = null;
   public isDisabled: boolean = false;
   public messageInformation: boolean = false;
-  private textractClient: TextractClient;
   encryptedData: string | null = null;
 
   constructor(
@@ -44,15 +38,7 @@ export class ScanPage {
     private renderer: Renderer2,
     private activatedRoute: ActivatedRoute,
     private emission: EmissionDetailsService
-  ) {
-    this.textractClient = new TextractClient({
-      region: environment.awsConfig.region,
-      credentials: {
-        accessKeyId: environment.awsConfig.credentials.accessKeyId,
-        secretAccessKey: environment.awsConfig.credentials.secretAccessKey,
-      },
-    });
-  }
+  ) {}
 
   ngAfterViewInit() {
     this.startCamera();
@@ -150,13 +136,6 @@ export class ScanPage {
   async processImage(file: Blob) {
     const currentScanType = localStorage.getItem('CURRENT_SCAN');
     this.showLoading = true;
-    const isValid = await this.validateDocumentType(file, currentScanType);
-    if (!isValid) {
-      this.showLoading = false;
-      this.messageInformation = false;
-      this.mostrarToast(' La imagen no coincide', 'toast-error');
-      return;
-    }
     this.ocrService
       .uploadImage(file)
       .pipe(
@@ -180,19 +159,30 @@ export class ScanPage {
         })
       )
       .subscribe((response: any) => {
+        const rawText: string =
+          typeof response === 'string'
+            ? response
+            : typeof response?.text === 'string'
+              ? response.text
+              : JSON.stringify(response ?? '');
+
+        const isValid = this.validateDocumentTypeFromText(rawText, currentScanType);
+        if (!isValid) {
+          this.showLoading = false;
+          this.messageInformation = false;
+          this.mostrarToast(' La imagen no coincide', 'toast-error');
+          this.clearPreviousData();
+          this.capturePhoto();
+          return;
+        }
+
         this.text = response;
         this.processDocumentText(this.text);
       });
   }
 
-  async validateDocumentType(
-    file: Blob,
-    currentScanType: string | null
-  ): Promise<boolean> {
-    if (!currentScanType) {
-      return false;
-    }
-    const text = await this.performOcr(file);
+  validateDocumentTypeFromText(text: string, currentScanType: string | null): boolean {
+    if (!currentScanType) return false;
     if (currentScanType === 'licencia') {
       return /LICENCIA/.test(text) || /Licencia/.test(text);
     } else if (currentScanType === 'cedula') {
@@ -201,30 +191,6 @@ export class ScanPage {
       return /CERTIFICADO/.test(text) || /Certificado/.test(text);
     }
     return false;
-  }
-
-  async performOcr(file: Blob): Promise<string> {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      const command = new DetectDocumentTextCommand({
-        Document: { Bytes: uint8Array },
-      });
-      const response = await this.textractClient.send(command);
-      const text =
-        response.Blocks?.filter((block) => block.BlockType === 'LINE')
-          .map((block) => block.Text)
-          .join(' ') || '';
-      return this.cleanText(text);
-    } catch (error) {
-      throw new Error(
-        'Se produjo un error al procesar la imagen.😰 Por favor, intente nuevamente.'
-      );
-    }
-  }
-
-  cleanText(text: string): string {
-    return text.replace(/\s+/g, ' ').trim();
   }
 
   processDocumentText(text: any) {

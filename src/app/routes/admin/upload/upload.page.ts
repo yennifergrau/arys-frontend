@@ -3,12 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { AwsService } from 'src/app/shared/services/aws.service';
-import {
-  DetectDocumentTextCommand,
-  TextractClient,
-} from '@aws-sdk/client-textract';
 import { SafeResourceUrl  } from '@angular/platform-browser';
-import { environment } from 'src/environments/environment';
 import { DomSanitizer } from '@angular/platform-browser';
 import { catchError, throwError } from 'rxjs';
 import { TabComponent } from 'src/app/shared/components/tab/tab.component';
@@ -36,7 +31,6 @@ export class UploadPage implements OnInit {
   public showLoading: boolean = false;
   public text!: string;
   public pdfUrl: SafeResourceUrl | null = null;
-  private textractClient: TextractClient;
   public isPdf: boolean = false;
   public messageInformation: boolean = false;
   public messageInformationError: boolean = false;
@@ -48,15 +42,7 @@ export class UploadPage implements OnInit {
     private navCtrl: Router,
     private renderer: Renderer2,
     private emission: EmissionDetailsService
-  ) {
-    this.textractClient = new TextractClient({
-      region: environment.awsConfig.region,
-      credentials: {
-        accessKeyId: environment.awsConfig.credentials.accessKeyId,
-        secretAccessKey: environment.awsConfig.credentials.secretAccessKey,
-      },
-    });
-  }
+  ) {}
 
   ngOnInit(): void {}
 
@@ -114,43 +100,8 @@ export class UploadPage implements OnInit {
     }
   }
 
-  public async performOcr(file: Blob): Promise<string> {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      const command = new DetectDocumentTextCommand({
-        Document: { Bytes: uint8Array },
-      });
-      const response = await this.textractClient.send(command);
-      const text =
-        response.Blocks?.filter((block) => block.BlockType === 'LINE')
-          .map((block) => block.Text)
-          .join(' ') || '';
-
-      return this.cleanText(text);
-    } catch (error) {
-      console.log('Error en performOcr')
-      console.log(error)
-      throw new Error(
-        'Se produjo un error al procesar la imagen. Por favor, intente nuevamente.'
-      );
-    }
-  }
-
-  public cleanText(text: string): string {
-    return text.replace(/\s+/g, '').trim();
-  }
-
-  public async validateDocumentType(
-    file: Blob,
-    currentScanType: string | null
-  ): Promise<boolean> {
-    if (!currentScanType) {
-      return false;
-    }
-
-    const text = await this.performOcr(file);
-
+  public validateDocumentTypeFromText(text: string, currentScanType: string | null): boolean {
+    if (!currentScanType) return false;
     if (currentScanType === 'licencia') {
       return /LICENCIA/.test(text) || /Licencia/.test(text);
     } else if (currentScanType === 'cedula') {
@@ -158,21 +109,12 @@ export class UploadPage implements OnInit {
     } else if (currentScanType === 'carnet') {
       return /CERTIFICADO/.test(text) || /Certificado/.test(text);
     }
-
     return false;
   }
 
   public async processImage(file: Blob) {
     const currentScanType = localStorage.getItem('CURRENT_ADJUNTO');
     this.showLoading = true;
-    const isValid = await this.validateDocumentType(file, currentScanType);
-    if (!isValid) {
-      this.showLoading = false;
-      this.messageInformationError = true;
-      this.messageInformation = false;
-      this.mostrarToast(' La imagen no coincide', 'toast-error');
-      return;
-    }
     this.ocrService
       .fileUpload(file)
       .pipe(
@@ -192,6 +134,23 @@ export class UploadPage implements OnInit {
         })
       )
       .subscribe((response: any) => {
+        const rawText: string =
+          typeof response === 'string'
+            ? response
+            : typeof response?.text === 'string'
+              ? response.text
+              : JSON.stringify(response ?? '');
+
+        const isValid = this.validateDocumentTypeFromText(rawText, currentScanType);
+        if (!isValid) {
+          this.showLoading = false;
+          this.messageInformationError = true;
+          this.messageInformation = false;
+          this.mostrarToast(' La imagen no coincide', 'toast-error');
+          this.clearPreviousData();
+          return;
+        }
+
         this.text = response;
         this.processDocumentText(this.text);
       });

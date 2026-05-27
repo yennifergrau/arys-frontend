@@ -104,12 +104,4 @@ export const environment = {
       edit_user: 'edit/post/user/view'
     }
   },
-
-  awsConfig: {
-    region: 'us-east-1',
-    credentials: {
-      accessKeyId: 'AKIAXSGIZOBMISXPNAGU',
-      secretAccessKey: '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',
-    },
-  },
 };
