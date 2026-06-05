@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { HttpClientModule } from '@angular/common/http';
-import { formatValidator, matchFieldsValidator } from 'src/utils/match.validator';
+import { matchFieldsValidator, strongPasswordValidator, strongPasswordErrorMessage } from 'src/utils/match.validator';
 
 
 @Component({
@@ -28,7 +28,6 @@ export class RestorePasswordPage implements OnInit {
   public showLoading : boolean = false;
   emailUser !: string | any
   formGroup !: FormGroup
-  private REGEX_PASSWORD = /^.{6,}$/
   public showPassword: boolean = false;
   public showPasswordConfir: boolean = false;
 
@@ -45,11 +44,11 @@ export class RestorePasswordPage implements OnInit {
       email:[''],
       password: ['', [
                 Validators.required, 
-                formatValidator(this.REGEX_PASSWORD, 'formatoInvalido')
+                strongPasswordValidator(10)
             ]],
       passwordConfir:['', [
                 Validators.required, 
-                formatValidator(this.REGEX_PASSWORD, 'formatoInvalido')
+                strongPasswordValidator(10)
             ]],
     }, {
       validators: matchFieldsValidator('password', 'passwordConfir')
@@ -88,9 +87,10 @@ export class RestorePasswordPage implements OnInit {
     return 'Todos los campos son obligatorios.'; 
   }
 
-  // B. Verificación de formato (Min 6 caracteres)
-  if (p1.hasError('formatoInvalido') || p2.hasError('formatoInvalido')) {
-    return 'La contraseña debe tener al menos 6 caracteres.';
+  // B. Verificación de fortaleza de contraseña
+  const pwdMsg = strongPasswordErrorMessage(p1.errors, 10) || strongPasswordErrorMessage(p2.errors, 10);
+  if (pwdMsg) {
+    return pwdMsg;
   }
 
   // C. Verificación de coincidencia (MustMatch)
@@ -129,8 +129,15 @@ export class RestorePasswordPage implements OnInit {
     },
     error: (error) => {
       this.showLoading = false;
-      this.mostrarToast('Ocurrió un error al restablecer la contraseña', 'toast-error');
-      console.error('Error:', error);
+      const serverMsg = error?.error?.message ? String(error.error.message) : '';
+      if (error?.status === 422) {
+        this.mostrarToast(
+          serverMsg || 'La contraseña no cumple los requisitos de seguridad.',
+          'toast-error'
+        );
+      } else {
+        this.mostrarToast('Ocurrió un error al restablecer la contraseña', 'toast-error');
+      }
     }
   });
 }

@@ -18,7 +18,7 @@ import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { timer } from 'rxjs';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { NotificationService } from 'src/app/shared/services/notification.service';
-import { matchFieldsValidator, formatValidator } from 'src/utils/match.validator';
+import { matchFieldsValidator, formatValidator, strongPasswordValidator, strongPasswordErrorMessage } from 'src/utils/match.validator';
 
 type DataControl = register;
 
@@ -51,7 +51,6 @@ export class RegisterPage {
   private REGEX_STRING = /^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]{1,20}$/
   private REGEX_EMAIL = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   private REGEX_NUMBER = /^(212|412|414|424|416|426)[0-9]{7}$/;
-  private REGEX_PASSWORD = /^.{6,}$/
 
   constructor(
     private fb: FormBuilder,
@@ -97,7 +96,7 @@ export class RegisterPage {
         formatValidator(this.REGEX_NUMBER, 'formatoTelefonoInvalido')
       ]),
       password: new FormControl('', [Validators.required,
-        formatValidator(this.REGEX_PASSWORD, 'formatoPasswordInvalido')
+        strongPasswordValidator(10)
       ]),
       credit: ('false')
     }, {
@@ -216,6 +215,8 @@ private procesarErroresDeFormulario() {
 private obtenerMensajeUnico(): string {
   // Retorna el mensaje específico dependiendo de qué error quedó solo
   if (this.formAuth.hasError('mustMatch')) return 'Los correos electrónicos no coinciden.';
+  const pwdMsg = strongPasswordErrorMessage(this.passwordControl.errors, 10);
+  if (pwdMsg) return pwdMsg;
   if (!this.isTerminosAccepted) return 'Debes aceptar los términos y condiciones.';
   return 'Por favor, verifique el campo marcado en rojo.';
 }
@@ -244,15 +245,25 @@ private obtenerMensajeUnico(): string {
             });
           },
           error:async (err: HttpErrorResponse) => {
-            if (err.status === 500) {
-              this.mostrarToast(
+            this.showLoading = false;
+            const serverMsg = err?.error?.message ? String(err.error.message) : '';
+            if (err.status >= 500) {
+              await this.mostrarToast(
                 `Error de comunicación, ${err.status}`,
                 'toast-error'
               );
-              this.showLoading = false;
+            } else if (err.status === 422) {
+              await this.mostrarToast(
+                serverMsg || 'La contraseña no cumple los requisitos de seguridad.',
+                'toast-error'
+              );
             } else if (err.status === 400) {
-              this.showLoading = false;
-             await this.mostrarToast('Usuario ya está registrado', 'toast-error');
+              await this.mostrarToast('Usuario ya está registrado', 'toast-error');
+            } else {
+              await this.mostrarToast(
+                serverMsg || 'No se pudo completar el registro. Intenta nuevamente.',
+                'toast-error'
+              );
             }
           },
         });

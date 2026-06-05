@@ -69,6 +69,78 @@ export function formatValidator(regex: RegExp, errorName: string): ValidatorFn {
 }
 
 /**
+ * Lista corta de contraseñas comunes que se rechazan explícitamente.
+ * El control definitivo (lista completa tipo HIBP) debe estar en el backend.
+ */
+const COMMON_PASSWORDS = [
+  '123456', '1234567', '12345678', '123456789', '1234567890',
+  'password', 'contrasena', 'contraseña', 'qwerty', 'abc123',
+  '111111', '000000', 'iloveyou', 'admin', 'arys', 'arys123',
+];
+
+/**
+ * Validador de contraseña fuerte.
+ * Exige longitud mínima, mayúscula, minúscula, número y símbolo,
+ * y rechaza contraseñas comunes.
+ *
+ * Errores posibles (para mostrar en UI):
+ * - passwordMinLength, passwordUppercase, passwordLowercase,
+ *   passwordNumber, passwordSymbol, passwordCommon
+ *
+ * @param minLength Longitud mínima (por defecto 10).
+ * @returns {ValidatorFn}
+ */
+export function strongPasswordValidator(minLength: number = 10): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value: string = control.value;
+
+    // Dejar el vacío a Validators.required
+    if (!value) {
+      return null;
+    }
+
+    if (COMMON_PASSWORDS.includes(value.toLowerCase())) {
+      return { passwordCommon: true };
+    }
+    if (value.length < minLength) {
+      return { passwordMinLength: true };
+    }
+    if (!/[A-ZÁÉÍÓÚÑ]/.test(value)) {
+      return { passwordUppercase: true };
+    }
+    if (!/[a-záéíóúñ]/.test(value)) {
+      return { passwordLowercase: true };
+    }
+    if (!/[0-9]/.test(value)) {
+      return { passwordNumber: true };
+    }
+    if (!/[^A-Za-z0-9]/.test(value)) {
+      return { passwordSymbol: true };
+    }
+
+    return null;
+  };
+}
+
+/**
+ * Devuelve un mensaje legible para el primer error de contraseña fuerte encontrado.
+ * Útil para mostrar en toasts/inline. Devuelve null si no hay error relevante.
+ */
+export function strongPasswordErrorMessage(
+  errors: ValidationErrors | null,
+  minLength: number = 10
+): string | null {
+  if (!errors) return null;
+  if (errors['passwordCommon']) return 'La contraseña es demasiado común; elige una más segura.';
+  if (errors['passwordMinLength']) return `La contraseña debe tener al menos ${minLength} caracteres.`;
+  if (errors['passwordUppercase']) return 'La contraseña debe incluir al menos una mayúscula.';
+  if (errors['passwordLowercase']) return 'La contraseña debe incluir al menos una minúscula.';
+  if (errors['passwordNumber']) return 'La contraseña debe incluir al menos un número.';
+  if (errors['passwordSymbol']) return 'La contraseña debe incluir al menos un símbolo.';
+  return null;
+}
+
+/**
  * Formatea un texto de matrícula (ej. AA514ES) insertando un guion
  * después del tercer carácter (ej. AA5-14ES).
  * * @param matricula El texto de la matrícula a formatear.

@@ -36,6 +36,15 @@ export class LoginPage implements OnInit {
   public showSpinner: boolean = false;
   public showPassword: boolean = false;
 
+  /**
+   * Throttle de intentos (defensa en profundidad en cliente).
+   * El control real de fuerza bruta debe estar en el backend (rate limit + bloqueo).
+   */
+  private static readonly MAX_ATTEMPTS = 5;
+  private static readonly LOCKOUT_MS = 30_000;
+  private failedAttempts = 0;
+  private lockoutUntil = 0;
+
   constructor(
     private fb: FormBuilder,
     private renderer: Renderer2,
@@ -106,43 +115,60 @@ export class LoginPage implements OnInit {
 
   }
 
+  public get isButtonDisabled(): boolean {
+    return this.showSpinner || this.isLockedOut();
+  }
+
+  private isLockedOut(): boolean {
+    return Date.now() < this.lockoutUntil;
+  }
+
+  private registerFailedAttempt(): void {
+    this.failedAttempts++;
+    if (this.failedAttempts >= LoginPage.MAX_ATTEMPTS) {
+      this.lockoutUntil = Date.now() + LoginPage.LOCKOUT_MS;
+      this.failedAttempts = 0;
+    }
+  }
+
+  private resetAttempts(): void {
+    this.failedAttempts = 0;
+    this.lockoutUntil = 0;
+  }
+
+  private showRemainingLockout(): void {
+    const seconds = Math.ceil((this.lockoutUntil - Date.now()) / 1000);
+    this.mostrarToast(
+      `Demasiados intentos. Espera ${seconds}s antes de reintentar.`,
+      'toast-error'
+    );
+  }
+
   public async Submit() {
+    if (this.isLockedOut()) {
+      this.showRemainingLockout();
+      return;
+    }
     this.showSpinner = true;
     try {
-      console.log('paso')
       if (this.Formauth.valid) {
         const data = this.Formauth.value;
-        console.log(data)
         this._authService.login(data).subscribe({
           next: (response: any) => {
-            console.log(response)
             this.showSpinner = false;
+            this.resetAttempts();
             this.navCtrl.navigateRoot(['admin/auth-veirify-sarys']);
           },
           error: (err: HttpErrorResponse) => {
             this.showSpinner = false;
-
-            const msg = err?.error?.message != null ? String(err.error.message) : '';
-            const normalized = msg
-              .replace(/\uFFFD/g, '') // caracteres corruptos "�"
-              .toLowerCase();
 
             if (err?.error?.status === 500 || err.status >= 500) {
               this.mostrarToast(`Error de comunicación ${err.status || ''}`.trim(), 'toast-error');
               return;
             }
 
-            if (
-              normalized.includes('contrase') ||
-              normalized.includes('autenticacion') ||
-              normalized.includes('authenticate') ||
-              normalized.includes('invalid')
-            ) {
-              this.mostrarToast('¡Credenciales inválidas!', 'toast-error');
-              return;
-            }
-
-            this.mostrarToast('No se pudo iniciar sesión. Intenta nuevamente.', 'toast-error');
+            this.registerFailedAttempt();
+            this.mostrarToast('¡Credenciales inválidas!', 'toast-error');
           },
         });
       } else {
