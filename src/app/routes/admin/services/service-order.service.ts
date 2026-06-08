@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -18,8 +18,20 @@ export class ServiceOrderService {
 
   constructor() { }
 
+  private getAuthHeaders(): { headers?: HttpHeaders } {
+    const token = (sessionStorage.getItem('accessToken') || '').trim();
+    if (!token) return {};
+    const headers = new HttpHeaders()
+      .set('Authorization', `Bearer ${token}`)
+      .set('x-access-token', token);
+    return { headers };
+  }
+
   public getPendingOrders(customerId: number) {
-    return this.http.get<PendingOrdersResponse>(`${this.baseUrl}/${this.getPendingUrl}/${customerId}`).pipe(
+    return this.http.get<PendingOrdersResponse>(
+      `${this.baseUrl}/${this.getPendingUrl}/${customerId}`,
+      this.getAuthHeaders()
+    ).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error al obtener ordenes pendientes'));
       })
@@ -31,7 +43,10 @@ export class ServiceOrderService {
       idMember != null && !Number.isNaN(idMember) && idMember > 0
         ? `?id_member=${encodeURIComponent(String(idMember))}`
         : '';
-    return this.http.get<OrderDetailsResponse>(`${this.baseUrl}/${this.getOrderDetailUrl}/${orderId}${q}`).pipe(
+    return this.http.get<OrderDetailsResponse>(
+      `${this.baseUrl}/${this.getOrderDetailUrl}/${orderId}${q}`,
+      this.getAuthHeaders()
+    ).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error al obtener detalle de orden'));
       })
@@ -45,7 +60,8 @@ export class ServiceOrderService {
     }
     return this.http.post<ApplyCreditResponse>(
       `${this.baseUrl}/${this.applyCreditUrl}/${orderId}/apply-credit`,
-      body
+      body,
+      this.getAuthHeaders()
     ).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error al aplicar credito'));
@@ -54,7 +70,11 @@ export class ServiceOrderService {
   }
 
   public payWithCredit(orderId: string) {
-    return this.http.post<PaymentResponse>(`${this.baseUrl}/${this.payOrderUrl}/${orderId}/pay`, {}).pipe(
+    return this.http.post<PaymentResponse>(
+      `${this.baseUrl}/${this.payOrderUrl}/${orderId}/pay`,
+      {},
+      this.getAuthHeaders()
+    ).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error al procesar pago con credito'));
       })

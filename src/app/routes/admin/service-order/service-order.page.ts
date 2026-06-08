@@ -69,6 +69,8 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   public summaryState: 'loading' | 'ready' | 'fallback' = 'loading'
   public summaryMessage: string = ''
   private readonly PENDING_ORDERS_CACHE_KEY = PENDING_ORDERS_CACHE_KEY
+  /** Evita doble carga inicial: ngOnInit + ionViewWillEnter en primer render. */
+  private hasEnteredOnce = false
 
   public activeOrderId: string | null = null
   public creditInfo: CreditInfo | null = null
@@ -594,7 +596,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
     });
   }
 
-  private loadMembershipSummary() {
+  private loadMembershipSummary(refreshOrders = false) {
     const idRaw = sessionStorage.getItem('id_member')
     const idMember = idRaw ? Number(idRaw) : NaN
     const email =
@@ -614,8 +616,10 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
         const row = res?.status && Array.isArray(res.data) && res.data.length ? res.data[0] : null
         if (!row) {
           this.membershipSummary = null
+          if (refreshOrders) this.getPendingOrders()
           return
         }
+        const resolvedMemberId = row.id_master != null ? Number(row.id_master) : NaN
         this.membershipSummary = {
           credit_line_id: row.credit_line_id != null ? String(row.credit_line_id) : null,
           cedrif_credit: row.cedrif_credit != null ? String(row.cedrif_credit) : null,
@@ -623,20 +627,37 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
           credit_available: row.credit_available,
           credit_used: row.credit_used,
         }
-        if (row.id_master != null) {
-          sessionStorage.setItem('id_member', String(row.id_master))
+        if (!Number.isNaN(resolvedMemberId) && resolvedMemberId > 0) {
+          this.id_member = resolvedMemberId
+          sessionStorage.setItem('id_member', String(resolvedMemberId))
+          if (refreshOrders) this.getPendingOrders(resolvedMemberId)
+        } else if (refreshOrders) {
+          this.getPendingOrders()
         }
       },
       error: () => {
         this.membershipSummary = null
+        if (refreshOrders) this.getPendingOrders()
       },
     })
   }
 
-  private getPendingOrders() {
+  private getPendingOrders(memberIdOverride?: number) {
     try {
       const storedMember = sessionStorage.getItem('id_member')
-      const membershipId = storedMember ? Number(storedMember) : this.id_member
+      const fromStorage = storedMember ? Number(storedMember) : NaN
+      const membershipId =
+        memberIdOverride != null && !Number.isNaN(memberIdOverride) && memberIdOverride > 0
+          ? memberIdOverride
+          : !Number.isNaN(fromStorage) && fromStorage > 0
+            ? fromStorage
+            : this.id_member
+
+      if (!membershipId || Number.isNaN(membershipId) || membershipId <= 0) {
+        this.pendingOrders = []
+        this.showLoading = false
+        return
+      }
       this.serviceOrderService.getPendingOrders(membershipId).subscribe({
         next: (result) => {
           this.pendingOrders = result?.status && Array.isArray(result.data) ? result.data : []
@@ -737,15 +758,19 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   ngOnInit() {
     this.summaryState = 'loading'
     this.summaryMessage = ''
-    this.loadMembershipSummary()
+    this.loadMembershipSummary(true)
     const cached = this.hydrateFromCache()
     this.loadCustomerProduct(cached.meritop)
-    this.getPendingOrders()
   }
 
   ionViewWillEnter() {
+    // En Ionic, la primera entrada puede ejecutar ngOnInit y luego ionViewWillEnter;
+    // omitimos este primer ionViewWillEnter para no duplicar requests.
+    if (!this.hasEnteredOnce) {
+      this.hasEnteredOnce = true
+      return
+    }
     this.refreshMeritopProductSilent()
-    this.getPendingOrders()
-    this.loadMembershipSummary()
+    this.loadMembershipSummary(true)
   }
 }
