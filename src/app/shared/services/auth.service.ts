@@ -34,7 +34,7 @@ export class AuthService {
 
   register(user: any): Observable<RegisterResponse> {
     return this.http
-      .post<RegisterResponse>(`${this.baseUrl}/sarys/post/fechetd/logout`, user)
+      .post<RegisterResponse>(`${this.baseUrl}/sarys/post/fechetd/register`, user)
       .pipe(
         catchError((err) => {
           this.error.set(err.error?.message || 'Registration failed');
