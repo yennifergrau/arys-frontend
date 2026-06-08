@@ -171,6 +171,27 @@ export class RegisterPage {
 
   }
 
+  private normalizePhoneForBackend(rawPhone: string): string | null {
+    // Keep only digits from masked/prefixed input.
+    let digits = String(rawPhone || '').replace(/\D/g, '');
+
+    // Accept +58XXXXXXXXXX format from UI mask and convert to local 10 digits.
+    if (digits.startsWith('58') && digits.length >= 12) {
+      digits = digits.slice(2);
+    }
+
+    // If comes as 11 digits with leading zero, use local 10-digit core.
+    if (digits.length === 11 && digits.startsWith('0')) {
+      digits = digits.slice(1);
+    }
+
+    // Expected Venezuela mobile/local format used by current backend/client rules.
+    const isValidCore = /^(212|412|414|424|416|426)\d{7}$/.test(digits);
+    if (!isValidCore) return null;
+
+    return `0${digits.slice(0, 3)}-${digits.slice(3)}`;
+  }
+
 private procesarErroresDeFormulario() {
   const erroresActivos: string[] = [];
   
@@ -235,7 +256,13 @@ private obtenerMensajeUnico(): string {
     this.showLoading = true;
     try {
         const data: DataControl = this.formAuth.value;
-        data.phone = '0' + data.phone!.slice(0, 3) + '-' + data.phone!.slice(3);
+        const normalizedPhone = this.normalizePhoneForBackend(String(data.phone ?? ''));
+        if (!normalizedPhone) {
+          this.showLoading = false;
+          this.mostrarToast('El teléfono no tiene un formato válido.', 'toast-error');
+          return;
+        }
+        data.phone = normalizedPhone;
         this._authService.register(data).subscribe({
           next: async (response) => {
             this.mostrarToast('¡Registro exitoso!', 'toast-success');
