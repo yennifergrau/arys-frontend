@@ -3,6 +3,7 @@ import { PublicPage } from './routes/public/public.page';
 import { AdminPage } from './routes/admin/admin.page';
 import { PUBLIC_ROUTES } from './routes/public/public.routes';
 import { ADMIN_ROUTES } from './routes/admin/admin.routes';
+import { adminAuthChildGuard, adminAuthGuard } from './routes/admin/guards/admin-auth.guard';
 
 export const routes: Routes = [
   {
@@ -13,6 +14,8 @@ export const routes: Routes = [
   {
     path: 'admin',
     component: AdminPage,
+    canActivate: [adminAuthGuard],
+    canActivateChild: [adminAuthChildGuard],
     children: ADMIN_ROUTES,
   },
   {

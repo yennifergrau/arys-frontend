@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -26,6 +26,14 @@ export class DataArysService {
   private readonly getPurchased = environment.meritop.addData.get_purchase
 
   constructor() { }
+
+  private getAuthHeaders(): HttpHeaders {
+    const token = sessionStorage.getItem('accessToken') || '';
+    if (!token) return new HttpHeaders();
+    return new HttpHeaders()
+      .set('Authorization', `Bearer ${token}`)
+      .set('x-access-token', token);
+  }
 
   public updatecredit(data:any){
     return this.http.post<any>(`${this.baseUrl}/${this.updateCredit}`,data).pipe(
@@ -99,7 +107,7 @@ export class DataArysService {
 
 
   public get_membership(id_member: number | string) {
-    return this.http.get<any>(`${this.baseUrl}/${this.get_membership_url}/${id_member}`).pipe(
+    return this.http.get<any>(`${this.baseUrl}/${this.get_membership_url}/${id_member}`, { headers: this.getAuthHeaders() }).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error obtener membresía'));
       })
@@ -108,7 +116,7 @@ export class DataArysService {
 
   public get_membership_by_email(email: string) {
     const q = encodeURIComponent(email.trim());
-    return this.http.get<any>(`${this.baseUrl}/${this.get_membership_by_email_url}?email=${q}`).pipe(
+    return this.http.get<any>(`${this.baseUrl}/${this.get_membership_by_email_url}?email=${q}`, { headers: this.getAuthHeaders() }).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error obtener membresía por email'));
       })
@@ -118,7 +126,7 @@ export class DataArysService {
   public validate_credit_line(payload: { rif: string }) {
     const rif = String(payload?.rif ?? '').trim();
     return this.http
-      .post<any>(`${this.baseUrl}/${this.validate_credit_line_url}`, { rif })
+      .post<any>(`${this.baseUrl}/${this.validate_credit_line_url}`, { rif }, { headers: this.getAuthHeaders() })
       .pipe(
         catchError((error: HttpErrorResponse) => {
           return throwError(() => new Error('Error al validar línea de crédito'));
@@ -131,7 +139,8 @@ export class DataArysService {
     return this.http
       .post<any>(
         `${this.baseUrl}/${this.update_membership_cedrif_credit_url}/${id_member}/cedrif-credit`,
-        { rif }
+        { rif },
+        { headers: this.getAuthHeaders() }
       )
       .pipe(
         catchError((error: HttpErrorResponse) => {
@@ -159,7 +168,11 @@ export class DataArysService {
   ) {
     const body: Record<string, string> = {};
     if (!payload) {
-      return this.http.post<any>(`${this.baseUrl}/${this.retry_credit_line_url}/member/${id_member}`, body).pipe(
+      return this.http.post<any>(
+        `${this.baseUrl}/${this.retry_credit_line_url}/member/${id_member}`,
+        body,
+        { headers: this.getAuthHeaders() }
+      ).pipe(
         catchError((error: HttpErrorResponse) => {
           return throwError(() => new Error('Error al reintentar línea de crédito'));
         })
@@ -175,7 +188,7 @@ export class DataArysService {
     set('email', payload.email);
     set('phone_number', payload.phone_number ?? payload.phone);
     set('account_number', payload.account_number ?? payload.accountNumber);
-    return this.http.post<any>(`${this.baseUrl}/${this.retry_credit_line_url}/member/${id_member}`, body).pipe(
+    return this.http.post<any>(`${this.baseUrl}/${this.retry_credit_line_url}/member/${id_member}`, body, { headers: this.getAuthHeaders() }).pipe(
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error('Error al reintentar línea de crédito'));
       })
