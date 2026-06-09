@@ -7,6 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
 import { environment } from 'src/environments/environment';
 import { DataArysService } from '../services/data-arys.service';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 type ServiceOption = {
   id: string;
@@ -26,6 +27,7 @@ export class ServiceRequestPage implements OnInit {
   private navCtrl = inject(NavController);
   private arys = inject(DataArysService);
   private route = inject(ActivatedRoute);
+  private tokenStore = inject(TokenStoreService);
 
   public username = '';
   public docLabel = '';
@@ -188,7 +190,7 @@ export class ServiceRequestPage implements OnInit {
     }
 
     const storedMember = sessionStorage.getItem('id_member');
-    const token = sessionStorage.getItem('accessToken');
+    const token = this.tokenStore.getAccessTokenSync();
     if (token) {
       try {
         const decoded: any = jwtDecode(token);

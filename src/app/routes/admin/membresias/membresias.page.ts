@@ -9,6 +9,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { jwtDecode } from 'jwt-decode';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-membresias',
@@ -30,6 +31,7 @@ import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 export class MembresiasPage implements OnInit {
 
   private arys_service = inject(DataArysService)
+  private tokenStore = inject(TokenStoreService)
   private membershipId: number | null = null
   private userEmail: string | null = null
   public data_membership: any[] = [];
@@ -38,8 +40,8 @@ export class MembresiasPage implements OnInit {
 
   constructor() {
     this.showLoading = true
-    const decode : any = sessionStorage.getItem('accessToken')
-    const decodeToken: any = jwtDecode(decode)
+    const decode : any = this.tokenStore.getAccessTokenSync()
+    const decodeToken: any = decode ? jwtDecode(decode) : {}
     const stored = sessionStorage.getItem('id_member')
     this.membershipId = stored ? Number(stored) : (decodeToken.id_member != null ? Number(decodeToken.id_member) : null)
     this.userEmail = decodeToken.email ? String(decodeToken.email) : null

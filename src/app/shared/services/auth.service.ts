@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, throwError, tap } from 'rxjs';
 import { environment } from './../../../environments/environment';
 import {NavController} from '@ionic/angular'
+import { TokenStoreService } from './token-store.service';
 
 type RegisterResponse = { message: string };
 type AuthDto = { email: string; password: string };
@@ -19,13 +20,14 @@ export class AuthService {
   private readonly urlUser = environment.user.url
   private readonly view_user = environment.user.data.view_user
   private readonly update_user = environment.user.data.edit_user
+  private tokenStore = inject(TokenStoreService);
 
   constructor() {
-    const tokenFromStorage = sessionStorage.getItem('accessToken');
-    const expirationTimeFromStorage = sessionStorage.getItem('tokenExpirationTime');
+    const tokenFromStorage = this.tokenStore.getAccessTokenSync();
+    const expirationTimeFromStorage = this.tokenStore.getExpirationSync();
 
     this.accessToken.set(tokenFromStorage);
-    this.expirationTime.set(expirationTimeFromStorage ? Number(expirationTimeFromStorage) : null);
+    this.expirationTime.set(expirationTimeFromStorage ?? null);
 
     if (this.isTokenExpired()) {
       this.logout();
@@ -80,8 +82,7 @@ export class AuthService {
 
       this.accessToken.set(response.token);
       this.expirationTime.set(expirationTime);
-      sessionStorage.setItem('accessToken', response.token);
-      sessionStorage.setItem('tokenExpirationTime', expirationTime.toString());
+      void this.tokenStore.setSession(response.token, expirationTime);
     } else {
       this.error.set('No token received');
     }
@@ -99,8 +100,7 @@ export class AuthService {
   clearSession(): void {
     this.accessToken.set(null);
     this.expirationTime.set(null);
-    sessionStorage.removeItem('accessToken');
-    sessionStorage.removeItem('tokenExpirationTime');
+    void this.tokenStore.clearSession();
   }
 
   logout(): void {

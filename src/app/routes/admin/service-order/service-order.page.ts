@@ -21,6 +21,7 @@ import {
   isMeritopOperationFailed,
 } from '../utils/meritop-feedback.util';
 import { IonicModule, ToastController, ViewWillEnter } from '@ionic/angular';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-service-order',
@@ -44,6 +45,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   private meritopService = inject(MeritopService)
   private dataArysService = inject(DataArysService)
   private meritopCache = inject(MeritopSummaryCacheService)
+  private tokenStore = inject(TokenStoreService)
   private toastCtrl = inject(ToastController)
   id_user!: number
   private id_member: number = 0
@@ -120,7 +122,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
 
   constructor() {
     this.showLoading = true
-    const token = sessionStorage.getItem('accessToken')
+    const token = this.tokenStore.getAccessTokenSync()
     if (!token) return
 
     try {
@@ -752,7 +754,10 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   }
 
   private getCustomerIdentity() {
-    return resolveMeritopClientIdentity({ membershipRow: this.membershipSummary });
+    return resolveMeritopClientIdentity({
+      membershipRow: this.membershipSummary,
+      accessToken: this.tokenStore.getAccessTokenSync(),
+    });
   }
 
   ngOnInit() {

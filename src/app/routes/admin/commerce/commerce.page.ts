@@ -12,6 +12,7 @@ import { EmissionDetailsService } from '../services/emission-details.service';
 import { jwtDecode } from 'jwt-decode';
 import { ServiceOrderService } from '../services/service-order.service';
 import { ServiceOrder } from '../interface/service-order.interface';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-commerce',
@@ -30,6 +31,7 @@ import { ServiceOrder } from '../interface/service-order.interface';
 export class CommercePage implements OnInit {
 
   private serviceOrderService = inject(ServiceOrderService);
+  private tokenStore = inject(TokenStoreService);
 
   public isHidden: boolean = true;
   private json_commerce : commerce[] | any;
@@ -117,7 +119,7 @@ export class CommercePage implements OnInit {
   
 
   ngOnInit() {
-    const token = sessionStorage.getItem('accessToken');
+    const token = this.tokenStore.getAccessTokenSync();
     let idUser = 0;
     if (token) {
       try {

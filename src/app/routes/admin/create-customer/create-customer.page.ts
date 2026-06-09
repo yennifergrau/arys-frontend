@@ -49,6 +49,7 @@ import {
   parseCedrifCredit,
 
 } from '../utils/meritop-identity.util';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 
 
@@ -93,6 +94,7 @@ export class CreateCustomerPage implements OnInit {
   private _arysService = inject(DataArysService);
 
   private access = inject(UserAccessService);
+  private tokenStore = inject(TokenStoreService);
 
   public showLoading = false;
 
@@ -166,7 +168,7 @@ export class CreateCustomerPage implements OnInit {
 
   private getAccessToken() {
 
-    const dataToken: string | null = sessionStorage.getItem('accessToken');
+    const dataToken: string | null = this.tokenStore.getAccessTokenSync();
 
     if (!dataToken) return null;
 

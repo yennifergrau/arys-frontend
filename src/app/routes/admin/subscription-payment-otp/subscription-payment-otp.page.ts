@@ -28,6 +28,7 @@ import { NotificationService } from 'src/app/shared/services/notification.servic
 import { operationStatuses } from 'src/app/shared/interface/error.interface';
 import { jwtDecode } from 'jwt-decode';
 import { PolizaquiService } from '../services/polizaqui.service';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-subscription-payment-otp',
@@ -63,6 +64,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
   emission_service = inject(EmissionService);
   polizaqui = inject(PolizaquiService);
   emission = inject(EmissionService);
+  tokenStore = inject(TokenStoreService);
   showSpinner: boolean = false;
   otpForm!: FormGroup;
   planDetails!: any;
@@ -280,7 +282,7 @@ export class SubscriptionPaymentOtpPage implements OnInit, AfterViewInit {
 
   private getUserEmailFromToken(): string {
     try {
-      const raw = sessionStorage.getItem('accessToken');
+      const raw = this.tokenStore.getAccessTokenSync();
       if (!raw) return '';
       const decoded: any = jwtDecode(raw);
       return decoded?.email != null ? String(decoded.email).trim() : '';

@@ -11,6 +11,7 @@ import { DataArysService } from '../services/data-arys.service';
 import { ServiceOrderService } from '../services/service-order.service';
 import { EmissionDetailsService } from '../services/emission-details.service';
 import { membershipHasCreditLine } from '../utils/meritop-identity.util';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-entry',
@@ -24,6 +25,7 @@ export class EntryPage implements OnInit {
   private readonly arys = inject(DataArysService);
   private readonly serviceOrders = inject(ServiceOrderService);
   private readonly emissionDetails = inject(EmissionDetailsService);
+  private readonly tokenStore = inject(TokenStoreService);
 
   public showLoading = false;
   public username = '';
@@ -38,7 +40,7 @@ export class EntryPage implements OnInit {
   ) {}
 
   private getIdentityFromToken(): { email?: string; id_member?: number; name?: string } | null {
-    const token = sessionStorage.getItem('accessToken');
+    const token = this.tokenStore.getAccessTokenSync();
     if (!token) return null;
     try {
       const decoded: any = jwtDecode(token);

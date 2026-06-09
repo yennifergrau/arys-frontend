@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { inject, Injectable } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,6 +10,7 @@ import { environment } from 'src/environments/environment';
 export class DataArysService {
 
   private http = inject(HttpClient)
+  private tokenStore = inject(TokenStoreService)
   private readonly baseUrl = environment.arys.url
   private readonly add_person_url = environment.arys.OtherApis.add_person
   private readonly add_vehicle_url = environment.arys.OtherApis.add_vehicle
@@ -28,7 +30,7 @@ export class DataArysService {
   constructor() { }
 
   private getAuthHeaders(): HttpHeaders {
-    const token = sessionStorage.getItem('accessToken') || '';
+    const token = this.tokenStore.getAccessTokenSync() || '';
     if (!token) return new HttpHeaders();
     return new HttpHeaders()
       .set('Authorization', `Bearer ${token}`)

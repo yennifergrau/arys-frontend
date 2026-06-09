@@ -2,10 +2,12 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { inject, Injectable } from '@angular/core';
 import { catchError, firstValueFrom, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Injectable({ providedIn: 'root' })
 export class PolizaquiService {
   private readonly http = inject(HttpClient);
+  private readonly tokenStore = inject(TokenStoreService);
   private readonly baseUrl = environment.polizaqui.baseUrl;
   private readonly registerPaymentUrl = environment.polizaqui.registerPayment;
   private readonly registerMembershipUrl = environment.polizaqui.registerMembership;
@@ -14,8 +16,7 @@ export class PolizaquiService {
     // Compatible con Arys-Poliza: intenta enviar token si existe.
     let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     try {
-      const token = sessionStorage.getItem('accessToken') || '';
-      const bearer = token.trim();
+      const bearer = (this.tokenStore.getAccessTokenSync() || '').trim();
       if (bearer) {
         headers = headers.set('x-access-token', bearer).set('Authorization', `Bearer ${bearer}`);
       }

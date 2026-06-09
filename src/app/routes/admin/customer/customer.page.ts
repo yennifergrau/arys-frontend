@@ -10,6 +10,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { FormatCurrencyPipe } from '../pipes/currency.pipe';
 import { EmissionDetailsService } from '../services/emission-details.service';
 import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-customer',
@@ -31,6 +32,7 @@ export class CustomerPage implements OnInit {
   public customer_data: data_customer[] = [];
   public showLoading: boolean = false;
   private _emisionService = inject( EmissionDetailsService )
+  private tokenStore = inject(TokenStoreService)
   public firstName!: string | any;
   public amountTotal!: string | number;
   public membershipName!: string | any;
@@ -92,7 +94,9 @@ export class CustomerPage implements OnInit {
 
   private async loadCustomer() {
     try {
-      const identity = resolveMeritopClientIdentity();
+      const identity = resolveMeritopClientIdentity({
+        accessToken: this.tokenStore.getAccessTokenSync(),
+      });
       if (!identity) return;
       const data = {
         bank: "94932663-923d-48a3-b13a-6b0bea8f3608",

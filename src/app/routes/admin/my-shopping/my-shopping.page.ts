@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -7,6 +7,7 @@ import { DataArysService } from '../services/data-arys.service';
 import { HttpClientModule } from '@angular/common/http';
 import {jwtDecode} from 'jwt-decode'
 import { EmissionDetailsService } from '../services/emission-details.service';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-my-shopping',
@@ -17,6 +18,7 @@ import { EmissionDetailsService } from '../services/emission-details.service';
   providers:[DataArysService]
 })
 export class MyShoppingPage implements OnInit {
+  private tokenStore = inject(TokenStoreService);
   activeTab: string = 'enProceso';
   rif!: string;
   purchases: any[] = [];
@@ -54,7 +56,7 @@ public irAPagar(purchase: any) {
   }
 
   private decodeToken() {
-    const data = sessionStorage.getItem('accessToken') || '';
+    const data = this.tokenStore.getAccessTokenSync() || '';
     try {
       const decodeToken: any = jwtDecode(data);
       const p = decodeToken?.prefix != null ? String(decodeToken.prefix) : '';

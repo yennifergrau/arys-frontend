@@ -6,6 +6,7 @@ import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { environment } from './environments/environment';
 import { enableProdMode } from '@angular/core';
+import { TokenStoreService } from './app/shared/services/token-store.service';
 
 if(environment.production){
   enableProdMode();
@@ -18,4 +19,7 @@ bootstrapApplication(AppComponent, {
     provideRouter(routes, withPreloading(PreloadAllModules)),
     provideHttpClient(),
   ],
+}).then(async (appRef) => {
+  const tokenStore = appRef.injector.get(TokenStoreService);
+  await tokenStore.init();
 });

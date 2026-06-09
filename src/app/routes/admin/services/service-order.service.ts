@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { PendingOrdersResponse, OrderDetailsResponse, PaymentResponse, ApplyCreditResponse } from '../interface/service-order.interface';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,7 @@ import { PendingOrdersResponse, OrderDetailsResponse, PaymentResponse, ApplyCred
 export class ServiceOrderService {
 
   private http = inject(HttpClient)
+  private tokenStore = inject(TokenStoreService)
   private readonly baseUrl = environment.arys.url
   private readonly getPendingUrl = environment.arys.OtherApis.get_pending_orders
   private readonly getOrderDetailUrl = environment.arys.OtherApis.get_order_details
@@ -19,7 +21,7 @@ export class ServiceOrderService {
   constructor() { }
 
   private getAuthHeaders(): { headers?: HttpHeaders } {
-    const token = (sessionStorage.getItem('accessToken') || '').trim();
+    const token = (this.tokenStore.getAccessTokenSync() || '').trim();
     if (!token) return {};
     const headers = new HttpHeaders()
       .set('Authorization', `Bearer ${token}`)

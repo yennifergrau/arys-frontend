@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, concatMap, map } from 'rxjs/operators';
 import { MeritopService } from './meritop.service';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 import {
   MeritopClientIdentity,
   resolveMeritopClientIdentity,
@@ -28,6 +29,7 @@ export type MeritopSummaryCache = {
 @Injectable({ providedIn: 'root' })
 export class MeritopSummaryCacheService {
   private meritopService = inject(MeritopService);
+  private tokenStore = inject(TokenStoreService);
 
   toNumber(value: unknown): number {
     if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
@@ -132,7 +134,9 @@ export class MeritopSummaryCacheService {
 
   /** Refresca `customer/products`, persiste caché y devuelve el producto crudo. */
   refreshFromServer$(identity?: MeritopClientIdentity | null): Observable<unknown | null> {
-    const resolved = identity ?? resolveMeritopClientIdentity();
+    const resolved =
+      identity ??
+      resolveMeritopClientIdentity({ accessToken: this.tokenStore.getAccessTokenSync() });
     if (!resolved) {
       return of(null);
     }

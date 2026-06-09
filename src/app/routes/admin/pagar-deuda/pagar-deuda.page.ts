@@ -15,6 +15,7 @@ import { DataArysService } from '../services/data-arys.service';
 import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
 import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-pagar-deuda',
@@ -28,6 +29,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   private meritopService = inject(MeritopService);
   private meritopCache = inject(MeritopSummaryCacheService);
   private dataArysService = inject(DataArysService);
+  private tokenStore = inject(TokenStoreService);
   private navCtrl = inject(NavController);
   private toastCtrl = inject(ToastController);
 
@@ -239,7 +241,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   }
 
   constructor() {
-    const token = sessionStorage.getItem('accessToken');
+    const token = this.tokenStore.getAccessTokenSync();
     if (token) {
       try {
         this.accessTokenData = jwtDecode(token);
@@ -343,7 +345,10 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   }
 
   private getIdentity() {
-    return resolveMeritopClientIdentity({ membershipRow: this.membershipSummary });
+    return resolveMeritopClientIdentity({
+      membershipRow: this.membershipSummary,
+      accessToken: this.tokenStore.getAccessTokenSync(),
+    });
   }
 
   /** Rellena docType/docId desde token o userData (necesario aunque Meritop venga solo de caché). */

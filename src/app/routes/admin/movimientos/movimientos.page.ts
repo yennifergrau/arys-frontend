@@ -11,6 +11,7 @@ import { finalize } from 'rxjs';
 import { DataArysService } from '../services/data-arys.service';
 import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
 import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-movimientos',
@@ -25,6 +26,7 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   private meritopCache = inject(MeritopSummaryCacheService);
   private dataArysService = inject(DataArysService);
   private navCtrl = inject(NavController);
+  private tokenStore = inject(TokenStoreService);
 
   public transactions: Transaction[] = [];
   public groupedTransactions: { date: string, items: Transaction[] }[] = [];
@@ -289,7 +291,7 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   }
 
   constructor() {
-    const token = sessionStorage.getItem('accessToken');
+    const token = this.tokenStore.getAccessTokenSync();
     if (token) {
       try {
         this.accessTokenData = jwtDecode(token);
@@ -410,7 +412,10 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   }
 
   private getIdentity() {
-    return resolveMeritopClientIdentity({ membershipRow: this.membershipSummary });
+    return resolveMeritopClientIdentity({
+      membershipRow: this.membershipSummary,
+      accessToken: this.tokenStore.getAccessTokenSync(),
+    });
   }
 
   private applyMeritopProduct(product: any): void {

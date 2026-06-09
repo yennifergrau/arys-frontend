@@ -1,8 +1,9 @@
 import { inject } from '@angular/core';
 import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 const isValidJwtInSession = (): boolean => {
-  const token = sessionStorage.getItem('accessToken');
+  const token = inject(TokenStoreService).getAccessTokenSync();
   if (!token) return false;
   try {
     const payload = JSON.parse(atob(token.split('.')[1] || ''));

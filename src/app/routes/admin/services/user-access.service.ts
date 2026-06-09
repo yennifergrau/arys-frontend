@@ -3,6 +3,7 @@ import { DataArysService } from './data-arys.service';
 import { jwtDecode } from 'jwt-decode';
 import { firstValueFrom } from 'rxjs';
 import { membershipHasCreditLine } from '../utils/meritop-identity.util';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 export type UserAccessState = {
   loaded: boolean;
@@ -16,6 +17,7 @@ const STORAGE_KEY = 'arys_access_state_v1';
 @Injectable({ providedIn: 'root' })
 export class UserAccessService {
   private readonly dataArys = inject(DataArysService);
+  private readonly tokenStore = inject(TokenStoreService);
 
   /**
    * Marca la línea de crédito como activa en sesión para evitar bucles de guard
@@ -62,7 +64,7 @@ export class UserAccessService {
 
   private getTokenIdentity(): { id_member?: number; email?: string } {
     try {
-      const token = sessionStorage.getItem('accessToken');
+      const token = this.tokenStore.getAccessTokenSync();
       if (!token) return {};
       const decoded: any = jwtDecode(token);
       const id_member =

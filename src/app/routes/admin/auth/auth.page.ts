@@ -18,6 +18,7 @@ import { EmissionDetailsService } from '../services/emission-details.service';
 import { DataArysService } from '../services/data-arys.service';
 import { jwtDecode } from 'jwt-decode';
 import { firstValueFrom } from 'rxjs';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-auth',
@@ -46,6 +47,7 @@ export class AuthPage implements OnInit {
   private emission = inject(EmissionService);
   private emissionDetails = inject(EmissionDetailsService);
   private arysService = inject(DataArysService);
+  private tokenStore = inject(TokenStoreService);
 
   constructor(
     private fb: FormBuilder,
@@ -284,7 +286,7 @@ export class AuthPage implements OnInit {
   }
 
   private async runAutomatedVerification(): Promise<void> {
-    const token = sessionStorage.getItem('accessToken');
+    const token = this.tokenStore.getAccessTokenSync();
     if (!token?.trim()) {
       await this.navCtrl.navigateRoot(['/login']);
       return;
@@ -339,7 +341,8 @@ export class AuthPage implements OnInit {
 
   
     private getAccessToken() {
-      const dataToken : any = sessionStorage.getItem('accessToken')
+      const dataToken : any = this.tokenStore.getAccessTokenSync()
+      if (!dataToken) return {}
       const decodeToken : any = jwtDecode(dataToken)
       this.emissionDetails.data_user = decodeToken
       return decodeToken
@@ -376,7 +379,7 @@ export class AuthPage implements OnInit {
     }
 
   ngOnInit(): void {
-    const hasToken = !!sessionStorage.getItem('accessToken')?.trim();
+    const hasToken = !!this.tokenStore.getAccessTokenSync()?.trim();
     if (!hasToken) {
       void this.navCtrl.navigateRoot(['/login']);
       return;

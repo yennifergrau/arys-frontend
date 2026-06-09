@@ -70,6 +70,7 @@ export function membershipHasCreditLine(row: unknown): boolean {
 export type ResolveMeritopIdentityOptions = {
   membershipRows?: unknown[];
   membershipRow?: unknown;
+  accessToken?: string | null;
 };
 
 /**
@@ -105,16 +106,16 @@ export function resolveMeritopClientIdentity(
     // noop
   }
 
-  try {
-    const token = sessionStorage.getItem('accessToken');
-    if (token) {
+  const token = options?.accessToken ?? null;
+  if (token) {
+    try {
       const decoded: any = jwtDecode(token);
       const doctype = String(decoded?.doctype || decoded?.prefix || '').trim();
       const docid = Number(decoded?.docid || decoded?.rif || 0);
       if (doctype && docid > 0) return { doctype, docid };
+    } catch {
+      // noop
     }
-  } catch {
-    // noop
   }
 
   try {

@@ -36,6 +36,7 @@ import {
 } from '../utils/meritop-identity.util';
 import { firstValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 type ServiceOption = {
   id: string;
@@ -76,6 +77,7 @@ export class DashboardPage implements OnInit, ViewWillEnter {
 
   private arys_service = inject(DataArysService)
   private meritopCache = inject(MeritopSummaryCacheService)
+  private tokenStore = inject(TokenStoreService)
   public isHidden: boolean = true;
   public json_customer: customer[] | any;
   private emission = inject(EmissionService);
@@ -988,8 +990,8 @@ export class DashboardPage implements OnInit, ViewWillEnter {
   ngOnInit() {
     this.showLoading = true;
     this.loadState = { membership: false, meritop: false, pendingOrders: false };
-    const dataUser : any = sessionStorage.getItem('accessToken')
-    const decodeData: any = jwtDecode(dataUser)
+    const dataUser : any = this.tokenStore.getAccessTokenSync()
+    const decodeData: any = dataUser ? jwtDecode(dataUser) : {}
     console.log(decodeData)
     this.username = decodeData?.name + ' ' + decodeData?.sub_ape
     this.UserVerifyMembership(decodeData.rif)

@@ -1,4 +1,4 @@
-import { Component, OnInit, Renderer2 } from '@angular/core';
+import { Component, inject, OnInit, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
@@ -8,6 +8,7 @@ import {jwtDecode} from 'jwt-decode'
 import { edit_profile } from '../interface/arys.interface';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-edit-user',
@@ -26,6 +27,7 @@ import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
     providers:[AuthService,provideNgxMask()]
 })
 export class EditUserPage implements OnInit {
+  private tokenStore = inject(TokenStoreService);
 
   formEdit !: FormGroup
   information_use : edit_profile[] = []
@@ -58,7 +60,7 @@ export class EditUserPage implements OnInit {
 
   private decodeToken() {
     this.showLoading = true;
-    const data_token = sessionStorage.getItem('accessToken')
+    const data_token = this.tokenStore.getAccessTokenSync()
     if(data_token){
       const decode_data : any = jwtDecode(data_token)
       this.information_use = decode_data

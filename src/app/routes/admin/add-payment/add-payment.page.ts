@@ -25,6 +25,7 @@ import { listBank } from '../interface/meritop.interface';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { catchError, of, timeout } from 'rxjs';
 import { EmissionDetailsService } from '../services/emission-details.service';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
   selector: 'app-add-payment',
@@ -62,6 +63,7 @@ export class AddPaymentPage implements AfterViewInit {
   public selectedPaymentOption: number = 1;
   public customAmount: number | null = null;
   private _emisionService = inject(EmissionDetailsService)
+  private tokenStore = inject(TokenStoreService)
   public paymentForm = new FormGroup({
     amount: new FormControl(0, [Validators.required]),
     bank: new FormControl('', [Validators.required]),
@@ -125,7 +127,9 @@ export class AddPaymentPage implements AfterViewInit {
   private async loadCustomer() {
  
     try {
-      const identity = resolveMeritopClientIdentity();
+      const identity = resolveMeritopClientIdentity({
+        accessToken: this.tokenStore.getAccessTokenSync(),
+      });
       if (!identity) return;
       const data = {
         bank: "94932663-923d-48a3-b13a-6b0bea8f3608",
