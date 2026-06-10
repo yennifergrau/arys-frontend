@@ -9,20 +9,214 @@
 
 .ic-authentication-area {
   min-height: 100vh;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
-/* Espacio para el FAB de WhatsApp (fijo abajo a la derecha) sin tapar "Verificar" */
 .ic-authentication-area .bottom-btn.mt-auto {
   padding-bottom: calc(30px + 56px + 20px);
 }
+
+/* ════════════════════════════
+   Pantalla
+════════════════════════════ */
+.av-screen {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ════════════════════════════
+   Hero — fondo amarillo
+════════════════════════════ */
+.av-hero {
+  background: #ffb000;
+  padding: 40px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  border-radius: 0 0 32px 32px;
+}
+
+/* Círculos decorativos */
+.av-hero__circles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 0 0 32px 32px;
+}
+
+.av-hero__c1 {
+  position: absolute;
+  top: -48px;
+  right: -48px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  display: block;
+}
+
+.av-hero__c2 {
+  position: absolute;
+  bottom: -60px;
+  left: -40px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+  display: block;
+}
+
+/* Símbolo A de Arys */
+.av-hero__symbol {
+  width: 80px;
+  height: 80px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  position: relative;
+  z-index: 1;
+
+  img {
+    width: 52px;
+    height: auto;
+  }
+}
+
+.av-hero__label {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: rgba(0, 0, 0, 0.7);
+  position: relative;
+  z-index: 1;
+  margin-top: 4px;
+}
+
+.av-hero__sub {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.55);
+  font-weight: 400;
+  position: relative;
+  z-index: 1;
+}
+
+/* ════════════════════════════
+   Contenido
+════════════════════════════ */
+.av-content {
+  padding: 28px 24px 8px;
+  flex: 1;
+}
+
+.av-heading {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.av-desc {
+  font-size: 14px;
+  color: #888;
+  line-height: 1.55;
+  margin-bottom: 20px;
+}
+
+/* ── Trust signals ── */
+.av-trust {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 24px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 12px 8px;
+}
+
+.av-trust__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+
+  i {
+    font-size: 16px;
+    color: #ffb000;
+  }
+
+  span {
+    font-size: 11px;
+    font-weight: 600;
+    color: #444;
+    text-align: center;
+  }
+}
+
+.av-trust__sep {
+  width: 1px;
+  height: 28px;
+  background: #e5e5e5;
+  flex-shrink: 0;
+}
+
+/* ── Contexto membresía ── */
+.av-member-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff8e6;
+  border-left: 3px solid #ffb000;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+
+  i {
+    color: #ffb000;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  span {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.4;
+  }
+}
+
+/* ── Label del input ── */
+.av-input-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 8px;
+  display: block;
+  text-align: left;
+}
+
+/* ── Focus amarillo en el input ── */
+.ic-form-group .input-group:focus-within {
+  border-color: #ffb000 !important;
+}
+
 select#prefix {
   height: 100%;
   background: white;
   border-radius: 0 !important;
-  border-left: 0px !important;
-  border-right: 0px !important;
-  transition: 0.5s;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  font-size: 16px;
+  transition: 0.25s;
+
   .input-group:focus-within & {
     border-color: #ffb000 !important;
   }

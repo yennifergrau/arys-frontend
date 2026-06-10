@@ -22,6 +22,8 @@ export class DataArysService {
   private readonly validate_credit_line_url = environment.arys.OtherApis.validate_credit_line
   private readonly update_membership_cedrif_credit_url =
     environment.arys.OtherApis.update_membership_cedrif_credit
+  private readonly update_membership_cedrif_membership_url =
+    environment.arys.OtherApis.update_membership_cedrif_membership
   private readonly save_credit_payment_url = environment.arys.OtherApis.save_credit_payment
   private readonly get_credit_payment_by_id_url = environment.arys.OtherApis.get_credit_payment_by_id
   private readonly updateCredit = environment.arys.OtherApis.update_credit
@@ -147,6 +149,21 @@ export class DataArysService {
       .pipe(
         catchError((error: HttpErrorResponse) => {
           return throwError(() => new Error('Error al actualizar cedrif_credit en membresía'));
+        })
+      );
+  }
+
+  public update_membership_cedrif_membership(id_member: number | string, payload: { rif: string }) {
+    const rif = String(payload?.rif ?? '').trim();
+    return this.http
+      .post<any>(
+        `${this.baseUrl}/${this.update_membership_cedrif_membership_url}/${id_member}/cedrif-membership`,
+        { rif },
+        { headers: this.getAuthHeaders() }
+      )
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          return throwError(() => new Error('Error al actualizar cedrif_membership en membresía'));
         })
       );
   }

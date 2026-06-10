@@ -19,6 +19,7 @@ import { DataArysService } from '../services/data-arys.service';
 import { jwtDecode } from 'jwt-decode';
 import { firstValueFrom } from 'rxjs';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
+import { formatCedrifRif, parseCedrifCredit } from '../utils/meritop-identity.util';
 
 @Component({
   selector: 'app-auth',
@@ -153,9 +154,49 @@ export class AuthPage implements OnInit {
     return { rows, picked };
   }
 
+  private membershipRifFromRow(row: any | null | undefined): string {
+    const parsed = parseCedrifCredit(row?.cedrif_membership);
+    return parsed ? formatCedrifRif(parsed.doctype, parsed.docid) : '';
+  }
+
+  private async persistMembershipCedulaIfNeeded(
+    picked: any,
+    rifToPersist: string
+  ): Promise<any> {
+    const rif = String(rifToPersist ?? '').trim();
+    const idMember = picked?.id_master;
+    if (!rif || idMember == null) return picked;
+
+    const existingRif = this.membershipRifFromRow(picked);
+    if (rif === existingRif) return picked;
+
+    try {
+      const updateRes = await firstValueFrom(
+        this.arysService.update_membership_cedrif_membership(idMember, { rif })
+      );
+      if (updateRes?.status === false) {
+        this.mostrarToast(
+          String(
+            updateRes?.message || 'La verificación fue correcta pero no se pudo guardar la cédula en la membresía.'
+          ),
+          'toast-error'
+        );
+        return picked;
+      }
+      return { ...picked, cedrif_membership: rif };
+    } catch {
+      this.mostrarToast(
+        'La verificación fue correcta pero no se pudo guardar la cédula en la membresía.',
+        'toast-error'
+      );
+      return picked;
+    }
+  }
+
   private callUserIsActive(
     clientData: { cedula: string; certificado?: string },
-    pre: { rows: any[]; picked: any | null } | null
+    pre: { rows: any[]; picked: any | null } | null,
+    rifToPersist?: string | null
   ): void {
     this.emission.userIsActive(clientData).subscribe({
       next: async (response: any) => {
@@ -200,6 +241,10 @@ export class AuthPage implements OnInit {
 
               if (picked?.id_master != null) {
                 sessionStorage.setItem('id_member', String(picked.id_master));
+              }
+
+              if (rifToPersist) {
+                picked = await this.persistMembershipCedulaIfNeeded(picked, rifToPersist);
               }
 
               this.emissionDetails.persistUserDataAfterVerification(response, picked);
@@ -248,6 +293,7 @@ export class AuthPage implements OnInit {
       this.showSpinner = true;
       this.autoVerifyInProgress = false;
       const cedulaFromForm = this.extractCedulaNumber(this.FormVerify.get('rif')?.value);
+      const prefix = String(this.FormVerify.get('prefix')?.value || 'V').trim();
       let pre: { rows: any[]; picked: any | null } | null = null;
       try {
         pre = await this.prefetchMembership();
@@ -267,7 +313,12 @@ export class AuthPage implements OnInit {
         clientData.certificado = cert;
       }
 
-      this.callUserIsActive(clientData, pre);
+      // Sin cedrif_membership en BD → guardar la cédula ingresada para auto-verificar la próxima vez.
+      const rifToPersist = cedulaFromMembership
+        ? null
+        : formatCedrifRif(prefix, cedulaFromForm);
+
+      this.callUserIsActive(clientData, pre, rifToPersist);
     } finally {
       if (!this.FormVerify.valid) {
         this.showSpinner = false;
@@ -321,7 +372,7 @@ export class AuthPage implements OnInit {
       clientData.certificado = cert;
     }
 
-    this.callUserIsActive(clientData, pre);
+    this.callUserIsActive(clientData, pre, null);
   }
 
   formatPlaca(event: any): void {
