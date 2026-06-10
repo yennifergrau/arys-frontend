@@ -461,22 +461,24 @@
   white-space: nowrap;
 }
 
-.wa-fast__btn--gps{
-  border-color: rgba(18, 43, 124, 0.22);
-  background: rgba(18, 43, 124, 0.06);
-  color: var(--blue-arys);
-}
-
-.wa-fast__hint{
-  font-size: 12px;
-  color: rgba(17, 24, 39, 0.62);
-  font-weight: 800;
-  line-height: 1.25;
-  text-align: right;
-}
-
 .wa-fast__group{
   margin-top: 10px;
+}
+
+.wa-chip.wa-chip--gps{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #1a2f8a;
+  background-color: #1a2f8a;
+  color: #fff !important;
+  font-weight: 900;
+}
+
+.wa-chip.wa-chip--gps:active{
+  background-color: #0f1f5e;
+  border-color: #0f1f5e;
+  transform: scale(0.98);
 }
 
 .wa-fast__label{
@@ -502,19 +504,6 @@
   color: rgba(17, 24, 39, 0.72);
 }
 
-@media (max-width: 420px){
-  .wa-fast__row{
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .wa-fast__btn{
-    width: 100%;
-    justify-content: center;
-  }
-  .wa-fast__hint{
-    text-align: left;
-  }
-}
 
 .wa-chip:active{
   transform: scale(0.99);

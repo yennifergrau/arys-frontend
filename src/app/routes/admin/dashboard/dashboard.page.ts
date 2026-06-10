@@ -333,34 +333,62 @@ export class DashboardPage implements OnInit, ViewWillEnter {
 
   public get waNoteChips(): QuickChip[] {
     const id = this.waSelected?.id ?? '';
-    const common: QuickChip[] = [
-      { label: 'Estoy seguro', value: 'Estoy en un lugar seguro' },
-      { label: 'Estoy en vía', value: 'Estoy en vía' },
-      { label: 'Urgente', value: 'Necesito ayuda lo antes posible' },
-    ];
-    const byService: Record<string, QuickChip[]> = {
-      grua: [
-        { label: 'No enciende', value: 'El vehículo no enciende' },
-        { label: 'Accidente', value: 'Tuve un incidente/accidente' },
-        { label: 'Traslado', value: 'Necesito traslado del vehículo' },
+    const byDetail: Record<string, QuickChip[]> = {
+      '1 ocupante': [
+        { label: 'Sin arranque', value: 'Vehículo sin arranque' },
+        { label: 'Accidente', value: 'Accidente de tránsito' },
+        { label: 'Varado en vía', value: 'Varado en vía' },
+        { label: '⚠️ Urgente', value: 'URGENTE - necesito atención inmediata' },
       ],
-      bateria: [
-        { label: 'No enciende', value: 'No enciende' },
-        { label: 'Arranque lento', value: 'El arranque está lento' },
-        { label: 'Luces débiles', value: 'Las luces están débiles' },
+      '2 o más ocupantes': [
+        { label: 'Sin arranque', value: 'Vehículo sin arranque' },
+        { label: 'Accidente', value: 'Accidente con varios ocupantes' },
+        { label: 'Varado en vía', value: 'Varado en vía' },
+        { label: '⚠️ Urgente', value: 'URGENTE - necesito atención inmediata' },
       ],
-      cachos: [
-        { label: 'Pinchazo', value: 'Tengo un pinchazo' },
-        { label: 'Sin repuesto', value: 'No tengo cacho de repuesto' },
-        { label: 'Rueda trancada', value: 'La rueda está trancada' },
+      'Cambio de caucho': [
+        { label: 'Pinchazo', value: 'Llanta pinchada' },
+        { label: 'Reventón', value: 'Reventón de llanta' },
+        { label: 'Sin repuesto', value: 'Sin caucho de repuesto' },
+        { label: '⚠️ Urgente', value: 'URGENTE - necesito atención inmediata' },
       ],
-      repuesto: [
-        { label: 'Cotización', value: 'Necesito cotización y disponibilidad' },
+      'Paso de corriente (batería)': [
+        { label: 'Sin arranque', value: 'Batería descargada, sin arranque' },
+        { label: 'Arranque lento', value: 'Arranque lento / batería débil' },
+        { label: 'Zona segura', value: 'Estoy en zona segura' },
+        { label: '⚠️ Urgente', value: 'URGENTE - necesito atención inmediata' },
+      ],
+      'Asesoría mecánica': [
+        { label: 'No enciende', value: 'Vehículo no enciende' },
+        { label: 'Ruido extraño', value: 'Ruido inusual en el motor' },
+        { label: 'Se recalentó', value: 'Motor recalentado' },
+        { label: '⚠️ Urgente', value: 'URGENTE - necesito atención inmediata' },
+      ],
+      'Repuestos': [
         { label: 'Pieza específica', value: 'Busco una pieza específica (detallo en notas)' },
-        { label: 'Entrega', value: 'Necesito coordinar entrega o retiro' },
+        { label: 'Cotización', value: 'Necesito cotización y disponibilidad' },
+        { label: '⚠️ Urgente', value: 'URGENTE - necesito atención inmediata' },
+      ],
+      'Imposición de multa': [
+        { label: 'Multa injusta', value: 'Multa aplicada de forma incorrecta' },
+        { label: 'Tengo evidencia', value: 'Tengo evidencia fotográfica' },
+        { label: 'Necesito asesoría', value: 'Necesito asesoría legal urgente' },
+      ],
+      'Accidentes de tránsito': [
+        { label: 'Tuve accidente', value: 'Accidente de tránsito' },
+        { label: 'Hay heridos', value: 'Hay personas heridas' },
+        { label: 'Tengo evidencia', value: 'Tengo evidencia fotográfica' },
+        { label: '⚠️ Urgente', value: 'URGENTE - necesito atención inmediata' },
+      ],
+      'Sustitución de vidrio': [
+        { label: 'Roto', value: 'Parabrisas completamente roto' },
+        { label: 'Fisura', value: 'Fisura o grieta en el vidrio' },
+        { label: 'Piedrazo', value: 'Impacto de piedra u objeto' },
+        { label: 'Tengo fotos', value: 'Tengo fotos del daño' },
       ],
     };
-    return [...(byService[id] ?? []), ...common];
+    const detail = this.waDetailSelected ?? '';
+    return byDetail[detail] ?? [];
   }
 
   public addWaLocationPreset(text: string): void {

@@ -209,7 +209,7 @@
                   }
                 </div>
 
-                @if (waSelected) {
+                @if (waSelected && (waSelected.details?.length ?? 0) > 1) {
                   <div class="wa-desc-card" aria-label="Descripción del servicio seleccionado">
                     <div class="wa-desc-title">{{ waSelected.label }}</div>
                     <div class="wa-desc-hint">Selecciona una opción</div>
@@ -287,17 +287,13 @@
                       <div class="wa-compose__title">2) Cuéntanos lo que pasó</div>
 
                       <div class="wa-fast">
-                        <div class="wa-fast__row">
-                          <button type="button" class="wa-fast__btn wa-fast__btn--gps" (click)="useMyLocation()">
-                            <i class="fa-solid fa-location-crosshairs me-2"></i>
-                            Usar mi ubicación
-                          </button>
-                          <div class="wa-fast__hint">Toca chips para llenar rápido.</div>
-                        </div>
-
                         <div class="wa-fast__group">
-                          <div class="wa-fast__label">Ubicación rápida</div>
+                          <div class="wa-fast__label">Ubicación</div>
                           <div class="wa-chips">
+                            <button type="button" class="wa-chip wa-chip--gps" (click)="useMyLocation()">
+                              <i class="fa-solid fa-location-crosshairs"></i>
+                              Mi ubicación
+                            </button>
                             @for (c of waLocationChips; track c.value) {
                               <button type="button" class="wa-chip" (click)="addWaLocationPreset(c.value)">{{ c.label }}</button>
                             }

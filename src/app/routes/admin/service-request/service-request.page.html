@@ -50,24 +50,6 @@
             </div>
           </div>
 
-          @if (selectedCount > 0) {
-            <div class="card style-2 m-t10">
-              <div class="card-header">
-                <h6 class="card-title">Seleccionados</h6>
-              </div>
-              <div class="card-body">
-                <div class="sr-chips">
-                  @for(s of selectedOptions; track s.id) {
-                    <button type="button" class="sr-chip" (click)="removeOption(s)" [attr.aria-label]="'Quitar ' + s.label">
-                      <span>{{ s.label }}</span>
-                      <i class="fa-solid fa-xmark"></i>
-                    </button>
-                  }
-                </div>
-              </div>
-            </div>
-          }
-
           <div class="card style-2 m-t10" id="sr-step-1">
             <div class="card-header">
               <h6 class="card-title">1) Elige un servicio</h6>
@@ -118,47 +100,99 @@
           </div>
 
           <div class="card style-2 m-t10" id="sr-step-2">
-            <div class="card-header">
-              <h6 class="card-title">2) ¿Dónde estás?</h6>
+            <div class="card-header sr-step2-header">
+              <h6 class="card-title">2) Cuéntanos lo que pasó</h6>
+              @if (selectedCount > 0) {
+                <span class="sr-service-badge">
+                  @switch (selectedOptions[0]?.id) {
+                    @case ('grua') { <i class="fa-solid fa-truck-pickup me-1"></i> }
+                    @case ('bateria') { <i class="fa-solid fa-car-battery me-1"></i> }
+                    @case ('caucho') { <i class="fa-solid fa-circle-dot me-1"></i> }
+                    @case ('gasolina') { <i class="fa-solid fa-gas-pump me-1"></i> }
+                    @case ('cerrajero') { <i class="fa-solid fa-key me-1"></i> }
+                    @default { <i class="fa-solid fa-screwdriver-wrench me-1"></i> }
+                  }
+                  {{ selectedOptions[0]?.label }}
+                </span>
+              }
             </div>
             <div class="card-body">
-              <div class="sr-hint">
-                Tip: indica ciudad, zona y un punto de referencia.
+
+              <!-- Chips rápidos de ubicación y situación -->
+              <div class="sr-fast">
+                <div class="sr-fast__group">
+                  <div class="sr-fast__label">Ubicación</div>
+                  <div class="sr-quick-chips">
+                    <button type="button" class="sr-quick-chip sr-quick-chip--gps" (click)="useMyLocation()">
+                      <i class="fa-solid fa-location-crosshairs"></i>
+                      Mi ubicación
+                    </button>
+                    @for (c of locationChips; track c.value) {
+                      <button type="button" class="sr-quick-chip" (click)="addLocationPreset(c.value)">{{ c.label }}</button>
+                    }
+                  </div>
+                </div>
+
+                <div class="sr-fast__group">
+                  <div class="sr-fast__label">Describe sin escribir</div>
+                  <div class="sr-quick-chips">
+                    @for (c of situationChips; track c.value) {
+                      <button type="button" class="sr-quick-chip" (click)="addNotePreset(c.value)">{{ c.label }}</button>
+                    }
+                  </div>
+                </div>
               </div>
-              <div class="m-b15 input-group input-lg input-rounded">
+
+              <!-- Campo de ubicación -->
+              <div class="sr-field m-t10">
+                <label class="sr-label">Ubicación</label>
                 <input
-                  class="form-control"
+                  class="form-control sr-input"
                   type="text"
-                  placeholder="Placa (opcional)"
-                  [(ngModel)]="plate"
-                />
-              </div>
-              <div class="m-b15 input-group input-lg input-rounded">
-                <input
-                  class="form-control"
-                  type="text"
-                  placeholder="Ubicación (ej: Av. X, Urb. Y, Ciudad)"
+                  placeholder="Ej: Av. X, cerca de Y"
                   [(ngModel)]="location"
                 />
               </div>
-              <div class="m-b15 input-group input-lg input-rounded">
-                <input
-                  class="form-control"
-                  type="text"
-                  placeholder="Punto de referencia (opcional)"
-                  [(ngModel)]="reference"
-                />
-              </div>
-              <div class="m-b15 input-group input-lg input-rounded">
-                <textarea
-                  class="form-control"
-                  rows="3"
-                  placeholder="Notas adicionales (opcional)"
-                  [(ngModel)]="notes"
-                ></textarea>
-              </div>
 
-              <div class="sr-inline-actions">
+              <!-- Detalles colapsables -->
+              <button type="button" class="sr-more" (click)="showDetails = !showDetails">
+                <span>Agregar detalles (opcional)</span>
+                <i class="fa-solid" [ngClass]="showDetails ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+              </button>
+
+              @if (showDetails) {
+                <div class="sr-details-grid">
+                  <div class="sr-field">
+                    <label class="sr-label">Placa</label>
+                    <input
+                      class="form-control sr-input"
+                      type="text"
+                      placeholder="Ej: AB123CD"
+                      [(ngModel)]="plate"
+                    />
+                  </div>
+                  <div class="sr-field">
+                    <label class="sr-label">Referencia</label>
+                    <input
+                      class="form-control sr-input"
+                      type="text"
+                      placeholder="Edificio, punto cercano…"
+                      [(ngModel)]="reference"
+                    />
+                  </div>
+                </div>
+                <div class="sr-field m-t10">
+                  <label class="sr-label">Describe el problema</label>
+                  <textarea
+                    class="form-control sr-input"
+                    rows="3"
+                    placeholder="Ej: Se apagó el carro, no enciende, estoy en vía…"
+                    [(ngModel)]="notes"
+                  ></textarea>
+                </div>
+              }
+
+              <div class="sr-inline-actions m-t10">
                 <button type="button" class="btn btn-sm btn-outline-secondary" (click)="scrollTo('sr-step-1')">
                   Cambiar servicio
                 </button>

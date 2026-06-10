@@ -268,3 +268,143 @@
   height: 120px;
 }
 
+/* ── Step-2 header with service badge ──────────────────────────── */
+.sr-step2-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sr-service-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--rgba-primary-1);
+  border: 1px solid rgba(0,0,0,0.08);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+/* ── Quick-fill chips section ──────────────────────────────────── */
+.sr-fast {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.02);
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.sr-quick-chip.sr-quick-chip--gps {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #1a2f8a;
+  background-color: #1a2f8a;
+  color: #fff !important;
+  font-weight: 900;
+}
+
+.sr-quick-chip.sr-quick-chip--gps:active {
+  background-color: #0f1f5e;
+  border-color: #0f1f5e;
+  transform: scale(0.98);
+}
+
+.sr-fast__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sr-fast__label {
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--body-color);
+  opacity: 0.6;
+}
+
+.sr-quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sr-quick-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: var(--bg-white);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--title);
+  min-height: 36px;
+}
+
+.sr-quick-chip:active {
+  background: var(--rgba-primary-1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ── Location input ────────────────────────────────────────────── */
+.sr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sr-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--title);
+  opacity: 0.8;
+}
+
+.sr-input {
+  font-size: 16px;
+  border-radius: 10px;
+}
+
+/* ── Collapsible details toggle ────────────────────────────────── */
+.sr-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--title);
+  min-height: 44px;
+}
+
+.sr-more:active {
+  background: rgba(0,0,0,0.03);
+}
+
+/* ── 2-column grid for plate + reference ───────────────────────── */
+.sr-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+
+  @media (max-width: 360px) {
+    grid-template-columns: 1fr;
+  }
+}
+

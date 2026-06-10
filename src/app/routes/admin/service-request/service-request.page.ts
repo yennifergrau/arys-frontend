@@ -38,6 +38,72 @@ export class ServiceRequestPage implements OnInit {
   public reference = '';
   public notes = '';
   public showPreview: boolean = false;
+  public showDetails: boolean = false;
+
+  readonly locationChips = [
+    { label: 'Autopista', value: 'Autopista' },
+    { label: 'En casa', value: 'En casa' },
+    { label: 'Trabajo', value: 'Trabajo' },
+    { label: 'Centro comercial', value: 'Centro comercial' },
+    { label: 'Estacionamiento', value: 'Estacionamiento' },
+  ];
+
+  private readonly situationChipsMap: Record<string, Array<{ label: string; value: string }>> = {
+    grua: [
+      { label: 'Sin arranque', value: 'Vehículo no enciende / sin arranque' },
+      { label: 'Accidente', value: 'Accidente o choque' },
+      { label: 'Traslado a taller', value: 'Necesito traslado a taller' },
+      { label: 'Con pasajeros', value: 'Hay pasajeros en el vehículo' },
+      { label: 'Varado en vía', value: 'Estoy varado en vía' },
+      { label: 'Zona segura', value: 'Estoy en zona segura' },
+      { label: 'URGENTE', value: '⚠️ URGENTE - necesito atención inmediata' },
+    ],
+    bateria: [
+      { label: 'Sin arranque', value: 'No enciende, batería descargada' },
+      { label: 'Arranque lento', value: 'El arranque está lento / batería débil' },
+      { label: 'Luces débiles', value: 'Luces débiles, posible batería baja' },
+      { label: 'Paso corriente', value: 'Necesito paso de corriente' },
+      { label: 'Zona segura', value: 'Estoy en zona segura' },
+      { label: 'URGENTE', value: '⚠️ URGENTE - necesito atención inmediata' },
+    ],
+    caucho: [
+      { label: 'Pinchazo', value: 'Llanta pinchada' },
+      { label: 'Reventón', value: 'Reventón de llanta' },
+      { label: 'Sin repuesto', value: 'No tengo caucho de repuesto' },
+      { label: 'Rueda trancada', value: 'Rueda trancada / no gira' },
+      { label: 'Zona segura', value: 'Estoy en zona segura' },
+      { label: 'URGENTE', value: '⚠️ URGENTE - necesito atención inmediata' },
+    ],
+    gasolina: [
+      { label: 'Sin gasolina', value: 'Me quedé sin combustible' },
+      { label: 'Sin gasoil', value: 'Me quedé sin gasoil' },
+      { label: 'Varado en vía', value: 'Estoy varado en vía' },
+      { label: 'Autopista', value: 'Estoy detenido en autopista' },
+      { label: 'Zona segura', value: 'Estoy en zona segura' },
+      { label: 'URGENTE', value: '⚠️ URGENTE - necesito atención inmediata' },
+    ],
+    cerrajero: [
+      { label: 'Llaves adentro', value: 'Las llaves quedaron dentro del vehículo' },
+      { label: 'Llave rota', value: 'La llave se rompió en la cerradura' },
+      { label: 'Llave perdida', value: 'Perdí la llave del vehículo' },
+      { label: 'Cerradura dañada', value: 'La cerradura está dañada / no abre' },
+      { label: 'URGENTE', value: '⚠️ URGENTE - necesito atención inmediata' },
+    ],
+    mecanica: [
+      { label: 'Sin arranque', value: 'El vehículo no enciende' },
+      { label: 'Ruido extraño', value: 'Hace un ruido inusual al arrancar o conducir' },
+      { label: 'Se recalentó', value: 'El motor se recalentó / temperatura alta' },
+      { label: 'Humo', value: 'Hay humo saliendo del motor' },
+      { label: 'No acelera', value: 'El vehículo no acelera con normalidad' },
+      { label: 'Zona segura', value: 'Estoy en zona segura' },
+      { label: 'URGENTE', value: '⚠️ URGENTE - necesito atención inmediata' },
+    ],
+  };
+
+  public get situationChips(): Array<{ label: string; value: string }> {
+    const id = this.options.find(o => o.selected)?.id ?? '';
+    return this.situationChipsMap[id] ?? [];
+  }
 
   public options: ServiceOption[] = [
     { id: 'grua', label: 'Grúa', description: 'Remolque / traslado', selected: false },
@@ -73,6 +139,36 @@ export class ServiceRequestPage implements OnInit {
     opt.selected = false;
   }
 
+  public addLocationPreset(text: string): void {
+    const t = String(text || '').trim();
+    if (!t) return;
+    if (!this.location.trim()) {
+      this.location = t;
+      return;
+    }
+    if (this.location.toLowerCase().includes(t.toLowerCase())) return;
+    this.location = `${this.location.trim()} · ${t}`;
+  }
+
+  public addNotePreset(text: string): void {
+    const t = String(text || '').trim();
+    if (!t) return;
+    if (!this.notes.trim()) {
+      this.notes = t;
+      return;
+    }
+    if (this.notes.toLowerCase().includes(t.toLowerCase())) return;
+    this.notes = `${this.notes.trim()}. ${t}`;
+  }
+
+  public useMyLocation(): void {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      pos => { this.location = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`; },
+      () => { /* silencioso */ }
+    );
+  }
+
   public clearAll(): void {
     this.options.forEach(o => (o.selected = false));
     this.location = '';
@@ -80,6 +176,7 @@ export class ServiceRequestPage implements OnInit {
     this.reference = '';
     this.notes = '';
     this.showPreview = false;
+    this.showDetails = false;
     setTimeout(() => this.scrollTo('sr-top'), 50);
   }
 
