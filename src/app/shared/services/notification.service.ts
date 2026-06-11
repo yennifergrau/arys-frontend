@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import emailjs from 'emailjs-com';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +13,8 @@ export class NotificationService {
       to_email: data.to_email,
       reset_password_link: data.reset_link,
       user_name:data.user_name,
-      logo_url:data.logo_url
+      logo_url:data.logo_url,
+      download_app_link: environment.downloadMobileAppLink
     };
 
     return emailjs.send(
@@ -29,6 +31,7 @@ export class NotificationService {
       logo_url: data.logoUrl,
       to_email: data.toEmail,
       reset_password_link: data.reset,
+      download_app_link: environment.downloadMobileAppLink
     };
     emailjs
       .send(
@@ -55,6 +58,7 @@ export class NotificationService {
       vigencia: data.vigencia,
       number: data.number,
       username: data.username,
+      download_app_link: environment.downloadMobileAppLink,
       owner: {
         name: data.owner.name,
         dni: data.owner.dni,

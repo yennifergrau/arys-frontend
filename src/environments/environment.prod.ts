@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  downloadMobileAppLink: 'https://arys.polizaqui.com/download',
 
   /** Atención por WhatsApp (solo dígitos, con código de país; ej. 584121234567) */
   contact: {
