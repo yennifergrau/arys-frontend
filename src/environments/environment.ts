@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  downloadMobileAppLink: 'https://arys.polizaqui.com/download',
+  downloadMobileAppLink: 'https://docs.polizaqui.com/qa-arys.apk',
 
   /** Atención por WhatsApp (solo dígitos, con código de país; ej. 584121234567) */
   contact: {
@@ -42,19 +42,19 @@ export const environment = {
       dataProperty: 'sarys/get/fechetd/person/property',
       add_vehicle: 'Sarys/post/fechetd/vehicle/add',
       dataVehicle: 'sarys/get/fechetd/vehicle/data',
-      documentProcess : 'sarys/get/fechetd/document/process',
-      cobertCotizador : 'sarys/get/fechetd/cobert/cotizador',
-      sendDocument : 'sarys/post/fechetd/send/document',
-      registerSubscriptions : 'sarys/post/fechetd/register/subscription',
-      addContractPerson : 'sarys/post/fechetd/add/contract/person'
+      documentProcess: 'sarys/get/fechetd/document/process',
+      cobertCotizador: 'sarys/get/fechetd/cobert/cotizador',
+      sendDocument: 'sarys/post/fechetd/send/document',
+      registerSubscriptions: 'sarys/post/fechetd/register/subscription',
+      addContractPerson: 'sarys/post/fechetd/add/contract/person'
     },
   },
 
-  arys:{
-    url:'https://demo-services-arys.polizaqui.com',
-    OtherApis:{
+  arys: {
+    url: 'https://demo-services-arys.polizaqui.com',
+    OtherApis: {
       add_person: 'data/fecht/user/property',
-      add_vehicle:'data/fecht/vehicle/user',
+      add_vehicle: 'data/fecht/vehicle/user',
       add_payment: 'data/fecht/payment/user',
       add_membership: 'data/fecht/membership/user',
       get_membership: 'data/get/fecht/membership/member',
@@ -73,35 +73,35 @@ export const environment = {
     }
   },
 
-  meritop:{
-    url:'https://demo-services-arys.polizaqui.com',
-    access:{
-      tokenAccess:'sarys/get/meritop/token/access',
+  meritop: {
+    url: 'https://demo-services-arys.polizaqui.com',
+    access: {
+      tokenAccess: 'sarys/get/meritop/token/access',
     },
-    globalMeritop:{
-      customer:'sarys/post/meritop/customer/products',
-      commerce:'sarys/post/meritop/commerce/directory',
-      addPurchased:'sarys/post/meritop/add/purchased',
-      addPayment:'sarys/post/meritop/add/payment',
-      transactionC:'sarys/post/meritop/transaction/customer',
-      transactionList:'sarys/post/meritop/transaction/customer/list',
-      transactionListByMonth:'sarys/post/meritop/transaction/customer/listByMonth',
-      detailTransaction:'sarys/post/meritop/transaction/details',
-      createcustomeruser:'sarys/post/meritop/customer/create/user',
+    globalMeritop: {
+      customer: 'sarys/post/meritop/customer/products',
+      commerce: 'sarys/post/meritop/commerce/directory',
+      addPurchased: 'sarys/post/meritop/add/purchased',
+      addPayment: 'sarys/post/meritop/add/payment',
+      transactionC: 'sarys/post/meritop/transaction/customer',
+      transactionList: 'sarys/post/meritop/transaction/customer/list',
+      transactionListByMonth: 'sarys/post/meritop/transaction/customer/listByMonth',
+      detailTransaction: 'sarys/post/meritop/transaction/details',
+      createcustomeruser: 'sarys/post/meritop/customer/create/user',
       listProvider: 'sarys/get/fechetd/list/provider'
     },
-    listBank:{
-      meritoBank:'sarys/post/meritop/list/bank/directory'
+    listBank: {
+      meritoBank: 'sarys/post/meritop/list/bank/directory'
     },
-    addData:{
-      add_purchase:'data/post/fecht/purchased/user',
+    addData: {
+      add_purchase: 'data/post/fecht/purchased/user',
       get_purchase: 'data/get/fecht/all/purchased'
     }
   },
 
-  user:{
-    url:'https://demo-auth-arys.polizaqui.com',
-    data:{
+  user: {
+    url: 'https://demo-auth-arys.polizaqui.com',
+    data: {
       view_user: 'view/user/fechetd/user',
       edit_user: 'edit/post/user/view'
     }
