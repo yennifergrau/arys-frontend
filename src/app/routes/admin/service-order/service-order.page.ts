@@ -22,6 +22,7 @@ import {
 } from '../utils/meritop-feedback.util';
 import { IonicModule, ToastController, ViewWillEnter } from '@ionic/angular';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
+import { PolizaquiService } from '../services/polizaqui.service';
 
 @Component({
   selector: 'app-service-order',
@@ -47,6 +48,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   private meritopCache = inject(MeritopSummaryCacheService)
   private tokenStore = inject(TokenStoreService)
   private toastCtrl = inject(ToastController)
+  private polizaquiService = inject(PolizaquiService)
   id_user!: number
   private id_member: number = 0
   public pendingOrders: ServiceOrder[] = []
@@ -83,6 +85,44 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   private orderDetails: any = null
   public isLoadingCreditPanel: boolean = false
   public creditPanelMessage: string = ''
+
+  /** Tasa BCV del día (USD → Bs) para montos de órdenes de servicio. */
+  public bcvRate = 0
+  public bcvRateReady = false
+
+  private parseBcvRate(response: any): number {
+    const raw = Array.isArray(response) ? response[0]?.rate ?? response[0] : response?.rate ?? response
+    const rate = this.toNumber(raw)
+    return rate > 0 ? rate : 0
+  }
+
+  /** Convierte monto USD (backend) a Bs con la tasa BCV cargada. */
+  usdToBs(amountUsd: number | string): number {
+    const usd = this.toNumber(amountUsd)
+    if (!this.bcvRateReady || this.bcvRate <= 0) return 0
+    return parseFloat((usd * this.bcvRate).toFixed(2))
+  }
+
+  orderAmountBs(order: ServiceOrder): number {
+    return this.usdToBs(order.amount)
+  }
+
+  private loadBcvRate(): void {
+    this.polizaquiService.tase_api().subscribe({
+      next: (response) => {
+        this.bcvRate = this.parseBcvRate(response)
+        this.bcvRateReady = this.bcvRate > 0
+        if (!this.bcvRateReady) {
+          void this.presentToast('No se pudo obtener la tasa BCV del día.', 'warning')
+        }
+      },
+      error: () => {
+        this.bcvRate = 0
+        this.bcvRateReady = false
+        void this.presentToast('Error al cargar la tasa BCV. Los montos de órdenes no están disponibles.', 'warning')
+      },
+    })
+  }
 
   private toNumber(value: any): number {
     if (typeof value === 'number') return Number.isFinite(value) ? value : 0
@@ -341,6 +381,11 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   }
 
   toggleCreditPanel(order: ServiceOrder) {
+    if (!this.bcvRateReady) {
+      void this.presentToast('Cargando la tasa BCV del día. Intenta de nuevo en un momento.', 'warning')
+      return
+    }
+
     if (this.activeOrderId === order.order_id) {
       this.activeOrderId = null
       this.creditInfo = null
@@ -380,7 +425,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
           }
           this.orderDetails = result
           const available = resolvedAvailable
-          const orderAmount = this.toNumber(order.amount)
+          const orderAmount = this.orderAmountBs(order)
           this.maxCredit = parseFloat(Math.min(available, orderAmount).toFixed(2))
           this.selectedCredit = this.maxCredit > 0 ? this.maxCredit : null
         } else {
@@ -429,8 +474,8 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
     this.selectedCredit = parseFloat(normalized.toFixed(2))
   }
 
-  useFullOrder(orderAmount: number | string) {
-    const safeOrderAmount = this.toNumber(orderAmount)
+  useFullOrder(orderAmountUsd: number | string) {
+    const safeOrderAmount = this.usdToBs(orderAmountUsd)
     this.selectedCredit = Math.min(safeOrderAmount, this.maxCredit);
   }
 
@@ -763,6 +808,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   ngOnInit() {
     this.summaryState = 'loading'
     this.summaryMessage = ''
+    this.loadBcvRate()
     this.loadMembershipSummary(true)
     const cached = this.hydrateFromCache()
     this.loadCustomerProduct(cached.meritop)
@@ -775,6 +821,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       this.hasEnteredOnce = true
       return
     }
+    this.loadBcvRate()
     this.refreshMeritopProductSilent()
     this.loadMembershipSummary(true)
   }

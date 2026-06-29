@@ -14,6 +14,7 @@ export const environment = {
   /** Backend Polizaqui (Arys-Poliza): register/payment + register/membership */
   polizaqui: {
     baseUrl: 'https://arys-ui-service.polizaqui.com',
+    tasa: 'tasa',
     registerPayment: 'register/payment',
     registerMembership: 'register/membership',
   },

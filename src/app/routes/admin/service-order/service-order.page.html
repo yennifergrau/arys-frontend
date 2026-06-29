@@ -131,7 +131,13 @@
               </span>
             </div>
 
-            <div class="amount-preview">{{formatBs(order.amount)}} Bs</div>
+            <div class="amount-preview">
+              @if(bcvRateReady){
+                {{ formatBs(orderAmountBs(order)) }} Bs
+              } @else {
+                <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+              }
+            </div>
 
             <div class="detail-list">
               <div class="detail">
@@ -189,7 +195,7 @@
                         inputmode="decimal"
                         [(ngModel)]="selectedCredit"
                         (focus)="clearLeadingZero()"
-                        (ngModelChange)="onAmountChange($event, order.amount)"
+                        (ngModelChange)="onAmountChange($event, orderAmountBs(order))"
                         [disabled]="isApplyingCredit || !!applyResult?.status"
                       />
                     </div>
@@ -262,7 +268,8 @@
               <div class="btn-row">
                 <button
                   class="btn btn-primary"
-                  (click)="toggleCreditPanel(order)">
+                  (click)="toggleCreditPanel(order)"
+                  [disabled]="!bcvRateReady">
                   <i class="fa-sharp fa-solid fa-credit-card font-15"></i>
                   {{ activeOrderId === order.order_id ? 'Cerrar panel' : 'Pagar con credito ARYS' }}
                 </button>
