@@ -300,15 +300,47 @@
           <ng-container *ngIf="isConsumoReceipt(tx)">
             <div class="mov-receipt-field">
               <span class="mov-receipt-field__label">Banco</span>
-              <span class="mov-receipt-field__value">{{ consumoBankName }}</span>
+              <span class="mov-receipt-field__value">
+                <ng-container *ngIf="!receiptPaymentLoading; else consumoLoadingBank">
+                  {{ consumoReceiptBankLabel }}
+                </ng-container>
+                <ng-template #consumoLoadingBank>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </span>
             </div>
             <div class="mov-receipt-field">
               <span class="mov-receipt-field__label">Teléfono</span>
-              <span class="mov-receipt-field__value">{{ consumoBankPhone }}</span>
+              <span class="mov-receipt-field__value">
+                <ng-container *ngIf="!receiptPaymentLoading; else consumoLoadingPhone">
+                  {{ consumoReceiptPhone }}
+                </ng-container>
+                <ng-template #consumoLoadingPhone>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </span>
             </div>
             <div class="mov-receipt-field">
               <span class="mov-receipt-field__label">RIF</span>
-              <span class="mov-receipt-field__value">{{ consumoBankRif }}</span>
+              <span class="mov-receipt-field__value">
+                <ng-container *ngIf="!receiptPaymentLoading; else consumoLoadingRif">
+                  {{ consumoReceiptRif }}
+                </ng-container>
+                <ng-template #consumoLoadingRif>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </span>
+            </div>
+            <div class="mov-receipt-field" *ngIf="pagoReferencia || receiptPaymentLoading">
+              <span class="mov-receipt-field__label">Referencia pago</span>
+              <span class="mov-receipt-field__value mov-receipt-field__value--ref">
+                <ng-container *ngIf="!receiptPaymentLoading; else consumoLoadingRef">
+                  {{ pagoReferencia || '--' }}
+                </ng-container>
+                <ng-template #consumoLoadingRef>
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                </ng-template>
+              </span>
             </div>
           </ng-container>
 

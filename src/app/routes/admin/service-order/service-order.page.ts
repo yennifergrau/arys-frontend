@@ -23,6 +23,7 @@ import {
 import { IonicModule, ToastController, ViewWillEnter } from '@ionic/angular';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 import { PolizaquiService } from '../services/polizaqui.service';
+import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-service-order',
@@ -546,6 +547,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
     const rawDoc = providerPayment?.id_number || '';
     const benefitDoctype = rawDoc.match(/^[a-zA-Z]/) ? rawDoc.charAt(0).toUpperCase() : 'V';
     const benefitDocid = rawDoc.replace(/^[a-zA-Z]/, '').trim();
+    const providerRif = rawDoc.trim() || `${benefitDoctype}${benefitDocid}`;
     const bankcode = providerPayment?.bank_code || '';
     const phonenumber = providerPayment?.mobile_number || '';
     if (!bankcode || !benefitDocid || !phonenumber) {
@@ -583,12 +585,18 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
     this.meritopService.addPurchased(payload).subscribe({
       next: (result) => {
         if (result?.status && !isMeritopOperationFailed(result)) {
-          const txId = result?.transaction_id ?? result?.transactionId ?? result?.id ?? null;
+          const txId =
+            result?.payid ??
+            result?.transaction_id ??
+            result?.transactionId ??
+            result?.id ??
+            null;
           const msg = txId != null && String(txId).trim() !== ''
             ? `Transacción ${txId} creada exitosamente`
             : 'Pago con crédito realizado correctamente';
           void this.presentToast(msg, 'success');
           this.applyResult = { ...result, message: msg };
+          this.persistCreditPaymentFromMeritop(result, bankcode, phonenumber, providerRif);
           // Luego del consumo en Meritop, marcamos la orden como pagada con crédito en ARYS
           // para que salga de pendientes.
           this.serviceOrderService.payWithCredit(orderId).subscribe({
@@ -641,6 +649,24 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
         void this.presentToast(msg, 'danger');
       }
     });
+  }
+
+  /** Persiste consumo en ARYS: destino = proveedor de la orden (no payment_dest Meritop, que es cuenta ARYS). */
+  private persistCreditPaymentFromMeritop(
+    result: any,
+    providerBank: string,
+    providerPhone: string,
+    providerRif: string
+  ): void {
+    const paymentId = result?.payid != null ? String(result.payid).trim() : '';
+    if (!paymentId) return;
+    const bank = String(providerBank ?? '').trim();
+    const phone = String(providerPhone ?? '').trim();
+    const rif = String(providerRif ?? '').trim();
+    this.dataArysService
+      .save_credit_payment({ payment_id: paymentId, bank, phone, rif })
+      .pipe(catchError(() => of(null)))
+      .subscribe();
   }
 
   private loadMembershipSummary(refreshOrders = false) {

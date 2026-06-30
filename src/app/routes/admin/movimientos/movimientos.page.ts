@@ -35,6 +35,13 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   public showLoading = false;
   public receiptPaymentLoading = false;
   public receiptPaymentData: any | null = null;
+  /** true si GET ARYS devolvió datos del pago/consumo. */
+  private receiptPaymentFromDb = false;
+
+  /** Fallback recibo consumo cuando no hay registro en BD. */
+  readonly consumoDefaultBankName = 'Banco Nacional de Crédito';
+  readonly consumoDefaultPhone = '04144120518';
+  readonly consumoDefaultRif = 'J309920600';
   public selectedSegment: string = 'ultimos';
   public dateFrom: string = '';
   public dateTo: string = '';
@@ -51,11 +58,6 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   public membershipSummary: any = null;
   private accessTokenData: any = null;
   private skipNextMeritopViewRefresh = true;
-
-  /** Datos del comercio para recibos de consumo (Pago móvil). */
-  readonly consumoBankName = 'Banco Nacional de Crédito';
-  readonly consumoBankPhone = '04144120518';
-  readonly consumoBankRif = 'J309920600';
 
   /** Bancos Venezuela (código pago móvil → nombre). */
   public readonly banksVE: Array<{ code: string; name: string }> = [
@@ -87,26 +89,67 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
     { code: '0191', name: 'Banco Nacional de Crédito (BNC)' },
   ];
 
-  /** Datos retornados por ARYS para recibos de pago (si existe). */
+  /** Datos retornados por ARYS para recibos (abono o consumo). */
   private resolveBankNameFromCode(codeOrName: string): string {
     const raw = String(codeOrName ?? '').trim();
     if (!raw) return '';
-    // Si no parece código (4 dígitos), asumimos que ya es “nombre” u otro identificador.
     if (!/^\d{4}$/.test(raw)) return raw;
     return this.banksVE.find(b => b.code === raw)?.name ?? raw;
   }
-  public get pagoOrigenBanco(): string {
-    return String(this.receiptPaymentData?.bank ?? this.receiptPaymentData?.payment_orig?.bankcode ?? '').trim();
+
+  private receiptBankCode(): string {
+    return String(
+      this.receiptPaymentData?.bank ??
+      this.receiptPaymentData?.payment_orig?.bankcode ??
+      this.receiptPaymentData?.payment_dest?.bankcode ??
+      ''
+    ).trim();
   }
+
   public get pagoOrigenBancoLabel(): string {
-    return this.resolveBankNameFromCode(this.pagoOrigenBanco);
+    const mapped = this.resolveBankNameFromCode(this.receiptBankCode());
+    if (mapped) return mapped;
+    return String(this.receiptPaymentData?.payment_dest?.bankname ?? '').trim();
   }
+
   public get pagoOrigenTelefono(): string {
-    return String(this.receiptPaymentData?.phone ?? this.receiptPaymentData?.payment_orig?.phonenumber ?? '').trim();
+    return String(
+      this.receiptPaymentData?.phone ??
+      this.receiptPaymentData?.payment_orig?.phonenumber ??
+      this.receiptPaymentData?.payment_dest?.phonenumber ??
+      ''
+    ).trim();
   }
+
+  /** Recibo consumo: BD primero; si no hay registro, valores por defecto. */
+  public get consumoReceiptBankLabel(): string {
+    if (this.receiptPaymentFromDb) {
+      const code = String(this.receiptPaymentData?.bank ?? '').trim();
+      if (code) return this.resolveBankNameFromCode(code);
+    }
+    return this.consumoDefaultBankName;
+  }
+
+  public get consumoReceiptPhone(): string {
+    if (this.receiptPaymentFromDb) {
+      const phone = String(this.receiptPaymentData?.phone ?? '').trim();
+      if (phone) return phone;
+    }
+    return this.consumoDefaultPhone;
+  }
+
+  public get consumoReceiptRif(): string {
+    if (this.receiptPaymentFromDb) {
+      const rif = String(this.receiptPaymentData?.rif ?? '').trim();
+      if (rif) return rif;
+    }
+    return this.consumoDefaultRif;
+  }
+
   public get pagoReferencia(): string {
     return String(
       this.receiptPaymentData?.payment_orig?.payment_reference ??
+      this.receiptPaymentData?.payment_dest?.payment_reference ??
       this.receiptPaymentData?.payment_reference ??
       ''
     ).trim();
@@ -638,10 +681,11 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
     this.selectedTransaction = tx;
     this.receiptOpen = true;
 
-    // Si es Pago: consulta ARYS por payment_id (= id de transacción/payid)
+    // Abono (Pago) o consumo: consulta ARYS por payment_id (= id transacción / payid)
     this.receiptPaymentData = null;
     this.receiptPaymentLoading = false;
-    if (this.isPagoReceipt(tx)) {
+    this.receiptPaymentFromDb = false;
+    if (this.isPagoReceipt(tx) || this.isConsumoReceipt(tx)) {
       const paymentId = String(tx.transactionId ?? '').trim();
       if (paymentId) {
         this.receiptPaymentLoading = true;
@@ -651,11 +695,24 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
           })
         ).subscribe({
           next: (res: any) => {
-            // tolerante: a veces viene {status,data} y otras el objeto directo
-            this.receiptPaymentData = res?.data ?? res ?? null;
+            const row = res?.status === true ? res?.data : res?.data ?? res;
+            const hasRow =
+              row &&
+              typeof row === 'object' &&
+              (String(row.bank ?? '').trim() ||
+                String(row.phone ?? '').trim() ||
+                String(row.rif ?? '').trim());
+            if (hasRow) {
+              this.receiptPaymentData = row;
+              this.receiptPaymentFromDb = true;
+            } else {
+              this.receiptPaymentData = null;
+              this.receiptPaymentFromDb = false;
+            }
           },
           error: () => {
             this.receiptPaymentData = null;
+            this.receiptPaymentFromDb = false;
           }
         });
       }
@@ -673,6 +730,7 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
     this.selectedTransaction = null;
     this.receiptPaymentData = null;
     this.receiptPaymentLoading = false;
+    this.receiptPaymentFromDb = false;
   }
 
   public formatCardMask(card?: string): string {
