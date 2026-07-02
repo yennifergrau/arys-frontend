@@ -159,6 +159,25 @@ export class AuthPage implements OnInit {
     return parsed ? formatCedrifRif(parsed.doctype, parsed.docid) : '';
   }
 
+  private buildStatusRequestData(
+    cedula: string,
+    picked: any | null | undefined
+  ): { cedula: string; certificado?: string; placa?: string } {
+    const clientData: { cedula: string; certificado?: string; placa?: string } = {
+      cedula,
+    };
+    const cert = picked?.certificate != null ? String(picked.certificate).trim() : '';
+    if (cert) {
+      clientData.certificado = cert;
+    }
+    const plate =
+      picked?.vehicle_plate != null ? String(picked.vehicle_plate).trim().replace(/-/g, '') : '';
+    if (plate) {
+      clientData.placa = plate;
+    }
+    return clientData;
+  }
+
   private async persistMembershipCedulaIfNeeded(
     picked: any,
     rifToPersist: string
@@ -194,7 +213,7 @@ export class AuthPage implements OnInit {
   }
 
   private callUserIsActive(
-    clientData: { cedula: string; certificado?: string },
+    clientData: { cedula: string; certificado?: string; placa?: string },
     pre: { rows: any[]; picked: any | null } | null,
     rifToPersist?: string | null
   ): void {
@@ -304,14 +323,10 @@ export class AuthPage implements OnInit {
       const cedulaFromMembership =
         this.extractCedulaNumber(pre?.picked?.cedrif_membership);
 
-      const cert =
-        pre?.picked?.certificate != null ? String(pre.picked.certificate).trim() : '';
-      const clientData: { cedula: string; certificado?: string } = {
-        cedula: cedulaFromMembership || cedulaFromForm,
-      };
-      if (cert) {
-        clientData.certificado = cert;
-      }
+      const clientData = this.buildStatusRequestData(
+        cedulaFromMembership || cedulaFromForm,
+        pre?.picked
+      );
 
       // Sin cedrif_membership en BD → guardar la cédula ingresada para auto-verificar la próxima vez.
       const rifToPersist = cedulaFromMembership
@@ -366,11 +381,7 @@ export class AuthPage implements OnInit {
 
     this.FormVerify.patchValue({ rif: cedulaFromMembership });
 
-    const cert = pre?.picked?.certificate != null ? String(pre.picked.certificate).trim() : '';
-    const clientData: { cedula: string; certificado?: string } = { cedula: cedulaFromMembership };
-    if (cert) {
-      clientData.certificado = cert;
-    }
+    const clientData = this.buildStatusRequestData(cedulaFromMembership, pre?.picked);
 
     this.callUserIsActive(clientData, pre, null);
   }
