@@ -36,6 +36,8 @@ import {
   resolveMeritopClientIdentity,
   userCedrifFromDecodedToken,
   cedulaDigitsForSarysStatus,
+  pickActiveMembershipRow,
+  certificateFromUserData,
 } from '../utils/meritop-identity.util';
 import { firstValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -1080,10 +1082,17 @@ export class DashboardPage implements OnInit, ViewWillEnter {
       result?.status && Array.isArray(result.data)
         ? result.data.filter((row: any) => membershipMatchesUserCedrif(row, decodeData))
         : [];
-    this.data_membership = rows;
-    const first = rows[0];
-    if (first?.id_master != null) {
-      sessionStorage.setItem('id_member', String(first.id_master));
+
+    const stored = sessionStorage.getItem('id_member');
+    const sessionIdMember = stored ? Number(stored) : NaN;
+    const picked = pickActiveMembershipRow(rows, {
+      idMember: !Number.isNaN(sessionIdMember) && sessionIdMember > 0 ? sessionIdMember : null,
+      certificate: certificateFromUserData() || null,
+    });
+
+    this.data_membership = picked ? [picked] : [];
+    if (picked?.['id_master'] != null) {
+      sessionStorage.setItem('id_member', String(picked['id_master']));
     }
   }
 

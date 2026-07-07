@@ -20,7 +20,7 @@ import { jwtDecode } from 'jwt-decode';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
-import { formatCedrifRif, parseCedrifCredit, userCedrifFromDecodedToken, membershipMatchesUserCedrif, cedulaDigitsForSarysStatus } from '../utils/meritop-identity.util';
+import { formatCedrifRif, parseCedrifCredit, userCedrifFromDecodedToken, membershipMatchesUserCedrif, cedulaDigitsForSarysStatus, pickActiveMembershipRow, certificateFromUserData } from '../utils/meritop-identity.util';
 
 @Component({
   selector: 'app-auth',
@@ -196,7 +196,12 @@ export class AuthPage implements OnInit {
         membershipResult?.status && Array.isArray(membershipResult.data)
           ? membershipResult.data.filter((row: any) => membershipMatchesUserCedrif(row, user))
           : [];
-      const picked = rows[0] ?? null;
+      const stored = sessionStorage.getItem('id_member');
+      const sessionIdMember = stored ? Number(stored) : NaN;
+      const picked = pickActiveMembershipRow(rows, {
+        idMember: !Number.isNaN(sessionIdMember) && sessionIdMember > 0 ? sessionIdMember : null,
+        certificate: certificateFromUserData() || null,
+      });
       return { rows, picked, userCedrif };
     } catch {
       const stored = sessionStorage.getItem('id_member');
@@ -217,7 +222,11 @@ export class AuthPage implements OnInit {
           membershipResult?.status && Array.isArray(membershipResult.data)
             ? membershipResult.data.filter((row: any) => membershipMatchesUserCedrif(row, user))
             : [];
-        return { rows, picked: rows[0] ?? null, userCedrif };
+        const picked = pickActiveMembershipRow(rows, {
+          idMember: idMember != null && !Number.isNaN(idMember) && idMember > 0 ? idMember : null,
+          certificate: certificateFromUserData() || null,
+        });
+        return { rows, picked, userCedrif };
       } catch {
         return { rows: [], picked: null, userCedrif };
       }
@@ -329,11 +338,15 @@ export class AuthPage implements OnInit {
               }
 
               const certFromStatus = String(response?.certificado ?? '').trim();
-              const matched = certFromStatus
-                ? rows.find((r: any) => String(r?.certificate ?? '').trim() === certFromStatus) ??
-                  null
-                : null;
-              picked = matched ?? picked ?? rows[0] ?? null;
+              picked =
+                pickActiveMembershipRow(rows, {
+                  certificate: certFromStatus || certificateFromUserData() || null,
+                  idMember: (() => {
+                    const s = sessionStorage.getItem('id_member');
+                    const n = s ? Number(s) : NaN;
+                    return !Number.isNaN(n) && n > 0 ? n : null;
+                  })(),
+                }) ?? picked ?? null;
 
               if (picked?.id_master != null) {
                 sessionStorage.setItem('id_member', String(picked.id_master));

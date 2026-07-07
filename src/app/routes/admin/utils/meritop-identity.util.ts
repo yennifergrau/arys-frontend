@@ -24,6 +24,58 @@ export function membershipMatchesUserCedrif(
   return formatCedrifRif(parsed.doctype, parsed.docid) === expected;
 }
 
+export type PickActiveMembershipOptions = {
+  idMember?: number | null;
+  certificate?: string | null;
+};
+
+/** Una sola membresía activa: sesión → certificado Sarys → la más reciente. */
+export function pickActiveMembershipRow(
+  rows: unknown[],
+  options?: PickActiveMembershipOptions
+): Record<string, unknown> | null {
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+
+  const idMember = Number(options?.idMember ?? 0);
+  if (Number.isFinite(idMember) && idMember > 0) {
+    const byId = rows.find(
+      (row) =>
+        row &&
+        typeof row === 'object' &&
+        Number((row as Record<string, unknown>)['id_master']) === idMember
+    );
+    if (byId && typeof byId === 'object') {
+      return byId as Record<string, unknown>;
+    }
+  }
+
+  const cert = options?.certificate != null ? String(options.certificate).trim() : '';
+  if (cert) {
+    const byCert = rows.find((row) => {
+      if (!row || typeof row !== 'object') return false;
+      const r = row as Record<string, unknown>;
+      const rowCert = String(r['certificate'] ?? r['certificado'] ?? '').trim();
+      return rowCert === cert;
+    });
+    if (byCert && typeof byCert === 'object') {
+      return byCert as Record<string, unknown>;
+    }
+  }
+
+  const first = rows[0];
+  return first && typeof first === 'object' ? (first as Record<string, unknown>) : null;
+}
+
+export function certificateFromUserData(): string {
+  try {
+    const raw = localStorage.getItem('userData');
+    const ud = raw ? JSON.parse(raw) : null;
+    return String(ud?.certificate ?? ud?.certificado ?? '').trim();
+  } catch {
+    return '';
+  }
+}
+
 /** Solo dígitos para POST `fechetd/status` (ClienteActivo). */
 export function cedulaDigitsForSarysStatus(cedrif: string): string {
   return String(cedrif ?? '').replace(/\D/g, '');
