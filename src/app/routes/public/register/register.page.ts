@@ -192,6 +192,12 @@ export class RegisterPage {
     return `0${digits.slice(0, 3)}-${digits.slice(3)}`;
   }
 
+  private normalizeRifForBackend(rawRif: string): string | null {
+    const digits = String(rawRif ?? '').replace(/\D/g, '');
+    if (digits.length < 6 || digits.length > 12) return null;
+    return digits;
+  }
+
 private procesarErroresDeFormulario() {
   const erroresActivos: string[] = [];
   
@@ -255,14 +261,31 @@ private obtenerMensajeUnico(): string {
 
     this.showLoading = true;
     try {
-        const data: DataControl = this.formAuth.value;
-        const normalizedPhone = this.normalizePhoneForBackend(String(data.phone ?? ''));
+        const formValue = this.formAuth.value;
+        const normalizedPhone = this.normalizePhoneForBackend(String(formValue.phone ?? ''));
         if (!normalizedPhone) {
           this.showLoading = false;
           this.mostrarToast('El teléfono no tiene un formato válido.', 'toast-error');
           return;
         }
-        data.phone = normalizedPhone;
+
+        const normalizedRif = this.normalizeRifForBackend(String(formValue.rif ?? ''));
+        if (!normalizedRif) {
+          this.showLoading = false;
+          this.mostrarToast('El documento de identidad no tiene un formato válido.', 'toast-error');
+          return;
+        }
+
+        const data: DataControl = {
+          name: formValue.name,
+          sub_ape: formValue.sub_ape,
+          email: formValue.email,
+          phone: normalizedPhone,
+          password: formValue.password,
+          prefix: formValue.prefix,
+          rif: normalizedRif,
+        };
+
         this._authService.register(data).subscribe({
           next: async (response) => {
             this.mostrarToast('¡Registro exitoso!', 'toast-success');
@@ -285,7 +308,10 @@ private obtenerMensajeUnico(): string {
                 'toast-error'
               );
             } else if (err.status === 400) {
-              await this.mostrarToast('Usuario ya está registrado', 'toast-error');
+              await this.mostrarToast(
+                serverMsg || 'Usuario ya está registrado',
+                'toast-error'
+              );
             } else {
               await this.mostrarToast(
                 serverMsg || 'No se pudo completar el registro. Intenta nuevamente.',

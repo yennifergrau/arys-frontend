@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, throwError, tap } from 'rxjs';
 import { environment } from './../../../environments/environment';
 import {NavController} from '@ionic/angular'
@@ -120,6 +120,34 @@ export class AuthService {
         return throwError(() => new Error('Error al obtener información del usuario'))
       })
     )
+  }
+
+  public updateUserDocument(payload: { prefix: string; rif: string }) {
+    const token = (this.tokenStore.getAccessTokenSync() || '').trim();
+    const headers = token
+      ? new HttpHeaders().set('Authorization', `Bearer ${token}`)
+      : new HttpHeaders();
+    return this.http
+      .post<{
+        status: boolean;
+        message: string;
+        token?: string;
+      }>(`${this.baseUrl}/sarys/update/fechectd/user/document`, payload, { headers })
+      .pipe(
+        catchError((err) => {
+          this.error.set(err.error?.message || 'No se pudo actualizar el documento');
+          return throwError(() => err);
+        })
+      );
+  }
+
+  public applyAccessToken(token: string): void {
+    if (!token?.trim()) return;
+    const decodedToken = this.decodeToken(token);
+    const expirationTime = decodedToken.exp * 1000;
+    this.accessToken.set(token);
+    this.expirationTime.set(expirationTime);
+    void this.tokenStore.setSession(token, expirationTime);
   }
 
   public edit_user_info(data:string) {

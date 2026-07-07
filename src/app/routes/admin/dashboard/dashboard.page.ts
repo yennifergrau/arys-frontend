@@ -32,7 +32,10 @@ import { ServiceOrderService } from '../services/service-order.service';
 import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
 import {
   membershipHasCreditLine,
+  membershipMatchesUserCedrif,
   resolveMeritopClientIdentity,
+  userCedrifFromDecodedToken,
+  cedulaDigitsForSarysStatus,
 } from '../utils/meritop-identity.util';
 import { firstValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -987,32 +990,50 @@ export class DashboardPage implements OnInit, ViewWillEnter {
   //   }
   // }
 
-  private UserVerifyMembership(rif: string){
-      const data = {
-        cedula: rif
-      }
-
-      this.emission.userIsActive(data).subscribe({
-        next: (response: any) => {
-          
-          // Si el usuario no tiene membresia lo enviamos a los planes para que compre una
-          if (response.total === 0) {
-            this.navCtrl.navigateRoot(['/admin/planes/home/user']);
-            this.showLoading = false;
-          } 
- 
-          this.showLoading = false;
-    
-        },
-        error: (err: any) => {
-
-          console.log(err)
-          // En Inicio no bloqueamos la UX por fallas de red/servidor.
-          // Si esta validación falla, el usuario igual puede ver su dashboard.
-          this.showLoading = false;
-        },
-      });
+  private verifySarysMembership(decodeData: any, membershipRow?: any): void {
+    const cedrif = userCedrifFromDecodedToken(decodeData);
+    if (!cedrif) {
+      return;
     }
+
+    const data: { cedula: string; certificado?: string; placa?: string } = {
+      cedula: cedulaDigitsForSarysStatus(cedrif),
+    };
+
+    const cert =
+      membershipRow?.certificate != null ? String(membershipRow.certificate).trim() : '';
+    if (cert) {
+      data.certificado = cert;
+    }
+
+    const plate =
+      membershipRow?.vehicle_plate != null
+        ? String(membershipRow.vehicle_plate).trim().replace(/-/g, '')
+        : '';
+    if (plate) {
+      data.placa = plate;
+    }
+
+    this.emission.userIsActive(data).subscribe({
+      next: (response: any) => {
+        if (response?.total === 0) {
+          this.navCtrl.navigateRoot(['/admin/planes/home/user']);
+          return;
+        }
+
+        const status =
+          response?.estatus_gene1 != null ? String(response.estatus_gene1).trim() : '';
+        if (status === 'ACTIVO' && membershipRow) {
+          this._emisionService.persistUserDataAfterVerification(response, membershipRow);
+        } else if (status === 'ACTIVO') {
+          this._emisionService.userData = response;
+        }
+      },
+      error: () => {
+        // En Inicio no bloqueamos la UX por fallas de red/servidor.
+      },
+    });
+  }
 
 
   ngOnInit() {
@@ -1022,7 +1043,6 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     const decodeData: any = dataUser ? jwtDecode(dataUser) : {}
     console.log(decodeData)
     this.username = decodeData?.name + ' ' + decodeData?.sub_ape
-    this.UserVerifyMembership(decodeData.rif)
 
     // Placa por defecto: preferimos `userData` (localStorage). Fallback: token.
     try {
@@ -1052,14 +1072,54 @@ export class DashboardPage implements OnInit, ViewWillEnter {
       : decodeData?.id_member != null
         ? Number(decodeData.id_member)
         : null
-    if (idMember) {
-      this.getMembershipById(idMember)
-    } else if (decodeData?.email) {
-      this.getMembershipByEmail(String(decodeData.email))
-    } else {
+    this.loadMembershipForUser(decodeData, idMember)
+  }
+
+  private applyMembershipResult(result: any, decodeData: any): void {
+    const rows =
+      result?.status && Array.isArray(result.data)
+        ? result.data.filter((row: any) => membershipMatchesUserCedrif(row, decodeData))
+        : [];
+    this.data_membership = rows;
+    const first = rows[0];
+    if (first?.id_master != null) {
+      sessionStorage.setItem('id_member', String(first.id_master));
+    }
+  }
+
+  private async finalizeMembershipLoad(decodeData: any): Promise<void> {
+    const first = this.data_membership?.[0];
+    this.verifySarysMembership(decodeData, first);
+    await this.checkPendingOrders();
+    this.syncUserDataFromMembershipRows();
+    this.loadMeritopSummary();
+    this.loadState.membership = true;
+    this.finishIfReady();
+  }
+
+  private loadMembershipForUser(decodeData: any, idMember: number | null): void {
+    try {
+      this.arys_service
+        .get_membership_for_user({
+          id_member: idMember,
+          email: decodeData?.email ? String(decodeData.email) : null,
+        })
+        .subscribe({
+          next: async (result) => {
+            this.applyMembershipResult(result, decodeData);
+            await this.finalizeMembershipLoad(decodeData);
+          },
+          error: async () => {
+            this.data_membership = [];
+            await this.finalizeMembershipLoad(decodeData);
+          },
+        });
+    } catch (e) {
+      console.error(e);
+      this.data_membership = [];
       this.loadState.membership = true;
-      // Si no hay id/email, no hay órdenes que cargar.
       this.loadState.pendingOrders = true;
+      this.loadMeritopSummary();
       this.finishIfReady();
     }
   }
@@ -1069,76 +1129,6 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     const first = this.data_membership?.[0];
     if (first) {
       this._emisionService.mergeUserDataFromMembership(first);
-    }
-  }
-
-  private getMembershipById(idMember: number){
-    try{
-      this.arys_service.get_membership(idMember).subscribe({
-        next: async (result) => {
-          this.data_membership =
-            result?.status && Array.isArray(result.data) ? result.data : [];
-          const first = this.data_membership?.[0];
-          if (first?.id_master != null) {
-            sessionStorage.setItem('id_member', String(first.id_master));
-          }
-
-          await this.checkPendingOrders();
-          this.syncUserDataFromMembershipRows();
-          this.loadMeritopSummary();
-
-          this.loadState.membership = true;
-          this.finishIfReady();
-        },
-        error: async (error) => {
-          this.data_membership = [];
-          await this.checkPendingOrders();
-          this.syncUserDataFromMembershipRows();
-          this.loadMeritopSummary();
-          this.loadState.membership = true;
-          this.finishIfReady();
-          console.log(error);
-        }
-      })
-    }catch(e){
-      console.error(e);     
-    }
-  }
-
-  private getMembershipByEmail(email: string) {
-    try {
-      this.arys_service.get_membership_by_email(email).subscribe({
-        next: async (result) => {
-          this.data_membership =
-            result?.status && Array.isArray(result.data) ? result.data : [];
-          const first = this.data_membership?.[0];
-          if (first?.id_master != null) {
-            sessionStorage.setItem('id_member', String(first.id_master));
-          }
-
-          await this.checkPendingOrders();
-          this.syncUserDataFromMembershipRows();
-          this.loadMeritopSummary();
-
-          this.loadState.membership = true;
-          this.finishIfReady();
-        },
-        error: async () => {
-          this.data_membership = [];
-          await this.checkPendingOrders();
-          this.syncUserDataFromMembershipRows();
-          this.loadMeritopSummary();
-          this.loadState.membership = true;
-          this.finishIfReady();
-        }
-      })
-    } catch (e) {
-      console.error(e)
-      this.data_membership = [];
-      this.loadState.membership = true;
-      this.loadState.pendingOrders = true;
-      this.loadMeritopSummary();
-      this.finishIfReady();
     }
   }
 

@@ -27,9 +27,19 @@
               <!-- ── Contenido ── -->
               <div class="av-content">
 
-                <h2 class="av-heading">Accede con tu cédula</h2>
+                <h2 class="av-heading">
+                  @if (needsDocumentUpdate) {
+                    Registra tu cédula
+                  } @else {
+                    Accede con tu cédula
+                  }
+                </h2>
                 <p class="av-desc">
-                  Ingresa tu número de identificación para verificar si tienes una membresía activa.
+                  @if (needsDocumentUpdate) {
+                    Tu cuenta aún no tiene documento. Ingrésalo para vincularla con tu membresía.
+                  } @else {
+                    Ingresa tu número de identificación para verificar si tienes una membresía activa.
+                  }
                 </p>
 
                 <!-- Trust signals -->
@@ -96,7 +106,11 @@
               <!-- ── Botón ── -->
               <div class="bottom-btn mt-auto">
                 <a (click)="onSubmit()" class="btn btn-primary btn-thin btn-lg w-100 rounded-xl">
-                  Verificar membresía
+                  @if (needsDocumentUpdate) {
+                    Guardar y verificar
+                  } @else {
+                    Verificar membresía
+                  }
                 </a>
               </div>
 

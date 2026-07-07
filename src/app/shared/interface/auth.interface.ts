@@ -9,4 +9,6 @@ export interface register {
     email?: string;
     phone?: string;
     password?: string;
+    rif?: string;
+    prefix?: string;
 }

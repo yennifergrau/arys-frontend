@@ -18,8 +18,9 @@ import { EmissionDetailsService } from '../services/emission-details.service';
 import { DataArysService } from '../services/data-arys.service';
 import { jwtDecode } from 'jwt-decode';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from 'src/app/shared/services/auth.service';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
-import { formatCedrifRif, parseCedrifCredit } from '../utils/meritop-identity.util';
+import { formatCedrifRif, parseCedrifCredit, userCedrifFromDecodedToken, membershipMatchesUserCedrif, cedulaDigitsForSarysStatus } from '../utils/meritop-identity.util';
 
 @Component({
   selector: 'app-auth',
@@ -45,10 +46,13 @@ export class AuthPage implements OnInit {
   /** Solo true cuando hace falta que el usuario complete o corrija el documento. */
   public showVerifyForm = false;
   public autoVerifyInProgress = false;
+  /** Cuenta legacy sin cédula en BD: el usuario debe completarla en el formulario. */
+  public needsDocumentUpdate = false;
   private emission = inject(EmissionService);
   private emissionDetails = inject(EmissionDetailsService);
   private arysService = inject(DataArysService);
   private tokenStore = inject(TokenStoreService);
+  private authService = inject(AuthService);
 
   constructor(
     private fb: FormBuilder,
@@ -122,36 +126,102 @@ export class AuthPage implements OnInit {
   private extractCedulaNumber(raw: any): string {
     const s = raw != null ? String(raw).trim() : '';
     if (!s) return '';
-    // Acepta formatos como "V28317753", "E-28.317.753", "J 28317753" → "28317753"
     const digits = s.replace(/\D/g, '');
     return digits;
   }
 
-  /** Membresía desde BD (token) antes de `userIsActive`, para enviar `certificado` en el POST y alinear filas. */
-  private async prefetchMembership(): Promise<{ rows: any[]; picked: any | null }> {
-    const user = this.getAccessToken();
-    const stored = sessionStorage.getItem('id_member');
-    const idMember = stored
-      ? Number(stored)
-      : user.id_member != null
-        ? Number(user.id_member)
-        : null;
+  private async ensureUserDocumentFromForm(
+    user: Record<string, unknown>
+  ): Promise<{ user: Record<string, unknown>; userCedrif: string } | null> {
+    const cedulaFromForm = this.extractCedulaNumber(this.FormVerify.get('rif')?.value);
+    const prefix = String(this.FormVerify.get('prefix')?.value || 'V').trim();
+    const formCedrif = formatCedrifRif(prefix, cedulaFromForm);
 
-    let membershipResult: any = null;
-    if (idMember != null && !Number.isNaN(idMember) && idMember > 0) {
-      membershipResult = await firstValueFrom(this.arysService.get_membership(idMember));
-    } else if (user.email) {
-      membershipResult = await firstValueFrom(
-        this.arysService.get_membership_by_email(String(user.email))
-      );
+    if (!cedulaFromForm || !formCedrif) {
+      this.mostrarToast('El documento de identidad no tiene un formato válido.', 'toast-error');
+      return null;
     }
 
-    const rows =
-      membershipResult?.status && Array.isArray(membershipResult.data)
-        ? membershipResult.data
-        : [];
-    const picked = rows[0] ?? null;
-    return { rows, picked };
+    const userCedrif = userCedrifFromDecodedToken(user);
+    if (userCedrif) {
+      if (formCedrif !== userCedrif) {
+        this.mostrarToast('La cédula ingresada no coincide con la de tu cuenta.', 'toast-error');
+        return null;
+      }
+      return { user, userCedrif };
+    }
+
+    try {
+      const updateRes: any = await firstValueFrom(
+        this.authService.updateUserDocument({ prefix, rif: cedulaFromForm })
+      );
+      const token = updateRes?.token ? String(updateRes.token) : '';
+      if (!token) {
+        this.mostrarToast('No se pudo actualizar la cédula de tu cuenta.', 'toast-error');
+        return null;
+      }
+
+      this.authService.applyAccessToken(token);
+      const updatedUser = this.getAccessToken();
+      const updatedCedrif = userCedrifFromDecodedToken(updatedUser);
+      if (!updatedCedrif) {
+        this.mostrarToast('No se pudo validar la cédula actualizada.', 'toast-error');
+        return null;
+      }
+
+      this.needsDocumentUpdate = false;
+      return { user: updatedUser, userCedrif: updatedCedrif };
+    } catch (err: any) {
+      const serverMsg = err?.error?.message ? String(err.error.message) : '';
+      this.mostrarToast(
+        serverMsg || 'No se pudo registrar la cédula en tu cuenta.',
+        'toast-error'
+      );
+      return null;
+    }
+  }
+
+  /** Membresía asociada a la cédula del usuario autenticado. */
+  private async prefetchMembership(): Promise<{ rows: any[]; picked: any | null; userCedrif: string }> {
+    const user = this.getAccessToken();
+    const userCedrif = userCedrifFromDecodedToken(user);
+
+    if (!userCedrif) {
+      return { rows: [], picked: null, userCedrif: '' };
+    }
+
+    try {
+      const membershipResult = await firstValueFrom(this.arysService.get_membership_by_cedrif());
+      const rows =
+        membershipResult?.status && Array.isArray(membershipResult.data)
+          ? membershipResult.data.filter((row: any) => membershipMatchesUserCedrif(row, user))
+          : [];
+      const picked = rows[0] ?? null;
+      return { rows, picked, userCedrif };
+    } catch {
+      const stored = sessionStorage.getItem('id_member');
+      const idMember = stored
+        ? Number(stored)
+        : user.id_member != null
+          ? Number(user.id_member)
+          : null;
+
+      try {
+        const membershipResult = await firstValueFrom(
+          this.arysService.get_membership_for_user({
+            id_member: idMember,
+            email: user.email ? String(user.email) : null,
+          })
+        );
+        const rows =
+          membershipResult?.status && Array.isArray(membershipResult.data)
+            ? membershipResult.data.filter((row: any) => membershipMatchesUserCedrif(row, user))
+            : [];
+        return { rows, picked: rows[0] ?? null, userCedrif };
+      } catch {
+        return { rows: [], picked: null, userCedrif };
+      }
+    }
   }
 
   private membershipRifFromRow(row: any | null | undefined): string {
@@ -160,11 +230,11 @@ export class AuthPage implements OnInit {
   }
 
   private buildStatusRequestData(
-    cedula: string,
+    cedrif: string,
     picked: any | null | undefined
   ): { cedula: string; certificado?: string; placa?: string } {
     const clientData: { cedula: string; certificado?: string; placa?: string } = {
-      cedula,
+      cedula: cedulaDigitsForSarysStatus(cedrif),
     };
     const cert = picked?.certificate != null ? String(picked.certificate).trim() : '';
     if (cert) {
@@ -182,9 +252,15 @@ export class AuthPage implements OnInit {
     picked: any,
     rifToPersist: string
   ): Promise<any> {
+    const user = this.getAccessToken();
+    const userCedrif = userCedrifFromDecodedToken(user);
     const rif = String(rifToPersist ?? '').trim();
+    if (!rif || !userCedrif || rif !== userCedrif) {
+      return picked;
+    }
+
     const idMember = picked?.id_master;
-    if (!rif || idMember == null) return picked;
+    if (!idMember) return picked;
 
     const existingRif = this.membershipRifFromRow(picked);
     if (rif === existingRif) return picked;
@@ -214,7 +290,7 @@ export class AuthPage implements OnInit {
 
   private callUserIsActive(
     clientData: { cedula: string; certificado?: string; placa?: string },
-    pre: { rows: any[]; picked: any | null } | null,
+    pre: { rows: any[]; picked: any | null; userCedrif?: string } | null,
     rifToPersist?: string | null
   ): void {
     this.emission.userIsActive(clientData).subscribe({
@@ -237,17 +313,18 @@ export class AuthPage implements OnInit {
                     ? Number(user.id_member)
                     : null;
 
-                const membershipResult = idMember
-                  ? await firstValueFrom(this.arysService.get_membership(idMember))
-                  : user.email
-                    ? await firstValueFrom(
-                        this.arysService.get_membership_by_email(String(user.email))
-                      )
-                    : null;
+                const membershipResult = await firstValueFrom(
+                  this.arysService.get_membership_for_user({
+                    id_member: idMember,
+                    email: user.email ? String(user.email) : null,
+                  })
+                );
 
                 rows =
                   membershipResult?.status && Array.isArray(membershipResult.data)
-                    ? membershipResult.data
+                    ? membershipResult.data.filter((row: any) =>
+                        membershipMatchesUserCedrif(row, user)
+                      )
                     : [];
               }
 
@@ -311,29 +388,38 @@ export class AuthPage implements OnInit {
       this.showVerifyForm = true;
       this.showSpinner = true;
       this.autoVerifyInProgress = false;
-      const cedulaFromForm = this.extractCedulaNumber(this.FormVerify.get('rif')?.value);
-      const prefix = String(this.FormVerify.get('prefix')?.value || 'V').trim();
-      let pre: { rows: any[]; picked: any | null } | null = null;
+
+      let user = this.getAccessToken();
+      const ensured = await this.ensureUserDocumentFromForm(user);
+      if (!ensured) {
+        this.showSpinner = false;
+        return;
+      }
+
+      user = ensured.user;
+      const userCedrif = ensured.userCedrif;
+
+      let pre: { rows: any[]; picked: any | null; userCedrif: string } | null = null;
       try {
         pre = await this.prefetchMembership();
       } catch {
         pre = null;
       }
 
-      const cedulaFromMembership =
-        this.extractCedulaNumber(pre?.picked?.cedrif_membership);
+      if (!pre?.picked) {
+        this.showSpinner = false;
+        this.mostrarToast('No hay membresía asociada a tu cédula.', 'toast-error');
+        return;
+      }
 
-      const clientData = this.buildStatusRequestData(
-        cedulaFromMembership || cedulaFromForm,
-        pre?.picked
-      );
+      if (!membershipMatchesUserCedrif(pre.picked, user)) {
+        this.showSpinner = false;
+        this.mostrarToast('La cédula de tu cuenta no coincide con la membresía.', 'toast-error');
+        return;
+      }
 
-      // Sin cedrif_membership en BD → guardar la cédula ingresada para auto-verificar la próxima vez.
-      const rifToPersist = cedulaFromMembership
-        ? null
-        : formatCedrifRif(prefix, cedulaFromForm);
-
-      this.callUserIsActive(clientData, pre, rifToPersist);
+      const clientData = this.buildStatusRequestData(userCedrif, pre.picked);
+      this.callUserIsActive(clientData, pre, null);
     } finally {
       if (!this.FormVerify.valid) {
         this.showSpinner = false;
@@ -358,12 +444,25 @@ export class AuthPage implements OnInit {
       return;
     }
 
+    const user = this.getAccessToken();
+    const userCedrif = userCedrifFromDecodedToken(user);
+    if (!userCedrif) {
+      this.needsDocumentUpdate = true;
+      this.revealVerifyForm();
+      return;
+    }
+
+    this.needsDocumentUpdate = false;
+
     this.autoVerifyInProgress = true;
     this.showSpinner = true;
     this.showVerifyForm = false;
-    this.FormVerify.patchValue({ prefix: 'V' });
+    this.FormVerify.patchValue({
+      prefix: String(user.prefix || 'V').trim() || 'V',
+      rif: String(user.rif || '').replace(/\D/g, ''),
+    });
 
-    let pre: { rows: any[]; picked: any | null } | null = null;
+    let pre: { rows: any[]; picked: any | null; userCedrif: string } | null = null;
     try {
       pre = await this.prefetchMembership();
     } catch (e) {
@@ -371,18 +470,19 @@ export class AuthPage implements OnInit {
       pre = null;
     }
 
-    const cedulaFromMembership =
-      this.extractCedulaNumber(pre?.picked?.cedrif_membership);
-
-    if (!cedulaFromMembership) {
+    if (!pre?.picked) {
+      this.mostrarToast('No hay membresía asociada a tu cédula.', 'toast-error');
       this.revealVerifyForm();
       return;
     }
 
-    this.FormVerify.patchValue({ rif: cedulaFromMembership });
+    if (!membershipMatchesUserCedrif(pre.picked, user)) {
+      this.mostrarToast('La cédula de tu cuenta no coincide con la membresía.', 'toast-error');
+      this.revealVerifyForm();
+      return;
+    }
 
-    const clientData = this.buildStatusRequestData(cedulaFromMembership, pre?.picked);
-
+    const clientData = this.buildStatusRequestData(userCedrif, pre.picked);
     this.callUserIsActive(clientData, pre, null);
   }
 

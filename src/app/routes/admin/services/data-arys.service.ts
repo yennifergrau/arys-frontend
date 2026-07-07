@@ -18,6 +18,7 @@ export class DataArysService {
   private readonly add_membership_url = environment.arys.OtherApis.add_membership
   private readonly get_membership_url = environment.arys.OtherApis.get_membership
   private readonly get_membership_by_email_url = environment.arys.OtherApis.get_membership_by_email
+  private readonly get_membership_by_cedrif_url = environment.arys.OtherApis.get_membership_by_cedrif
   private readonly retry_credit_line_url = environment.arys.OtherApis.retry_credit_line
   private readonly validate_credit_line_url = environment.arys.OtherApis.validate_credit_line
   private readonly update_membership_cedrif_credit_url =
@@ -132,6 +133,34 @@ export class DataArysService {
         return throwError(() => new Error('Error obtener membresía por email'));
       })
     )
+  }
+
+  /** Membresía vinculada a la cédula del usuario autenticado (JWT). */
+  public get_membership_by_cedrif() {
+    return this.http.get<any>(`${this.baseUrl}/${this.get_membership_by_cedrif_url}`, { headers: this.getAuthHeaders() }).pipe(
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => new Error('Error obtener membresía por cédula'));
+      })
+    )
+  }
+
+  /**
+   * Resuelve membresía priorizando cédula del token; fallback por id o email.
+   */
+  public get_membership_for_user(options?: { id_member?: number | null; email?: string | null }) {
+    return this.get_membership_by_cedrif().pipe(
+      catchError(() => {
+        const idMember = options?.id_member;
+        if (idMember != null && !Number.isNaN(Number(idMember)) && Number(idMember) > 0) {
+          return this.get_membership(idMember);
+        }
+        const email = String(options?.email ?? '').trim();
+        if (email) {
+          return this.get_membership_by_email(email);
+        }
+        return throwError(() => new Error('No se pudo resolver la membresía del usuario'));
+      })
+    );
   }
 
   public validate_credit_line(payload: { rif: string }) {

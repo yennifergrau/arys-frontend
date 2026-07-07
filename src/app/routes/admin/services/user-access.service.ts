@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { DataArysService } from './data-arys.service';
 import { jwtDecode } from 'jwt-decode';
 import { firstValueFrom } from 'rxjs';
-import { membershipHasCreditLine } from '../utils/meritop-identity.util';
+import { membershipHasCreditLine, membershipMatchesUserCedrif } from '../utils/meritop-identity.util';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 export type UserAccessState = {
@@ -62,7 +62,7 @@ export class UserAccessService {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   }
 
-  private getTokenIdentity(): { id_member?: number; email?: string } {
+  private getTokenIdentity(): { id_member?: number; email?: string; decoded?: any } {
     try {
       const token = this.tokenStore.getAccessTokenSync();
       if (!token) return {};
@@ -72,7 +72,7 @@ export class UserAccessService {
           ? Number(decoded.id_member)
           : undefined;
       const email = decoded?.email != null ? String(decoded.email).trim() : undefined;
-      return { id_member, email };
+      return { id_member, email, decoded };
     } catch {
       return {};
     }
@@ -97,14 +97,15 @@ export class UserAccessService {
     const email = tokenIdentity.email ?? null;
 
     try {
-      const res: any =
-        idMember != null
-          ? await firstValueFrom(this.dataArys.get_membership(idMember))
-          : email
-            ? await firstValueFrom(this.dataArys.get_membership_by_email(email))
-            : null;
+      const res: any = await firstValueFrom(
+        this.dataArys.get_membership_for_user({ id_member: idMember, email })
+      );
 
-      const rows = res?.status && Array.isArray(res.data) ? res.data : [];
+      const rows = res?.status && Array.isArray(res.data)
+        ? res.data.filter((row: any) =>
+            membershipMatchesUserCedrif(row, tokenIdentity.decoded ?? {})
+          )
+        : [];
       const hasMembership = rows.length > 0;
       const first = rows[0];
       const resolvedIdMember =

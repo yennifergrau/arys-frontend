@@ -2,6 +2,33 @@ import { jwtDecode } from 'jwt-decode';
 
 export type MeritopClientIdentity = { doctype: string; docid: number };
 
+/** Cédula del JWT (`prefix` + `rif`) en formato `V12345678`. */
+export function userCedrifFromDecodedToken(decoded: unknown): string {
+  if (!decoded || typeof decoded !== 'object') return '';
+  const row = decoded as Record<string, unknown>;
+  const prefix = String(row['prefix'] ?? row['doctype'] ?? row['letra_rif'] ?? '').trim();
+  const rif = String(row['rif'] ?? row['docid'] ?? '').replace(/\D/g, '');
+  return formatCedrifRif(prefix || 'V', rif);
+}
+
+/** Compara cédula de usuario con `cedrif_membership` de la fila. */
+export function membershipMatchesUserCedrif(
+  membershipRow: unknown,
+  decodedToken: unknown
+): boolean {
+  if (!membershipRow || typeof membershipRow !== 'object') return false;
+  const expected = userCedrifFromDecodedToken(decodedToken);
+  if (!expected) return false;
+  const parsed = parseCedrifCredit((membershipRow as Record<string, unknown>)['cedrif_membership']);
+  if (!parsed) return false;
+  return formatCedrifRif(parsed.doctype, parsed.docid) === expected;
+}
+
+/** Solo dígitos para POST `fechetd/status` (ClienteActivo). */
+export function cedulaDigitsForSarysStatus(cedrif: string): string {
+  return String(cedrif ?? '').replace(/\D/g, '');
+}
+
 /** Parsea `cedrif_credit` / `V15700584` → tipo + número para Meritop. */
 export function parseCedrifCredit(raw: unknown): MeritopClientIdentity | null {
   const s = raw != null ? String(raw).trim() : '';
