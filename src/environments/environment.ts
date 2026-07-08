@@ -1,6 +1,9 @@
 export const environment = {
   production: true,
 
+  // Debe coincidir con versiones.id_version al compilar cada APK
+  appVersionCode: 1,
+
   /** Atención por WhatsApp (solo dígitos, con código de país; ej. 584121234567) */
   contact: {
     whatsappPhone: '584144128237',

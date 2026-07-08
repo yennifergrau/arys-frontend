@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { MobileVersionService } from './shared/services/mobile-version.service';
 
 @Component({
   selector: 'app-root',
@@ -10,7 +11,11 @@ import { StatusBar, Style } from '@capacitor/status-bar';
   imports: [IonApp, IonRouterOutlet],
 })
 export class AppComponent implements OnInit {
+  private mobileVersion = inject(MobileVersionService);
+
   ngOnInit(): void {
+    void this.mobileVersion.presentBlockIfNeeded();
+
     if (!Capacitor.isNativePlatform()) {
       return;
     }
