@@ -11,6 +11,7 @@ export interface ProviderPaymentMobile {
   bank_code: string;
   id_number: string;
   mobile_number: string;
+  account_number?: string | null;
 }
 
 export interface ServiceOrder {

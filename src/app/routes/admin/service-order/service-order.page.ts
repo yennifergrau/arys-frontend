@@ -550,6 +550,11 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
     const providerRif = rawDoc.trim() || `${benefitDoctype}${benefitDocid}`;
     const bankcode = providerPayment?.bank_code || '';
     const phonenumber = providerPayment?.mobile_number || '';
+    const rawAccountNumber = providerPayment?.account_number;
+    const accountNumber =
+      rawAccountNumber != null && String(rawAccountNumber).trim() !== ''
+        ? String(rawAccountNumber).trim()
+        : null;
     if (!bankcode || !benefitDocid || !phonenumber) {
       this.isApplyingCredit = false;
       this.applyResult = {
@@ -576,7 +581,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
         docid: String(benefitDocid),
         name: order.order.provider_name,
         phonenumber,
-        account: null
+        account: accountNumber
       },
       reference: null,
       ip: '127.0.0.1'
