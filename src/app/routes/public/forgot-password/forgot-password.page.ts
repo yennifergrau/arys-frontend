@@ -16,6 +16,7 @@ import { timer } from 'rxjs';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { HttpClientModule } from '@angular/common/http';
 import { formatValidator } from 'src/utils/match.validator';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-forgot-password',
@@ -137,7 +138,7 @@ export class ForgotPasswordPage {
             
             const payload = {
               to_email:this.FormEmail.get('email')?.value,
-              reset_link:`https://demo-arys.polizaqui.com/restore/${inputEmail}`,
+              reset_link:`${environment.url_app_ventas}/restore/${inputEmail}`,
               user_name:this.FormEmail.get('email')?.value,
               logo_url: 'https://docs.polizaqui.com/logoArys.png'
             }
