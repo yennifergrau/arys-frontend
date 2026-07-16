@@ -10,6 +10,7 @@ export const environment = {
     whatsappServiceMessage: 'Hola, buen día. Quisiera solicitar un servicio; ¿me pueden indicar cómo hacerlo o qué información necesitan?',
   },
 
+  downloadMobileAppLink: 'https://docs.polizaqui.com/arys.apk',
   url_app_ventas: 'https://arys.polizaqui.com',
   authentication: 'https://sarys-auth.polizaqui.com',
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',

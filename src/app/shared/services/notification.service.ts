@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import emailjs from 'emailjs-com';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -11,25 +12,40 @@ export class NotificationService {
     const templateParams = {
       to_email: data.to_email,
       reset_password_link: data.reset_link,
-      user_name:data.user_name,
-      logo_url:data.logo_url
+      user_name: data.user_name,
+      logo_url: data.logo_url,
+      download_app_link: environment.downloadMobileAppLink,
     };
 
     return emailjs.send(
-    'service_cghilso',
-    'template_xsbri3r',
-    templateParams,
-    'k_5UFakYBXg08PFDH'
-  );
+      'service_cghilso',
+      'template_xsbri3r',
+      templateParams,
+      'k_5UFakYBXg08PFDH'
+    );
   }
 
+  /** Bienvenida al crear cuenta — mismo payload que Arys-Poliza (`CREACION_CLIENTE_APP`). */
   public welcomeArysService(data: any) {
+    const username = data?.nombre || data?.username || 'Usuario';
+    const email = data?.email || data?.toEmail || '';
+    const logoUrl = data?.logo_url || data?.logoUrl || 'https://docs.polizaqui.com/logoArys.png';
+    const appHomeUrl = environment.url_app_ventas || 'https://arys.polizaqui.com';
+
     const templateParams = {
-      username: data.username,
-      logo_url: data.logoUrl,
-      to_email: data.toEmail,
-      reset_password_link: data.reset,
+      asunto: '¡Tu cuenta ARYS Auto ha sido creada con éxito!',
+      titulo_principal: '¡BIENVENIDO A ARYS!',
+      username,
+      mensaje_introduccion:
+        'Te confirmamos que tu cuenta ha sido creada exitosamente. ¡Estamos listos para acompañarte en cada kilómetro! 🚀',
+      bloque_detalles: '',
+      texto_boton: '¡Explorar ahora!',
+      reset_password_link: appHomeUrl,
+      to_email: email,
+      logo_url: logoUrl,
+      download_app_link: environment.downloadMobileAppLink,
     };
+
     emailjs
       .send(
         'service_cghilso',

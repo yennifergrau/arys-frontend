@@ -327,13 +327,12 @@ private obtenerMensajeUnico(): string {
   }
 
 
-  private send_email() : void {
-    const welcomeArys = {
-      username: this.formAuth.get('name')?.value + ' ' + this.formAuth.get('sub_ape')?.value,
-      logoUrl: 'https://docs.polizaqui.com/logoArys.png',
-      toEmail:this.formAuth.get('email')?.value,
-      reset:`https://arys.polizaqui.com`
-    }
-    this.notificationService.welcomeArysService(welcomeArys)
+  private send_email(): void {
+    const payload = {
+      email: this.formAuth.get('email')?.value,
+      nombre: `${this.formAuth.get('name')?.value ?? ''} ${this.formAuth.get('sub_ape')?.value ?? ''}`.trim(),
+      logo_url: 'https://docs.polizaqui.com/logoArys.png',
+    };
+    this.notificationService.welcomeArysService(payload);
   }
 }
