@@ -135,6 +135,17 @@
                   thousandSeparator="."
                 />
               </div>
+              <div
+                class="error-messages"
+                *ngIf="rifControl.invalid && (rifControl.dirty || rifControl.touched)"
+              >
+                <small class="text-danger" *ngIf="rifControl.errors?.['required']">
+                  El documento de identidad es obligatorio.
+                </small>
+                <small class="text-danger" *ngIf="rifControl.errors?.['rifTaken']">
+                  Este documento de identidad ya está registrado.
+                </small>
+              </div>
 
               <div
                 class="m-b20 input-group input-lg input-group-icon input-rounded"
@@ -175,6 +186,20 @@
                 />
               </div>
               <div
+                class="error-messages"
+                *ngIf="emailControl.invalid && (emailControl.dirty || emailControl.touched)"
+              >
+                <small class="text-danger" *ngIf="emailControl.errors?.['required']">
+                  El correo electrónico es obligatorio.
+                </small>
+                <small class="text-danger" *ngIf="emailControl.errors?.['formatoEmailInvalido']">
+                  El formato del correo electrónico es inválido.
+                </small>
+                <small class="text-danger" *ngIf="emailControl.errors?.['emailTaken']">
+                  Este correo ya está registrado. Usa otro correo o inicia sesión.
+                </small>
+              </div>
+              <div
                 class="m-b20 input-group input-lg input-group-icon input-rounded"
               >
                 <div class="input-group-text">
@@ -209,6 +234,20 @@
                   class="form-control"
                   placeholder="Verificar Correo"
                 />
+              </div>
+              <div
+                class="error-messages"
+                *ngIf="confirEmailControl.invalid && (confirEmailControl.dirty || confirEmailControl.touched)"
+              >
+                <small class="text-danger" *ngIf="confirEmailControl.errors?.['required']">
+                  La confirmación del correo es obligatoria.
+                </small>
+                <small class="text-danger" *ngIf="confirEmailControl.errors?.['mustMatch']">
+                  Los correos electrónicos no coinciden.
+                </small>
+                <small class="text-danger" *ngIf="confirEmailControl.errors?.['formatoEmailInvalido']">
+                  El formato del correo electrónico es inválido.
+                </small>
               </div>
               <div
                 class="m-b20 input-group input-lg input-group-icon input-rounded"
@@ -286,6 +325,32 @@
                   style="cursor: pointer;"
                   (click)="cambiarShowPassword()"
                 ></i>
+              </div>
+              <div
+                class="error-messages"
+                *ngIf="passwordControl.invalid && (passwordControl.dirty || passwordControl.touched)"
+              >
+                <small class="text-danger" *ngIf="passwordControl.errors?.['required']">
+                  La contraseña es obligatoria.
+                </small>
+                <small class="text-danger" *ngIf="passwordControl.errors?.['passwordMinLength']">
+                  La contraseña debe tener al menos 10 caracteres.
+                </small>
+                <small class="text-danger" *ngIf="passwordControl.errors?.['passwordUppercase']">
+                  Debe incluir al menos una mayúscula.
+                </small>
+                <small class="text-danger" *ngIf="passwordControl.errors?.['passwordLowercase']">
+                  Debe incluir al menos una minúscula.
+                </small>
+                <small class="text-danger" *ngIf="passwordControl.errors?.['passwordNumber']">
+                  Debe incluir al menos un número.
+                </small>
+                <small class="text-danger" *ngIf="passwordControl.errors?.['passwordSymbol']">
+                  Debe incluir al menos un símbolo.
+                </small>
+                <small class="text-danger" *ngIf="passwordControl.errors?.['passwordCommon']">
+                  La contraseña es demasiado común.
+                </small>
               </div>
               <div class="form-check m-b20 w-100">
                 <input

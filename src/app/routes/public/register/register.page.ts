@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, Renderer2 } from '@angular/core';
+import { Component, OnInit, inject, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -38,7 +38,7 @@ type DataControl = register;
   ],
   providers: [AuthService, provideNgxMask()],
 })
-export class RegisterPage {
+export class RegisterPage implements OnInit {
   public formAuth!: FormGroup;
   private _authService = inject(AuthService);
   public showLoading: boolean = false;
@@ -61,12 +61,154 @@ export class RegisterPage {
     this.generateForm();
   }
 
+  ngOnInit(): void {
+    // Si un campo falla por el servidor y el usuario lo cambia, limpiar ese error
+    this.emailControl.valueChanges.subscribe(() => {
+      this.clearServerFieldError(this.emailControl, ['emailTaken', 'serverError']);
+      this.clearToast();
+      this.syncEmailMatchFlags();
+    });
+    this.confirEmailControl.valueChanges.subscribe(() => {
+      this.clearServerFieldError(this.emailControl, ['emailTaken', 'serverError']);
+      this.clearToast();
+      this.syncEmailMatchFlags();
+    });
+    this.rifControl.valueChanges.subscribe(() => {
+      if (this.clearServerFieldError(this.rifControl, ['rifTaken', 'serverError'])) {
+        this.clearToast();
+      }
+    });
+    this.phoneControl.valueChanges.subscribe(() => {
+      if (this.clearServerFieldError(this.phoneControl, ['phoneTaken', 'serverError'])) {
+        this.clearToast();
+      }
+    });
+  }
+
+  private syncEmailMatchFlags(): void {
+    const email = this.emailControl.value ?? '';
+    const confirm = this.confirEmailControl.value ?? '';
+    this.correoNoCoincide = email !== confirm && confirm !== '';
+    this.correoCoincide = email === confirm && this.emailControl.valid && email !== '';
+  }
+
+  /** @returns true si había un error de servidor y se limpió */
+  private clearServerFieldError(ctrl: AbstractControl, keys: string[]): boolean {
+    const hasAny = keys.some((key) => ctrl.hasError(key));
+    if (!hasAny) return false;
+    const errors = { ...(ctrl.errors || {}) };
+    keys.forEach((key) => delete errors[key]);
+    ctrl.setErrors(Object.keys(errors).length ? errors : null);
+    return true;
+  }
+
+  private clearToast(): void {
+    const toastContainer = document.getElementById('toastContainer');
+    if (toastContainer) {
+      toastContainer.innerHTML = '';
+    }
+  }
+
+  private extractRegisterErrorMessage(error: any): {
+    message: string;
+    field: 'email' | 'rif' | 'phone' | 'password' | null;
+  } {
+    const body = error?.error;
+    const status = error?.status;
+    const nestedErrors = body && typeof body === 'object' ? body.errors : undefined;
+    const emailFieldErrors: string[] = [];
+    const rifFieldErrors: string[] = [];
+    const phoneFieldErrors: string[] = [];
+
+    if (nestedErrors?.email) {
+      emailFieldErrors.push(...(Array.isArray(nestedErrors.email) ? nestedErrors.email : [String(nestedErrors.email)]));
+    }
+    if (nestedErrors?.correo) {
+      emailFieldErrors.push(...(Array.isArray(nestedErrors.correo) ? nestedErrors.correo : [String(nestedErrors.correo)]));
+    }
+    if (nestedErrors?.rif) {
+      rifFieldErrors.push(...(Array.isArray(nestedErrors.rif) ? nestedErrors.rif : [String(nestedErrors.rif)]));
+    }
+    if (nestedErrors?.documento) {
+      rifFieldErrors.push(...(Array.isArray(nestedErrors.documento) ? nestedErrors.documento : [String(nestedErrors.documento)]));
+    }
+    if (nestedErrors?.phone || nestedErrors?.telefono) {
+      const phoneErr = nestedErrors?.phone ?? nestedErrors?.telefono;
+      phoneFieldErrors.push(...(Array.isArray(phoneErr) ? phoneErr : [String(phoneErr)]));
+    }
+
+    const rawMessage = String(
+      (typeof body === 'string' ? body : '') ||
+      body?.message ||
+      body?.error ||
+      body?.msg ||
+      emailFieldErrors[0] ||
+      rifFieldErrors[0] ||
+      phoneFieldErrors[0] ||
+      ''
+    ).trim();
+    const lower = rawMessage.toLowerCase();
+
+    const looksLikeRifError =
+      rifFieldErrors.length > 0 ||
+      /(documento|identidad|cedula|cédula|\brif\b)/.test(lower);
+
+    if (looksLikeRifError) {
+      return {
+        message: rawMessage || 'Este documento de identidad ya está registrado.',
+        field: 'rif',
+      };
+    }
+
+    const looksLikePhoneError =
+      phoneFieldErrors.length > 0 ||
+      /(tel[eé]fono|\bphone\b|celular)/.test(lower);
+
+    if (looksLikePhoneError) {
+      return {
+        message: rawMessage || 'Este teléfono ya está registrado.',
+        field: 'phone',
+      };
+    }
+
+    // Español e inglés: "Email already registered", "correo ya registrado", etc.
+    const looksLikeEmailError =
+      emailFieldErrors.length > 0 ||
+      status === 409 ||
+      /email already|already registered|e-?mail.*regist|correo ya|ya .*registr|usuario ya/.test(lower) ||
+      (/(e-?mail|correo|usuario)/.test(lower) &&
+        /(already|exist|ya|regist|duplicate|unique|tomado|usado|ocupado)/.test(lower));
+
+    if (looksLikeEmailError) {
+      return {
+        message: 'Este correo ya está registrado. Usa otro correo o inicia sesión.',
+        field: 'email',
+      };
+    }
+
+    if (status === 422) {
+      const pwdHint = /password|contrase[nñ]a|clave/.test(lower);
+      return {
+        message: rawMessage || (pwdHint
+          ? 'La contraseña no cumple los requisitos de seguridad.'
+          : 'Revisa los datos del formulario e intenta nuevamente.'),
+        field: pwdHint ? 'password' : null,
+      };
+    }
+
+    // 400 genérico sin pista clara: mostrar mensaje del API, sin marcar correo
+    return {
+      message: rawMessage || 'No se pudo completar el registro. Intenta nuevamente.',
+      field: null,
+    };
+  }
+
   public verificarCoincidencia(event: Event) {
     const inputElement = event.target as HTMLInputElement;
     const correoVerificado = inputElement.value;
     const correoTomador = this.formAuth.get('email')?.value;
     this.correoNoCoincide = correoTomador !== correoVerificado;
-    this.correoCoincide = (correoTomador === correoVerificado) && this.emailControl.valid;  
+    this.correoCoincide = (correoTomador === correoVerificado) && this.emailControl.valid;
   }
 
   public onTerminosChange() {
@@ -86,10 +228,10 @@ export class RegisterPage {
       ]),
       rif: new FormControl('', [Validators.required]),
       prefix: new FormControl('V', Validators.required),
-      email: new FormControl('', [Validators.required, 
+      email: new FormControl('', [Validators.required,
         formatValidator(this.REGEX_EMAIL, 'formatoEmailInvalido')
       ]),
-      confirEmail: new FormControl('', [Validators.required, 
+      confirEmail: new FormControl('', [Validators.required,
         formatValidator(this.REGEX_EMAIL, 'formatoEmailInvalido')
       ]),
       phone: new FormControl('', [Validators.required,
@@ -100,7 +242,7 @@ export class RegisterPage {
       ]),
       credit: ('false')
     }, {
-      validators: matchFieldsValidator('email', 'confirEmail') 
+      validators: matchFieldsValidator('email', 'confirEmail')
     });
   }
 
@@ -198,56 +340,72 @@ export class RegisterPage {
     return digits;
   }
 
-private procesarErroresDeFormulario() {
-  const erroresActivos: string[] = [];
-  
-  // Lista de controles a revisar
-  const controles = ['name', 'sub_ape', 'email', 'confirEmail', 'phone', 'password', 'rif'];
+  private procesarErroresDeFormulario() {
+    const mensajesError: string[] = [];
+    const nombresLegibles: Record<string, string> = {
+      name: 'nombre',
+      sub_ape: 'apellido',
+      rif: 'documento de identidad',
+      email: 'correo electrónico',
+      confirEmail: 'confirmación de correo',
+      phone: 'teléfono',
+      password: 'contraseña',
+    };
 
-  controles.forEach(key => {
-    const control = this.formAuth.get(key);
-    
-    // Si el control individual tiene errores (como formatoEmailInvalido)
-    if (control?.invalid && control.touched) {
-      const errorKeys = Object.keys(control.errors || {});
-      errorKeys.forEach(errorKey => {
-        // Agregamos un identificador único por cada error de cada campo
-        erroresActivos.push(`${key}-${errorKey}`);
-      });
+    const campos = ['name', 'sub_ape', 'rif', 'email', 'confirEmail', 'phone', 'password'];
+
+    for (const campo of campos) {
+      const control = this.formAuth.get(campo);
+      const nombreMostrar = nombresLegibles[campo];
+
+      if (!control?.errors) continue;
+
+      if (control.hasError('required')) {
+        mensajesError.push(`El campo ${nombreMostrar} es obligatorio.`);
+      }
+      if (control.hasError('formatoNombreInvalido') || control.hasError('formatoApellidoInvalido')) {
+        mensajesError.push(`El ${nombreMostrar} no tiene el formato correcto (solo letras).`);
+      }
+      if (control.hasError('formatoEmailInvalido')) {
+        mensajesError.push('El formato del correo electrónico es inválido.');
+      }
+      if (control.hasError('formatoTelefonoInvalido')) {
+        mensajesError.push('El formato del teléfono debe ser venezolano.');
+      }
+      if (control.hasError('emailTaken')) {
+        mensajesError.push('Este correo ya está registrado. Usa otro correo o inicia sesión.');
+      }
+      if (control.hasError('rifTaken')) {
+        mensajesError.push('Este documento de identidad ya está registrado.');
+      }
+      if (control.hasError('phoneTaken')) {
+        mensajesError.push('Este teléfono ya está registrado.');
+      }
+      if (control.hasError('mustMatch')) {
+        mensajesError.push('Los correos electrónicos no coinciden.');
+      }
+
+      const pwdMsg = strongPasswordErrorMessage(control.errors, 10);
+      if (pwdMsg) {
+        mensajesError.push(pwdMsg);
+      }
     }
-  });
 
-  // Revisar error de coincidencia (que está en el grupo, no en el control)
-  if (this.formAuth.hasError('mustMatch')) {
-    erroresActivos.push('coincidencia-fallida');
+    if (this.showTerminosError) {
+      mensajesError.push('Debes aceptar los términos y condiciones.');
+    }
+
+    if (mensajesError.length > 0) {
+      const mensajesUnicos = [...new Set(mensajesError)];
+      if (mensajesUnicos.length === 1) {
+        this.mostrarToast(mensajesUnicos[0], 'toast-error');
+      } else {
+        this.mostrarToast(mensajesUnicos.slice(0, 3).join(' '), 'toast-error');
+      }
+    } else {
+      this.mostrarToast('Por favor, corrige todos los errores marcados en el formulario.', 'toast-error');
+    }
   }
-
-  // Agregamos el error de términos si falta
-  if (this.showTerminosError) {
-    erroresActivos.push('Debes aceptar los términos y condiciones.');
-  }
-
-  // Lógica de visualización
-  if (erroresActivos.length === 1) {
-    // Solo hay UN error en toda la pantalla (ej: solo falta un campo)
-    const mensaje = this.obtenerMensajeUnico();
-    this.mostrarToast(mensaje, 'toast-error');
-  } else {
-    // Hay múltiples errores (ej: joel y joel = 2 errores de formato)
-    this.mostrarToast('Revisar la información suministrada, existen campos con formato inválido o vacíos.', 'toast-error');
-  }
-}
-
-
-private obtenerMensajeUnico(): string {
-  // Retorna el mensaje específico dependiendo de qué error quedó solo
-  if (this.formAuth.hasError('mustMatch')) return 'Los correos electrónicos no coinciden.';
-  const pwdMsg = strongPasswordErrorMessage(this.passwordControl.errors, 10);
-  if (pwdMsg) return pwdMsg;
-  if (!this.isTerminosAccepted) return 'Debes aceptar los términos y condiciones.';
-  return 'Por favor, verifique el campo marcado en rojo.';
-}
-
 
   public async Submit() {
     this.formAuth.markAllAsTouched();
@@ -288,36 +446,43 @@ private obtenerMensajeUnico(): string {
 
         this._authService.register(data).subscribe({
           next: async (response) => {
+            this.showLoading = false;
             this.mostrarToast('¡Registro exitoso!', 'toast-success');
             this.send_email();
             timer(4000).subscribe(() => {
               this.navCtrl.navigateRoot('/login');
             });
           },
-          error:async (err: HttpErrorResponse) => {
+          error: async (err: HttpErrorResponse) => {
             this.showLoading = false;
-            const serverMsg = err?.error?.message ? String(err.error.message) : '';
             if (err.status >= 500) {
-              await this.mostrarToast(
-                `Error de comunicación, ${err.status}`,
-                'toast-error'
-              );
-            } else if (err.status === 422) {
-              await this.mostrarToast(
-                serverMsg || 'La contraseña no cumple los requisitos de seguridad.',
-                'toast-error'
-              );
-            } else if (err.status === 400) {
-              await this.mostrarToast(
-                serverMsg || 'Usuario ya está registrado',
-                'toast-error'
-              );
-            } else {
-              await this.mostrarToast(
-                serverMsg || 'No se pudo completar el registro. Intenta nuevamente.',
-                'toast-error'
-              );
+              this.mostrarToast(`Error de comunicación, ${err.status}`, 'toast-error');
+              return;
             }
+
+            const { message, field } = this.extractRegisterErrorMessage(err);
+
+            if (field === 'email') {
+              this.emailControl.setErrors({
+                ...(this.emailControl.errors || {}),
+                emailTaken: true,
+              });
+              this.emailControl.markAsTouched();
+            } else if (field === 'rif') {
+              this.rifControl.setErrors({
+                ...(this.rifControl.errors || {}),
+                rifTaken: true,
+              });
+              this.rifControl.markAsTouched();
+            } else if (field === 'phone') {
+              this.phoneControl.setErrors({
+                ...(this.phoneControl.errors || {}),
+                phoneTaken: true,
+              });
+              this.phoneControl.markAsTouched();
+            }
+
+            this.mostrarToast(message, 'toast-error');
           },
         });
     } catch (e) {

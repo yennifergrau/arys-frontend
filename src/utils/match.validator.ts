@@ -2,6 +2,7 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 /**
  * Validador para un FormGroup que verifica si dos campos tienen el mismo valor.
+ * Preserva otros errores del control (p. ej. formato o fortaleza de contraseña).
  * @param controlName El nombre del campo maestro (ej. 'email')
  * @param matchingControlName El nombre del campo de confirmación (ej. 'confirEmail')
  * @returns {ValidatorFn}
@@ -14,28 +15,31 @@ export const matchFieldsValidator = (
     const control = formGroup.get(controlName);
     const matchingControl = formGroup.get(matchingControlName);
 
-    // Si no existen los controles, no validar
     if (!control || !matchingControl) {
       return null;
     }
 
-    // Si ya hay un error en el campo de confirmación por otra regla (ej. formato), no añadir el error de coincidencia
-    if (matchingControl.errors && !matchingControl.errors['mustMatch']) {
-      return null;
+    const clearMustMatch = (ctrl: AbstractControl) => {
+      if (!ctrl.errors?.['mustMatch']) {
+        return;
+      }
+      const { mustMatch: _ignored, ...rest } = ctrl.errors;
+      ctrl.setErrors(Object.keys(rest).length ? rest : null);
+    };
+
+    const setMustMatch = (ctrl: AbstractControl) => {
+      ctrl.setErrors({ ...(ctrl.errors || {}), mustMatch: true });
+    };
+
+    if (control.value !== matchingControl.value) {
+      setMustMatch(control);
+      setMustMatch(matchingControl);
+      return { mustMatch: true };
     }
 
-    // Lógica de Coincidencia
-    if (control.value !== matchingControl.value) {
-      // Establecer el error en el control de confirmación
-      control.setErrors({ mustMatch: true }); 
-      matchingControl.setErrors({ mustMatch: true }); 
-      return { mustMatch: true }; // Opcional: establecer el error también en el FormGroup
-    } else {
-      // Limpiar el error si coinciden
-      control.setErrors(null);
-      matchingControl.setErrors(null);
-      return null;
-    }
+    clearMustMatch(control);
+    clearMustMatch(matchingControl);
+    return null;
   };
 };
 
