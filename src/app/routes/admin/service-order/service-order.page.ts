@@ -1,6 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TabComponent } from 'src/app/shared/components/tab/tab.component';
 import { ServiceOrderService } from '../services/service-order.service';
@@ -32,7 +31,6 @@ import { catchError, of } from 'rxjs';
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     IonicModule,
     RouterLink,
     TabComponent,
@@ -79,8 +77,6 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
 
   public activeOrderId: string | null = null
   public creditInfo: CreditInfo | null = null
-  public selectedCredit: number | null = null
-  public maxCredit: number = 0
   public isApplyingCredit: boolean = false
   public applyResult: ApplyCreditResponse | null = null
   private orderDetails: any = null
@@ -425,14 +421,8 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
             available: resolvedAvailable
           }
           this.orderDetails = result
-          const available = resolvedAvailable
-          const orderAmount = this.orderAmountBs(order)
-          this.maxCredit = parseFloat(Math.min(available, orderAmount).toFixed(2))
-          this.selectedCredit = this.maxCredit > 0 ? this.maxCredit : null
         } else {
           this.creditInfo = null
-          this.maxCredit = 0
-          this.selectedCredit = null
           this.creditPanelMessage =
             result?.message ||
             'No se pudo obtener la información de crédito para esta orden.'
@@ -441,66 +431,40 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       error: () => {
         this.isLoadingCreditPanel = false
         this.creditInfo = null
-        this.maxCredit = 0
-        this.selectedCredit = null
         this.creditPanelMessage = 'Error al cargar el detalle de la orden.'
       }
     })
   }
 
-  clearLeadingZero() {
-    if (this.selectedCredit === 0) {
-      this.selectedCredit = null
-    }
-  }
-
-  onAmountChange(value: number | string | null, orderAmount: number | string) {
-    const safeOrderAmount = this.toNumber(orderAmount)
-    if (value === null || value === '') {
-      this.selectedCredit = null
-      return
-    }
-
-    const parsed = this.toNumber(value)
-    if (Number.isNaN(parsed)) {
-      this.selectedCredit = null
-      return
-    }
-
-    let normalized = Math.max(0, parsed)
-    if (normalized > this.maxCredit) {
-      normalized = this.maxCredit
-    }
-
-    this.selectedCredit = parseFloat(normalized.toFixed(2))
-  }
-
-  useFullOrder(orderAmountUsd: number | string) {
-    const safeOrderAmount = this.usdToBs(orderAmountUsd)
-    this.selectedCredit = Math.min(safeOrderAmount, this.maxCredit);
-  }
-
-  useMaxAvailable() {
-    this.selectedCredit = this.maxCredit;
-  }
-
   confirmarConsumo(orderId: string) {
-    const amountToApply = Number(this.selectedCredit ?? 0);
     if (!orderId) {
       this.applyResult = { status: false, message: 'No se encontró el id de la orden.' };
       return;
     }
-    if (amountToApply <= 0) {
-      this.applyResult = { status: false, message: 'El monto a consumir debe ser mayor a 0.' };
-      return;
-    }
-
 
     const order = this.orderDetails;
     if (!order) {
       this.applyResult = {
         status: false,
         message: 'Primero abre el panel de la orden para cargar el detalle antes de confirmar.'
+      };
+      return;
+    }
+
+    const amountToApply = this.usdToBs(order?.order?.amount);
+    if (amountToApply <= 0) {
+      this.applyResult = {
+        status: false,
+        message: 'No se pudo calcular el monto total de la orden. Verifica la tasa BCV.'
+      };
+      return;
+    }
+
+    const available = this.toNumber(this.creditInfo?.available);
+    if (available < amountToApply) {
+      this.applyResult = {
+        status: false,
+        message: 'Tu crédito disponible no alcanza para cubrir el total de la orden.'
       };
       return;
     }

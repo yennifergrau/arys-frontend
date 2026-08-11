@@ -131,40 +131,43 @@
               </span>
             </div>
 
-            <div class="amount-preview">
-              @if(bcvRateReady){
-                {{ formatBs(orderAmountBs(order)) }} Bs
-              } @else {
-                <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
-              }
-            </div>
-
-            <div class="detail-list">
-              <div class="detail">
-                <span>Proveedor</span>
-                <strong>{{order.provider_name}}</strong>
+            <div class="amount-block">
+              <span class="amount-label">Total de la orden</span>
+              <div class="amount-preview">
+                @if(bcvRateReady){
+                  {{ formatBs(orderAmountBs(order)) }} Bs
+                } @else {
+                  <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
+                }
               </div>
-              <div class="detail">
-                <span>Fecha</span>
-                <strong>{{order.created_at | date:'dd/MM/yyyy HH:mm'}}</strong>
-              </div>
-              @if(order.payment_mobile_data){
-                <div class="detail">
-                  <span>Banco destino</span>
-                  <strong>{{order.payment_mobile_data.bank}}</strong>
-                </div>
-                <div class="detail">
-                  <span>Documento comercio</span>
-                  <strong>{{order.payment_mobile_data.document}}</strong>
-                </div>
-                <div class="detail">
-                  <span>Telefono pago movil</span>
-                  <strong>{{order.payment_mobile_data.phone}}</strong>
-                </div>
-              }
             </div>
 
             @if(activeOrderId === order.order_id){
+
+              <div class="detail-list">
+                <div class="detail">
+                  <span>Proveedor</span>
+                  <strong>{{order.provider_name}}</strong>
+                </div>
+                <div class="detail">
+                  <span>Fecha</span>
+                  <strong>{{order.created_at | date:'dd/MM/yyyy HH:mm'}}</strong>
+                </div>
+                @if(order.payment_mobile_data){
+                  <div class="detail">
+                    <span>Banco destino</span>
+                    <strong>{{order.payment_mobile_data.bank}}</strong>
+                  </div>
+                  <div class="detail">
+                    <span>Documento comercio</span>
+                    <strong>{{order.payment_mobile_data.document}}</strong>
+                  </div>
+                  <div class="detail">
+                    <span>Telefono pago movil</span>
+                    <strong>{{order.payment_mobile_data.phone}}</strong>
+                  </div>
+                }
+              </div>
 
               @if(isLoadingCreditPanel){
                 <div class="loader"><span></span><span></span><span></span></div>
@@ -175,59 +178,36 @@
                   <i class="feather icon-alert-circle"></i>
                   <p>{{ creditPanelMessage || 'No hay información de crédito para mostrar.' }}</p>
                 </div>
+                <div class="btn-row">
+                  <button class="btn btn-secondary" type="button" (click)="toggleCreditPanel(order)">
+                    Cancelar
+                  </button>
+                </div>
               }
 
               @if(!isLoadingCreditPanel && creditInfo !== null){
                 <div class="so-purchase-panel">
-
-                  <div class="section-title">Cuanto deseas pagar con ARYS?</div>
-                  <p class="section-sub">
-                    Puede ser total o parcial, sin exceder el disponible.
-                    <br>Disponible: <strong>{{formatBs(creditInfo.available)}} Bs</strong>
-                  </p>
-
-                  @if(maxCredit > 0){
-
-                    <div class="field">
-                      <label>Monto a consumir (Bs)</label>
-                      <input
-                        type="text"
-                        inputmode="decimal"
-                        [(ngModel)]="selectedCredit"
-                        (focus)="clearLeadingZero()"
-                        (ngModelChange)="onAmountChange($event, orderAmountBs(order))"
-                        [disabled]="isApplyingCredit || !!applyResult?.status"
-                      />
-                    </div>
-
+                  @if(creditInfo.available >= orderAmountBs(order) && orderAmountBs(order) > 0){
                     <div class="btn-row">
                       <button
-                        class="btn btn-secondary"
-                        (click)="useFullOrder(order.amount)"
-                        [disabled]="isApplyingCredit || !!applyResult?.status">
-                        Usar total de la orden
-                      </button>
-                      <button
-                        class="btn btn-secondary"
-                        (click)="useMaxAvailable()"
-                        [disabled]="isApplyingCredit || !!applyResult?.status">
-                        Usar maximo disponible
-                      </button>
-                      <button
                         class="btn btn-primary"
+                        type="button"
                         (click)="confirmarConsumo(order.order_id)"
-                        [disabled]="isApplyingCredit || !selectedCredit || selectedCredit <= 0 || !!applyResult?.status">
+                        [disabled]="isApplyingCredit || !bcvRateReady || !!applyResult?.status">
                         @if(isApplyingCredit){
                           Procesando...
                         } @else {
-                          Confirmar consumo
+                          Confirmar pago
                         }
                       </button>
+                      <button
+                        class="btn btn-secondary"
+                        type="button"
+                        (click)="toggleCreditPanel(order)"
+                        [disabled]="isApplyingCredit">
+                        Cancelar
+                      </button>
                     </div>
-
-
-
-
 
                     @if(applyResult){
                       <div class="so-result" [class.so-result--ok]="applyResult.status" [class.so-result--err]="!applyResult.status">
@@ -235,11 +215,23 @@
                         <p>{{ applyResult.message }}</p>
                       </div>
                     }
-
+                  } @else if(creditInfo.available > 0) {
+                    <p class="so-no-credit">
+                      Tu crédito disponible no alcanza para cubrir el total de la orden.
+                    </p>
+                    <div class="btn-row">
+                      <button class="btn btn-secondary" type="button" (click)="toggleCreditPanel(order)">
+                        Cerrar
+                      </button>
+                    </div>
                   } @else {
-                    <p class="so-no-credit">No tienes credito disponible en este momento.</p>
+                    <p class="so-no-credit">No tienes crédito disponible en este momento.</p>
+                    <div class="btn-row">
+                      <button class="btn btn-secondary" type="button" (click)="toggleCreditPanel(order)">
+                        Cerrar
+                      </button>
+                    </div>
                   }
-
                 </div>
               }
             }
@@ -264,14 +256,15 @@
               </div>
             }
 
-            @if(order.status === 'pending'){
+            @if(order.status === 'pending' && activeOrderId !== order.order_id){
               <div class="btn-row">
                 <button
                   class="btn btn-primary"
+                  type="button"
                   (click)="toggleCreditPanel(order)"
                   [disabled]="!bcvRateReady">
                   <i class="fa-sharp fa-solid fa-credit-card font-15"></i>
-                  {{ activeOrderId === order.order_id ? 'Cerrar panel' : 'Pagar con credito ARYS' }}
+                  Pagar con crédito ARYS
                 </button>
               </div>
             }
