@@ -3,6 +3,11 @@
     padding: 10px;
   }
 
+  .border-rounded.is-active {
+    border-color: #ffb000 !important;
+    background: rgba(255, 176, 0, 0.08);
+  }
+
   .error{
     text-align: center;
     margin: 20px;
@@ -11,10 +16,42 @@
     font-weight: 500;
   }
 
+  .hint {
+    margin: 8px 10px 4px;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+  }
+
   .font{
     font-size: 9px;
   }
 
   .mrg{
     margin: 10px;
+  }
+
+  .view-cart ul li:first-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .badge-active {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #5c3800;
+    background: rgba(255, 176, 0, 0.28);
+    border-radius: 999px;
+    padding: 4px 10px;
+  }
+
+  .membership-action {
+    min-height: 44px;
+    margin-top: 8px;
   }

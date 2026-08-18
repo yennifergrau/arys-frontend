@@ -2,7 +2,11 @@ import { inject, Injectable } from '@angular/core';
 import { DataArysService } from './data-arys.service';
 import { jwtDecode } from 'jwt-decode';
 import { firstValueFrom } from 'rxjs';
-import { membershipHasCreditLine, membershipMatchesUserCedrif } from '../utils/meritop-identity.util';
+import {
+  membershipHasCreditLine,
+  membershipMatchesUserCedrif,
+  pickActiveMembershipRow,
+} from '../utils/meritop-identity.util';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 export type UserAccessState = {
@@ -58,6 +62,18 @@ export class UserAccessService {
     sessionStorage.removeItem(STORAGE_KEY);
   }
 
+  /** Actualiza el acceso según la membresía que el usuario eligió usar. */
+  applyFromMembership(row: Record<string, unknown> | null | undefined): void {
+    const id = row?.['id_master'] != null ? Number(row['id_master']) : NaN;
+    const resolved = Number.isFinite(id) && id > 0 ? id : null;
+    this.setState({
+      loaded: true,
+      hasMembership: resolved != null,
+      hasCreditLine: membershipHasCreditLine(row),
+      idMember: resolved,
+    });
+  }
+
   private setState(next: UserAccessState): void {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   }
@@ -107,17 +123,17 @@ export class UserAccessService {
           )
         : [];
       const hasMembership = rows.length > 0;
-      const first = rows[0];
+      const picked = pickActiveMembershipRow(rows, { idMember });
       const resolvedIdMember =
-        first?.id_master != null && !Number.isNaN(Number(first.id_master))
-          ? Number(first.id_master)
+        picked?.['id_master'] != null && !Number.isNaN(Number(picked['id_master']))
+          ? Number(picked['id_master'])
           : idMember;
 
-      if (resolvedIdMember != null) {
+      if (resolvedIdMember != null && resolvedIdMember > 0) {
         sessionStorage.setItem('id_member', String(resolvedIdMember));
       }
 
-      const hasCreditLine = rows.some((r: any) => membershipHasCreditLine(r));
+      const hasCreditLine = membershipHasCreditLine(picked);
 
       const next: UserAccessState = {
         loaded: true,

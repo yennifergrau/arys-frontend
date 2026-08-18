@@ -42,6 +42,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
+import { MembershipSessionService } from '../services/membership-session.service';
 
 type ServiceOption = {
   id: string;
@@ -83,6 +84,7 @@ export class DashboardPage implements OnInit, ViewWillEnter {
   private arys_service = inject(DataArysService)
   private meritopCache = inject(MeritopSummaryCacheService)
   private tokenStore = inject(TokenStoreService)
+  private membershipSession = inject(MembershipSessionService)
   public isHidden: boolean = true;
   public json_customer: customer[] | any;
   private emission = inject(EmissionService);
@@ -97,6 +99,8 @@ export class DashboardPage implements OnInit, ViewWillEnter {
   public data_membership: any[] | null = null;
   public hasPendingOrder: boolean = false;
   public pendingOrdersCount: number = 0;
+  private decodeData: any = {};
+  private loadedMemberId: string | null = null;
 
   // Control de carga: la UX debe esperar a que todo esté listo
   private loadState = {
@@ -823,6 +827,13 @@ export class DashboardPage implements OnInit, ViewWillEnter {
   }
 
   ionViewWillEnter() {
+    const currentId = sessionStorage.getItem('id_member');
+    if (this.loadedMemberId != null && currentId !== this.loadedMemberId) {
+      this.showLoading = true;
+      this.loadState = { membership: false, meritop: false, pendingOrders: false };
+      this.loadMembershipForUser(this.decodeData, currentId ? Number(currentId) : null);
+      return;
+    }
     if (this.loadState.membership) {
       this.fetchMeritopProduct(true);
       void this.checkPendingOrders();
@@ -931,8 +942,12 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     }
   }
 
-  get hasAnyCreditLine(): boolean {
-    return this.membershipList.some(m => m.has_credit);
+  get hasMultipleMemberships(): boolean {
+    return this.membershipSession.getAvailableCount() > 1;
+  }
+
+  public cambiarMembresia(): void {
+    void this.router.navigate(['/admin/membresia/user']);
   }
 
   get hasAnyDebt(): boolean {
@@ -1043,7 +1058,7 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     this.loadState = { membership: false, meritop: false, pendingOrders: false };
     const dataUser : any = this.tokenStore.getAccessTokenSync()
     const decodeData: any = dataUser ? jwtDecode(dataUser) : {}
-    console.log(decodeData)
+    this.decodeData = decodeData
     this.username = decodeData?.name + ' ' + decodeData?.sub_ape
 
     // Placa por defecto: preferimos `userData` (localStorage). Fallback: token.
@@ -1083,6 +1098,8 @@ export class DashboardPage implements OnInit, ViewWillEnter {
         ? result.data.filter((row: any) => membershipMatchesUserCedrif(row, decodeData))
         : [];
 
+    this.membershipSession.rememberAvailableCount(rows.length);
+
     const stored = sessionStorage.getItem('id_member');
     const sessionIdMember = stored ? Number(stored) : NaN;
     const picked = pickActiveMembershipRow(rows, {
@@ -1091,19 +1108,36 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     });
 
     this.data_membership = picked ? [picked] : [];
-    if (picked?.['id_master'] != null) {
-      sessionStorage.setItem('id_member', String(picked['id_master']));
+    if (picked) {
+      this.membershipSession.activate(picked);
+      this.loadedMemberId = String(picked['id_master']);
+    } else {
+      this.loadedMemberId = null;
     }
   }
 
   private async finalizeMembershipLoad(decodeData: any): Promise<void> {
     const first = this.data_membership?.[0];
+    this.syncPlateFromMembership(decodeData, first);
     this.verifySarysMembership(decodeData, first);
     await this.checkPendingOrders();
     this.syncUserDataFromMembershipRows();
     this.loadMeritopSummary();
     this.loadState.membership = true;
     this.finishIfReady();
+  }
+
+  private syncPlateFromMembership(decodeData: any, membershipRow?: any): void {
+    const plateFromRow = String(
+      membershipRow?.vehicle_plate || membershipRow?.plate || membershipRow?.placa || ''
+    ).trim();
+    const plateFromToken = String(decodeData?.plate || decodeData?.placa || '').trim();
+    const plate = plateFromRow || plateFromToken;
+    if (plate) {
+      this.defaultPlate = plate;
+      this.waPlate = plate;
+      this.buyPlate = plate;
+    }
   }
 
   private loadMembershipForUser(decodeData: any, idMember: number | null): void {

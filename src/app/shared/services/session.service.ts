@@ -68,6 +68,7 @@ export class SessionService {
       'accessToken',
       'arys_access_state_v1',
       'id_member',
+      'arys_membership_count',
       'meritop_summary_v1',
       'pending_orders_v1',
       'tokenExpirationTime',

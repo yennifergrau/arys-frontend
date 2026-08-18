@@ -24,6 +24,7 @@
   flex-direction: column;
   width: 100%;
   min-height: 100vh;
+  overflow-y: auto;
 }
 
 /* ════════════════════════════
@@ -220,4 +221,59 @@ select#prefix {
   .input-group:focus-within & {
     border-color: #ffb000 !important;
   }
+}
+
+.av-member-list {
+  display: grid;
+  gap: 12px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+.av-member-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+.av-member-card__title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #111;
+}
+
+.av-member-card__line {
+  font-size: 13px;
+  color: #666;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.av-member-card__cta {
+  margin-top: 8px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #5c3800;
+}
+
+.av-back-picker {
+  margin-top: 10px;
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  color: #555;
 }

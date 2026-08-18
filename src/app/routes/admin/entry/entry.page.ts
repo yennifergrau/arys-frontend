@@ -10,7 +10,7 @@ import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { DataArysService } from '../services/data-arys.service';
 import { ServiceOrderService } from '../services/service-order.service';
 import { EmissionDetailsService } from '../services/emission-details.service';
-import { membershipHasCreditLine } from '../utils/meritop-identity.util';
+import { membershipHasCreditLine, pickActiveMembershipRow } from '../utils/meritop-identity.util';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
 @Component({
@@ -78,11 +78,15 @@ export class EntryPage implements OnInit {
             ? await firstValueFrom(this.arys.get_membership_by_email(String(tokenInfo.email)))
             : null;
 
-      const first = res?.data?.[0] ?? null;
-      if (first?.id_master != null) {
-        sessionStorage.setItem('id_member', String(first.id_master));
+      const rows = res?.status && Array.isArray(res.data) ? res.data : (res?.data ? [res.data] : []);
+      const storedId = stored != null && String(stored).trim() !== '' ? Number(stored) : null;
+      const picked = pickActiveMembershipRow(rows, {
+        idMember: storedId != null && !Number.isNaN(storedId) && storedId > 0 ? storedId : idMember,
+      });
+      if (picked?.['id_master'] != null) {
+        sessionStorage.setItem('id_member', String(picked['id_master']));
       }
-      return first;
+      return picked;
     } catch {
       return null;
     }

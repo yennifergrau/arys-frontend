@@ -49,6 +49,15 @@
                     <div class="dashboard-section__title">Mi Membresía y Crédito</div>
                     <div class="dashboard-section__subtitle">Saldos, deuda y fecha de pago.</div>
                   </div>
+                  @if (hasMultipleMemberships) {
+                    <button
+                      type="button"
+                      class="dashboard-section__switch"
+                      (click)="cambiarMembresia()"
+                    >
+                      Cambiar
+                    </button>
+                  }
                 </div>
 
                 <ul class="membership-grid">
@@ -176,7 +185,7 @@
                   } @empty {
                     <li class="membership-card membership-card--empty">
                       <div class="membership-card__empty">
-                        No se encontraron membresías. Abre «Mis membresías» en la barra inferior o vuelve a iniciar sesión si acabas de registrar tu póliza.
+                        No se encontraron membresías. Vuelve a iniciar sesión si acabas de registrar tu póliza.
                       </div>
                     </li>
                   }

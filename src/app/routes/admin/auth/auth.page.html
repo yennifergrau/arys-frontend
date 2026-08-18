@@ -1,11 +1,58 @@
 <div class="body-bg2">
   <div class="page-wrapper full-height">
     <main class="page-content">
-      <div class="container pt-0 overflow-hidden">
+      <div class="container pt-0" [class.overflow-hidden]="!showMembershipPicker">
         <div class="ic-authentication-area ic-flex-box">
 
           @if (showSpinner) {
             <app-spinner message="Verificando tu membresía..." />
+          }
+
+          @if (showMembershipPicker) {
+            <div class="av-screen">
+              <div class="av-hero">
+                <div class="av-hero__circles">
+                  <span class="av-hero__c1"></span>
+                  <span class="av-hero__c2"></span>
+                </div>
+                <div class="av-hero__symbol">
+                  <img src="assets/imagenes/icon/favicon.png" alt="Arys" />
+                </div>
+                <div class="av-hero__label">CLUB ARYS</div>
+                <div class="av-hero__sub">Elige tu membresía</div>
+              </div>
+
+              <div class="av-content">
+                <h2 class="av-heading">Tienes varias membresías</h2>
+                <p class="av-desc">
+                  Selecciona con cuál quieres entrar. Podrás cambiarla después en Mis membresías.
+                </p>
+
+                <div class="av-member-list">
+                  @for (row of membershipChoices; track row.id_master) {
+                    <button
+                      type="button"
+                      class="av-member-card"
+                      (click)="selectMembership(row)"
+                    >
+                      <div class="av-member-card__title">{{ row.name || 'Membresía' }}</div>
+                      <div class="av-member-card__line">
+                        {{ membershipVehicleLabel(row) }}
+                      </div>
+                      @if (row.vehicle_plate) {
+                        <div class="av-member-card__line">Placa {{ row.vehicle_plate }}</div>
+                      }
+                      @if (row.certificate || row.certificado) {
+                        <div class="av-member-card__line">
+                          Certificado {{ row.certificate || row.certificado }}
+                        </div>
+                      }
+                      <span class="av-member-card__cta">Usar esta</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
           }
 
           @if (showVerifyForm) {
@@ -112,6 +159,15 @@
                     Verificar membresía
                   }
                 </a>
+                @if (membershipChoices.length > 1) {
+                  <button
+                    type="button"
+                    class="av-back-picker"
+                    (click)="backToMembershipPicker()"
+                  >
+                    Elegir otra membresía
+                  </button>
+                }
               </div>
 
             </div>

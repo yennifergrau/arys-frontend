@@ -21,6 +21,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 import { formatCedrifRif, parseCedrifCredit, userCedrifFromDecodedToken, membershipMatchesUserCedrif, cedulaDigitsForSarysStatus, pickActiveMembershipRow, certificateFromUserData } from '../utils/meritop-identity.util';
+import { MembershipSessionService } from '../services/membership-session.service';
 
 @Component({
   selector: 'app-auth',
@@ -45,6 +46,9 @@ export class AuthPage implements OnInit {
   public showSpinner = false;
   /** Solo true cuando hace falta que el usuario complete o corrija el documento. */
   public showVerifyForm = false;
+  /** Varias membresías: el usuario elige cuál usar en esta sesión. */
+  public showMembershipPicker = false;
+  public membershipChoices: any[] = [];
   public autoVerifyInProgress = false;
   /** Cuenta legacy sin cédula en BD: el usuario debe completarla en el formulario. */
   public needsDocumentUpdate = false;
@@ -53,6 +57,7 @@ export class AuthPage implements OnInit {
   private arysService = inject(DataArysService);
   private tokenStore = inject(TokenStoreService);
   private authService = inject(AuthService);
+  private membershipSession = inject(MembershipSessionService);
 
   constructor(
     private fb: FormBuilder,
@@ -233,6 +238,45 @@ export class AuthPage implements OnInit {
     }
   }
 
+  private shouldAskMembershipChoice(rows: any[]): boolean {
+    if (!Array.isArray(rows) || rows.length <= 1) return false;
+    const activeId = this.membershipSession.getActiveId();
+    if (activeId == null) return true;
+    return !rows.some((row) => Number(row?.id_master) === activeId);
+  }
+
+  public membershipVehicleLabel(row: any): string {
+    const brand = String(row?.vehicle_brand ?? '').trim();
+    const model = String(row?.vehicle_model ?? '').trim();
+    return [brand, model].filter(Boolean).join(' ') || 'Sin vehículo';
+  }
+
+  public async selectMembership(row: any): Promise<void> {
+    if (!row?.id_master) return;
+    this.showMembershipPicker = false;
+    this.showVerifyForm = false;
+    this.showSpinner = true;
+    this.autoVerifyInProgress = true;
+    this.membershipSession.activate(row);
+    const user = this.getAccessToken();
+    const userCedrif = userCedrifFromDecodedToken(user);
+    if (!userCedrif) {
+      this.mostrarToast('No se pudo validar la cédula de tu cuenta.', 'toast-error');
+      this.revealVerifyForm();
+      return;
+    }
+    const pre = { rows: this.membershipChoices, picked: row, userCedrif };
+    this.callUserIsActive(this.buildStatusRequestData(userCedrif, row), pre, null);
+  }
+
+  public backToMembershipPicker(): void {
+    if (this.membershipChoices.length <= 1) return;
+    this.showVerifyForm = false;
+    this.showSpinner = false;
+    this.autoVerifyInProgress = false;
+    this.showMembershipPicker = true;
+  }
+
   private membershipRifFromRow(row: any | null | undefined): string {
     const parsed = parseCedrifCredit(row?.cedrif_membership);
     return parsed ? formatCedrifRif(parsed.doctype, parsed.docid) : '';
@@ -348,8 +392,8 @@ export class AuthPage implements OnInit {
                   })(),
                 }) ?? picked ?? null;
 
-              if (picked?.id_master != null) {
-                sessionStorage.setItem('id_member', String(picked.id_master));
+              if (picked) {
+                this.membershipSession.activate(picked);
               }
 
               if (rifToPersist) {
@@ -419,7 +463,22 @@ export class AuthPage implements OnInit {
         pre = null;
       }
 
-      if (!pre?.picked) {
+      if (!pre?.rows?.length) {
+        this.showSpinner = false;
+        this.mostrarToast('No hay membresía asociada a tu cédula.', 'toast-error');
+        return;
+      }
+
+      this.membershipChoices = pre.rows;
+      this.membershipSession.rememberAvailableCount(pre.rows.length);
+
+      if (this.shouldAskMembershipChoice(pre.rows)) {
+        this.showSpinner = false;
+        this.showMembershipPicker = true;
+        return;
+      }
+
+      if (!pre.picked) {
         this.showSpinner = false;
         this.mostrarToast('No hay membresía asociada a tu cédula.', 'toast-error');
         return;
@@ -431,6 +490,7 @@ export class AuthPage implements OnInit {
         return;
       }
 
+      this.membershipSession.activate(pre.picked);
       const clientData = this.buildStatusRequestData(userCedrif, pre.picked);
       this.callUserIsActive(clientData, pre, null);
     } finally {
@@ -483,7 +543,22 @@ export class AuthPage implements OnInit {
       pre = null;
     }
 
-    if (!pre?.picked) {
+    if (!pre?.rows?.length) {
+      this.mostrarToast('No hay membresía asociada a tu cédula.', 'toast-error');
+      this.revealVerifyForm();
+      return;
+    }
+
+    this.membershipChoices = pre.rows;
+    this.membershipSession.rememberAvailableCount(pre.rows.length);
+
+    if (this.shouldAskMembershipChoice(pre.rows)) {
+      this.showMembershipPicker = true;
+      this.finishAutoVerifyUi();
+      return;
+    }
+
+    if (!pre.picked) {
       this.mostrarToast('No hay membresía asociada a tu cédula.', 'toast-error');
       this.revealVerifyForm();
       return;
@@ -495,6 +570,7 @@ export class AuthPage implements OnInit {
       return;
     }
 
+    this.membershipSession.activate(pre.picked);
     const clientData = this.buildStatusRequestData(userCedrif, pre.picked);
     this.callUserIsActive(clientData, pre, null);
   }
