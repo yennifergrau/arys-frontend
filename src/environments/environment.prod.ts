@@ -2,7 +2,7 @@ export const environment = {
   production: false,
 
   // Debe coincidir con versiones.id_version al compilar cada APK
-  appVersionCode: 2,
+  appVersionCode: 4,
 
   /** Atención por WhatsApp (solo dígitos, con código de país; ej. 584121234567) */
   contact: {
