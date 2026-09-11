@@ -116,21 +116,21 @@ export function creditLineValidationBlocks(res: unknown): { block: boolean; mess
   ) {
     return {
       block: true,
-      message: msg || 'Esta cédula ya tiene una línea de crédito activa.',
+      message: msg || 'Esta cédula ya tiene un cupo de financiamiento activo.',
     };
   }
 
   if (r['status'] === false) {
     return {
       block: true,
-      message: msg || 'Esta cédula ya tiene una línea de crédito activa.',
+      message: msg || 'Esta cédula ya tiene un cupo de financiamiento activo.',
     };
   }
 
   if (r['can_open'] === false || r['available'] === false) {
     return {
       block: true,
-      message: msg || 'No se puede abrir otra línea de crédito con esta cédula.',
+      message: msg || 'No se puede abrir otro cupo de financiamiento con esta cédula.',
     };
   }
 

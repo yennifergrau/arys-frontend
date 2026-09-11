@@ -464,7 +464,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
     if (available < amountToApply) {
       this.applyResult = {
         status: false,
-        message: 'Tu crédito disponible no alcanza para cubrir el total de la orden.'
+        message: 'Tu financiamiento disponible no alcanza para cubrir el total de la orden.'
       };
       return;
     }
@@ -474,7 +474,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       this.applyResult = {
         status: false,
         message:
-          'No se pudo obtener tu identificación. Verifica tu línea de crédito en ARYS.'
+          'No se pudo obtener tu identificación. Verifica tu cupo de financiamiento en ARYS.'
       };
       return;
     }
@@ -484,7 +484,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       this.applyResult = {
         status: false,
         message:
-          'No hay número de línea/tarjeta Meritop. Activa la línea en tu membresía o verifica el producto en Meritop.',
+          'No hay número de cupo/tarjeta Meritop. Activa el cupo en tu membresía o verifica el producto en Meritop.',
       };
       return;
     }
@@ -562,7 +562,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
             null;
           const msg = txId != null && String(txId).trim() !== ''
             ? `Transacción ${txId} creada exitosamente`
-            : 'Pago con crédito realizado correctamente';
+            : 'Pago con financiamiento realizado correctamente';
           void this.presentToast(msg, 'success');
           this.applyResult = { ...result, message: msg };
           this.persistCreditPaymentFromMeritop(result, bankcode, phonenumber, providerRif);
@@ -580,7 +580,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
               if (order.order) {
                 order.order.status = 'paid_with_credit' as any;
               }
-              void this.presentToast('Orden marcada como pagada con crédito.', 'success');
+              void this.presentToast('Orden marcada como pagada con financiamiento.', 'success');
               this.refreshMeritopProductSilent();
               this.loadMembershipSummary();
               this.isApplyingCredit = false;
@@ -600,7 +600,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
           this.isApplyingCredit = false;
           const msg = getMeritopOperationMessage(
             result,
-            'No se pudo procesar el pago con crédito. Verifica tu saldo e intenta de nuevo.'
+            'No se pudo procesar el pago con financiamiento. Verifica tu saldo e intenta de nuevo.'
           );
           this.applyResult = { status: false, message: msg };
           void this.presentToast(msg, 'danger');

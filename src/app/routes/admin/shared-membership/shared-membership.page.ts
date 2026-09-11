@@ -155,15 +155,15 @@ export class SharedMembershipPage implements OnInit {
 
     if (this.creditLineActive) {
       setTimeout(() => {
-        this.mostrarToast(`Línea de crédito activada: $${this.creditAmount} USD`, 'toast-success');
+        this.mostrarToast(`Cupo de financiamiento activado: $${this.creditAmount} USD`, 'toast-success');
       }, 2000);
     } else if (this.creditLineReason === 'missing_rif') {
       setTimeout(() => {
-        this.mostrarToast('No se pudo activar la línea de crédito: cédula no registrada. Contacta soporte.', 'toast-error');
+        this.mostrarToast('No se pudo activar el cupo de financiamiento: cédula no registrada. Contacta soporte.', 'toast-error');
       }, 2000);
     } else if (this.creditLineReason === 'meritop_error') {
       setTimeout(() => {
-        this.mostrarToast('Tu línea de crédito está siendo procesada. Recibirás una notificación pronto.', 'toast-success');
+        this.mostrarToast('Tu cupo de financiamiento está siendo procesado. Recibirás una notificación pronto.', 'toast-success');
       }, 2000);
     }
   }

@@ -412,7 +412,7 @@ export class CreateCustomerPage implements OnInit {
 
       this.access.markCreditLineActive(idMember);
 
-      this.mostrarToast('¡Línea de crédito activada con éxito!', 'toast-success');
+      this.mostrarToast('¡Cupo de financiamiento activado con éxito!', 'toast-success');
 
       setTimeout(() => {
 
@@ -440,7 +440,7 @@ export class CreateCustomerPage implements OnInit {
 
     } else {
 
-      this.mostrarToast('No se pudo abrir la línea de crédito. Intenta más tarde.', 'toast-error');
+      this.mostrarToast('No se pudo abrir el cupo de financiamiento. Intenta más tarde.', 'toast-error');
 
     }
 

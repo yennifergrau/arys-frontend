@@ -46,7 +46,7 @@
               <section class="dashboard-section dashboard-section--top">
                 <div class="dashboard-section__header">
                   <div>
-                    <div class="dashboard-section__title">Mi Membresía y Crédito</div>
+                    <div class="dashboard-section__title">Mi Membresía y Financiamiento</div>
                     <div class="dashboard-section__subtitle">Saldos, deuda y fecha de pago.</div>
                   </div>
                   @if (hasMultipleMemberships) {
@@ -79,9 +79,9 @@
                           </div>
                           <div class="membership-card__chip">
                             @if(m.has_credit) {
-                              <span class="chip chip--success">Línea activa</span>
+                              <span class="chip chip--success">Cupo activo</span>
                             } @else {
-                              <span class="chip chip--warning">Sin línea</span>
+                              <span class="chip chip--warning">Sin cupo</span>
                             }
                           </div>
                         </div>
@@ -116,7 +116,7 @@
                         </div>
 
                         @if (meritopReady) {
-                          <div class="membership-card__progress" [attr.aria-label]="'Uso de crédito ' + creditUsagePercent(m) + '%'" role="img">
+                          <div class="membership-card__progress" [attr.aria-label]="'Uso de financiamiento ' + creditUsagePercent(m) + '%'" role="img">
                             <div class="membership-card__progressTop">
                               <div class="membership-card__progressLabel">Uso</div>
                               <div class="membership-card__progressValue">{{ creditUsagePercent(m) }}%</div>
@@ -170,7 +170,7 @@
                         }
                       } @else {
                         <div class="membership-card__empty">
-                          Abre tu línea de crédito para solicitar servicios con financiamiento.
+                          Abre tu cupo de financiamiento para solicitar servicios.
                         </div>
                         <button
                           type="button"
@@ -178,7 +178,7 @@
                           (click)="solicitarCredito(m)"
                         >
                           <i class="fa-solid fa-plus me-2"></i>
-                          Abrir línea de crédito
+                          Abrir cupo de financiamiento
                         </button>
                       }
                     </li>

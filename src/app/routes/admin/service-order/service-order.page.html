@@ -24,7 +24,7 @@
         <div class="top-row">
           <div class="hello">
             <h1>Ordenes de servicio</h1>
-            <p>Gestiona los pagos de tus proveedores con credito ARYS.</p>
+            <p>Gestiona los pagos de tus proveedores con financiamiento ARYS.</p>
           </div>
           <div class="chip">{{ pendingOrders.length }} pendientes</div>
         </div>
@@ -176,7 +176,7 @@
               @if(!isLoadingCreditPanel && creditInfo === null){
                 <div class="so-result so-result--err">
                   <i class="feather icon-alert-circle"></i>
-                  <p>{{ creditPanelMessage || 'No hay información de crédito para mostrar.' }}</p>
+                  <p>{{ creditPanelMessage || 'No hay información de financiamiento para mostrar.' }}</p>
                 </div>
                 <div class="btn-row">
                   <button class="btn btn-secondary" type="button" (click)="toggleCreditPanel(order)">
@@ -217,7 +217,7 @@
                     }
                   } @else if(creditInfo.available > 0) {
                     <p class="so-no-credit">
-                      Tu crédito disponible no alcanza para cubrir el total de la orden.
+                      Tu financiamiento disponible no alcanza para cubrir el total de la orden.
                     </p>
                     <div class="btn-row">
                       <button class="btn btn-secondary" type="button" (click)="toggleCreditPanel(order)">
@@ -225,7 +225,7 @@
                       </button>
                     </div>
                   } @else {
-                    <p class="so-no-credit">No tienes crédito disponible en este momento.</p>
+                    <p class="so-no-credit">No tienes cupo de financiamiento disponible en este momento.</p>
                     <div class="btn-row">
                       <button class="btn btn-secondary" type="button" (click)="toggleCreditPanel(order)">
                         Cerrar
@@ -264,7 +264,7 @@
                   (click)="toggleCreditPanel(order)"
                   [disabled]="!bcvRateReady">
                   <i class="fa-sharp fa-solid fa-credit-card font-15"></i>
-                  Pagar con crédito ARYS
+                  Pagar con financiamiento ARYS
                 </button>
               </div>
             }
