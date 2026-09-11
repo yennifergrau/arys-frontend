@@ -1,5 +1,5 @@
 export const environment = {
-  production: false,
+  production: true,
 
   // Debe coincidir con versiones.id_version al compilar cada APK
   appVersionCode: 5,
@@ -10,22 +10,22 @@ export const environment = {
     whatsappServiceMessage: 'Hola, buen día. Quisiera solicitar un servicio; ¿me pueden indicar cómo hacerlo o qué información necesitan?',
   },
 
-  downloadMobileAppLink: 'https://docs.polizaqui.com/arys.apk',
-  url_app_ventas: 'https://arys.polizaqui.com',
-  authentication: 'https://sarys-auth.polizaqui.com',
+  downloadMobileAppLink: 'https://docs.polizaqui.com/qa-arys.apk',
+  url_app_ventas: 'https://poliza.arys.polizaqui.com',
+  authentication: 'https://demo-auth-arys.polizaqui.com',
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',
   ocrFileService: 'https://adjuntar-documento-qa.polizaqui.com',
   paymentSypago: 'https://pagos-qa.arys.polizaqui.com',
   /** Backend Polizaqui (Arys-Poliza): register/payment + register/membership */
   polizaqui: {
-    baseUrl: 'https://arys-ui-service.polizaqui.com',
+    baseUrl: 'https://arys-ui-service-poliza.polizaqui.com',
     tasa: 'tasa',
     registerPayment: 'register/payment',
     registerMembership: 'register/membership',
   },
 
   sarys: {
-    url: 'https://sarys-services.polizaqui.com',
+    url: 'https://demo-services-arys.polizaqui.com',
     usuario: {
       estatus: 'sarys/post/fechetd/status',
     },
@@ -56,7 +56,7 @@ export const environment = {
   },
 
   arys:{
-    url:'https://sarys-services.polizaqui.com',
+    url:'https://demo-services-arys.polizaqui.com',
     OtherApis:{
       add_person: 'data/fecht/user/property',
       add_vehicle:'data/fecht/vehicle/user',
@@ -80,7 +80,7 @@ export const environment = {
   },
 
   meritop:{
-    url:'https://sarys-services.polizaqui.com',
+    url:'https://demo-services-arys.polizaqui.com',
     access:{
       tokenAccess:'sarys/get/meritop/token/access',
     },
@@ -101,12 +101,12 @@ export const environment = {
     },
     addData:{
       add_purchase:'data/post/fecht/purchased/user',
-      get_purchase: 'data/get/fecht/all/purchased'  
+      get_purchase: 'data/get/fecht/all/purchased'
     }
   },
 
   user:{
-    url:'https://sarys-auth.polizaqui.com',
+    url:'https://demo-auth-arys.polizaqui.com',
     data:{
       view_user: 'view/user/fechetd/user',
       edit_user: 'edit/post/user/view'
