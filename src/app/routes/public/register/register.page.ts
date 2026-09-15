@@ -50,7 +50,7 @@ export class RegisterPage implements OnInit {
   public showPassword: boolean = false;
   private REGEX_STRING = /^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]{1,20}$/
   private REGEX_EMAIL = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  private REGEX_NUMBER = /^(212|412|414|424|416|426)[0-9]{7}$/;
+  private REGEX_NUMBER = /^(212|412|414|416|422|424|426)[0-9]{7}$/;
 
   constructor(
     private fb: FormBuilder,
@@ -328,7 +328,7 @@ export class RegisterPage implements OnInit {
     }
 
     // Expected Venezuela mobile/local format used by current backend/client rules.
-    const isValidCore = /^(212|412|414|424|416|426)\d{7}$/.test(digits);
+    const isValidCore = /^(212|412|414|416|422|424|426)\d{7}$/.test(digits);
     if (!isValidCore) return null;
 
     return `0${digits.slice(0, 3)}-${digits.slice(3)}`;

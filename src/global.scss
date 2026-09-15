@@ -78,8 +78,8 @@
   --arys-safe-top: max(env(safe-area-inset-top, 0px), 0px);
   --arys-safe-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
   --arys-header-clearance: calc(var(--arys-headheight) + var(--arys-safe-top));
-  /* Barra flotante (~85px) + offset inferior (10px) + margen */
-  --arys-tabbar-clearance: calc(110px + var(--arys-safe-bottom));
+  /* Barra flotante (~85px) + offset inferior (12px) + margen de respiración */
+  --arys-tabbar-clearance: calc(130px + var(--arys-safe-bottom));
 }
 
 body.arys-native {
@@ -87,7 +87,7 @@ body.arys-native {
   --arys-safe-top: max(env(safe-area-inset-top, 0px), 28px);
   --arys-safe-bottom: max(env(safe-area-inset-bottom, 0px), 56px);
   --arys-header-clearance: calc(var(--arys-headheight) + var(--arys-safe-top));
-  --arys-tabbar-clearance: calc(118px + var(--arys-safe-bottom));
+  --arys-tabbar-clearance: calc(140px + var(--arys-safe-bottom));
 }
 
 html {
@@ -128,7 +128,11 @@ body.arys-native .menubar-area.footer-fixed {
 }
 
 /* Evita depender de :has() (no está en todos los WebView Android). */
-body.has-app-tab .page-content {
+body.has-app-tab .page-content,
+body.has-app-tab .page-content.p-b70,
+body.has-app-tab .page-content.p-b80,
+body.has-app-tab .page-content.p-b90,
+body.has-app-tab main.page-content {
   padding-bottom: var(--arys-tabbar-clearance) !important;
   scroll-padding-bottom: var(--arys-tabbar-clearance);
 }

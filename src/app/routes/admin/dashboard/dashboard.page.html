@@ -95,7 +95,7 @@
                               @if (isHidden) {
                                 ********
                               } @else if (meritopReady) {
-                                {{ m.available_amount | formatCurrency }} <span class="metric__unit">Bs</span>
+                                <span>{{ m.available_amount | formatCurrency }}</span> <span class="metric__unit">Bs</span>
                               } @else {
                                 <span class="metric__pending">{{ meritopLoading ? 'Cargando…' : '—' }}</span>
                               }
@@ -107,7 +107,7 @@
                               @if (isHidden) {
                                 ********
                               } @else if (meritopReady) {
-                                {{ m.credit_limit | formatCurrency }} <span class="metric__unit">Bs</span>
+                                <span>{{ m.credit_limit | formatCurrency }}</span> <span class="metric__unit">Bs</span>
                               } @else {
                                 <span class="metric__pending">{{ meritopLoading ? 'Cargando…' : '—' }}</span>
                               }
@@ -137,7 +137,7 @@
                               <div class="debt">
                                 <div class="debt__label">Deuda</div>
                                 <div class="debt__value">
-                                  {{ isHidden ? '********' : (m.credit_used | formatCurrency) }}
+                                  <span>{{ isHidden ? '********' : (m.credit_used | formatCurrency) }}</span>
                                   <span class="metric__unit">Bs</span>
                                 </div>
                               </div>
