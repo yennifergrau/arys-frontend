@@ -676,8 +676,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   margin: 0 4px 10px;
+}
+
+.dashboard-section__headings {
+  min-width: 0;
+  flex: 1;
 }
 
 .dashboard-section__title {
@@ -685,6 +690,7 @@
   font-weight: 900;
   color: var(--title);
   letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
 .dashboard-section__subtitle {
@@ -694,16 +700,45 @@
   margin-top: 2px;
 }
 
-.dashboard-section__switch {
+.dashboard-section__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0 12px;
-  border: 0;
-  background: transparent;
-  font-size: 13px;
-  font-weight: 800;
+}
+
+.dashboard-section__switch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: var(--bg-white);
   color: #5c3800;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 120ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+
+  i {
+    font-size: 13px;
+  }
+
+  &:hover, &:focus {
+    background: rgba(255, 176, 0, 0.18);
+    border-color: rgba(255, 176, 0, 0.45);
+    color: #3b2300;
+    transform: scale(1.08);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
 }
 
 .membership-grid {

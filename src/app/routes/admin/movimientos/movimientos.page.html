@@ -18,7 +18,18 @@
 
         <div class="top-row">
           <div class="hello">
-            <h1>Movimientos</h1>
+            <h1 class="d-flex align-items-center gap-2">
+              <span>Movimientos</span>
+              <button
+                type="button"
+                class="btn-help-circle"
+                (click)="contactFinancingSupport()"
+                title="¿Dudas sobre tu financiamiento activo? WhatsApp: +58 424-2318020"
+                aria-label="Ayuda sobre financiamiento activo"
+              >
+                <i class="fa-solid fa-circle-question"></i>
+              </button>
+            </h1>
             <p>Historial de consumos y pagos de tu cupo de financiamiento.</p>
           </div>
           <div class="chip">{{ transactions.length }} registros</div>

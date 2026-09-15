@@ -16,6 +16,7 @@ import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.se
 import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-pagar-deuda',
@@ -601,5 +602,13 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       position: 'bottom'
     });
     toast.present();
+  }
+
+  public contactFinancingSupport(): void {
+    const text = 'Hola, buen día. Quisiera aclarar dudas sobre el pago o saldo de mi financiamiento activo de ARYS.';
+    const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
+    const phone = raw.replace(/\D/g, '');
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 }

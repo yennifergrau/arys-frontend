@@ -12,6 +12,7 @@ import { DataArysService } from '../services/data-arys.service';
 import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
 import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-movimientos',
@@ -784,5 +785,13 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   public hasReceipt(tx: Transaction | null): boolean {
     if (!tx) return false;
     return tx.type !== 'commission' && !/comisi[oó]n/i.test(tx.merchantName ?? '');
+  }
+
+  public contactFinancingSupport(): void {
+    const text = 'Hola, buen día. Quisiera aclarar dudas sobre mi financiamiento activo de ARYS.';
+    const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
+    const phone = raw.replace(/\D/g, '');
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 }

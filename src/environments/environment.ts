@@ -7,7 +7,9 @@ export const environment = {
   /** Atención por WhatsApp (solo dígitos, con código de país; ej. 584121234567) */
   contact: {
     whatsappPhone: '584144128237',
+    whatsappFinancingPhone: '584242318020',
     whatsappServiceMessage: 'Hola, buen día. Quisiera solicitar un servicio; ¿me pueden indicar cómo hacerlo o qué información necesitan?',
+    whatsappFinancingMessage: 'Hola, buen día. Quisiera aclarar dudas sobre mi financiamiento activo.',
   },
 
   downloadMobileAppLink: 'https://docs.polizaqui.com/qa-arys.apk',

@@ -733,6 +733,16 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     }).format(d);
   }
 
+  public contactFinancingSupport(membership?: any): void {
+    const cert = membership?.name || this.data_membership?.[0]?.certificate || '';
+    const name = this.username || '';
+    const text = `Hola, buen día. Quisiera aclarar dudas sobre mi financiamiento activo de ARYS.${name ? `\nCliente: ${name}` : ''}${cert ? `\nMembresía: ${cert}` : ''}`;
+    const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
+    const phone = raw.replace(/\D/g, '');
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
   private finishIfReady(): void {
     const ready = this.loadState.membership && this.loadState.meritop && this.loadState.pendingOrders;
     if (ready) {

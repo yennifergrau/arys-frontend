@@ -17,7 +17,18 @@
 
         <div class="top-row">
           <div class="hello">
-            <h1>Pagar</h1>
+            <h1 class="d-flex align-items-center gap-2">
+              <span>Pagar</span>
+              <button
+                type="button"
+                class="btn-help-circle"
+                (click)="contactFinancingSupport()"
+                title="¿Dudas con tu abono o deuda activa? WhatsApp: +58 424-2318020"
+                aria-label="Ayuda sobre pagos de financiamiento"
+              >
+                <i class="fa-solid fa-circle-question"></i>
+              </button>
+            </h1>
             <p>Realiza abonos a tu cupo de financiamiento ARYS.</p>
           </div>
           <div class="chip">PAGAR</div>

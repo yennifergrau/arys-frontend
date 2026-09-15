@@ -8,6 +8,7 @@ import { NotificationService } from 'src/app/shared/services/notification.servic
 import { MeritopService } from '../services/meritop.service';
 import { HttpClientModule } from '@angular/common/http';
 import { userCreateCustomer } from '../interface/meritop.interface';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-shared-membership',
@@ -239,6 +240,14 @@ export class SharedMembershipPage implements OnInit {
     setTimeout(() => {
       this.renderer.removeChild(toastContainer, toast);
     }, 5000);
+  }
+
+  public contactFinancingSupport(): void {
+    const text = 'Hola, buen día. Quisiera soporte para activar/consultar dudas sobre mi cupo de financiamiento de ARYS.';
+    const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
+    const phone = raw.replace(/\D/g, '');
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
 }

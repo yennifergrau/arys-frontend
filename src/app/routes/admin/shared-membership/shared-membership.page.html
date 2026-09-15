@@ -93,8 +93,17 @@
         <!-- Cupo de financiamiento Meritop — cédula no registrada -->
         <div class="ic-product-preview mt-3" *ngIf="!creditLineActive && creditLineReason === 'missing_rif'">
           <div class="ic-box style-2 rounded-md">
-            <div class="title-head">
-              <h6 class="font-title">Cupo de financiamiento no disponible</h6>
+            <div class="title-head d-flex align-items-center justify-content-between">
+              <h6 class="font-title mb-0">Cupo de financiamiento no disponible</h6>
+              <button
+                type="button"
+                class="btn-help-circle"
+                (click)="contactFinancingSupport()"
+                title="¿Dudas sobre tu financiamiento activo? WhatsApp: +58 424-2318020"
+                aria-label="Ayuda sobre financiamiento activo"
+              >
+                <i class="fa-solid fa-circle-question"></i>
+              </button>
             </div>
             <div class="ic-box style-2 rounded-md">
               <div class="view-cart">
@@ -104,7 +113,7 @@
                     <span class="about" style="color: var(--bs-danger);">Sin cédula registrada</span>
                   </li>
                   <li>
-                    <span class="name" style="white-space: normal;">Para activar tu cupo de financiamiento contacta a soporte con tu número de cédula.</span>
+                    <span class="name" style="white-space: normal;">Para activar tu cupo de financiamiento o aclarar dudas sobre tu financiamiento activo, pulsa el botón de ayuda <strong>?</strong> o escríbenos al <strong>+58 424-2318020</strong>.</span>
                   </li>
                 </ul>
               </div>
