@@ -50,6 +50,7 @@ import {
 
 } from '../utils/meritop-identity.util';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
+import { MERITOP_SUMMARY_CACHE_KEY } from '../services/meritop-summary-cache.service';
 
 
 
@@ -412,11 +413,19 @@ export class CreateCustomerPage implements OnInit {
 
       this.access.markCreditLineActive(idMember);
 
+      try {
+        sessionStorage.removeItem(MERITOP_SUMMARY_CACHE_KEY);
+      } catch {
+        // noop
+      }
+
       this.mostrarToast('¡Cupo de financiamiento activado con éxito!', 'toast-success');
+
+      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/admin/dashboard/sarys';
 
       setTimeout(() => {
 
-        this.nav.navigate(['/admin/service-orders/pending']);
+        this.nav.navigateByUrl(returnUrl);
 
       }, 1500);
 

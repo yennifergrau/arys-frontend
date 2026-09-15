@@ -43,6 +43,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 import { MembershipSessionService } from '../services/membership-session.service';
+import { UserAccessService } from '../services/user-access.service';
 
 type ServiceOption = {
   id: string;
@@ -85,6 +86,7 @@ export class DashboardPage implements OnInit, ViewWillEnter {
   private meritopCache = inject(MeritopSummaryCacheService)
   private tokenStore = inject(TokenStoreService)
   private membershipSession = inject(MembershipSessionService)
+  private userAccess = inject(UserAccessService)
   public isHidden: boolean = true;
   public json_customer: customer[] | any;
   private emission = inject(EmissionService);
@@ -101,6 +103,7 @@ export class DashboardPage implements OnInit, ViewWillEnter {
   public pendingOrdersCount: number = 0;
   private decodeData: any = {};
   private loadedMemberId: string | null = null;
+  private hasEnteredOnce = false;
 
   // Control de carga: la UX debe esperar a que todo esté listo
   private loadState = {
@@ -242,6 +245,10 @@ export class DashboardPage implements OnInit, ViewWillEnter {
       // Requisito UX: en el dashboard mostramos únicamente el certificado.
       const label = certificate || 'Certificado';
       const lineId = membershipHasCreditLine(row);
+      const hasCreditFromAccess =
+        this.userAccess.state.hasCreditLine &&
+        (this.userAccess.state.idMember == null || this.userAccess.state.idMember === Number(row.id_master));
+      const hasCredit = !!lineId || this.meritopReady || hasCreditFromAccess;
 
       // Si el certificado viene en formato "<id_producto>-...", usamos el prefijo para mapear el plan.
       const productIdFromCertificate = (() => {
@@ -268,7 +275,7 @@ export class DashboardPage implements OnInit, ViewWillEnter {
         available_amount: available,
         credit_limit: limit,
         credit_used: creditUsed,
-        has_credit: !!lineId,
+        has_credit: hasCredit,
         credit_pay_before: creditPayBefore,
       };
     });
@@ -837,6 +844,18 @@ export class DashboardPage implements OnInit, ViewWillEnter {
   }
 
   ionViewWillEnter() {
+    if (!this.hasEnteredOnce) {
+      this.hasEnteredOnce = true;
+      return;
+    }
+
+    const dataUser: any = this.tokenStore.getAccessTokenSync();
+    const decodeData: any = dataUser ? jwtDecode(dataUser) : {};
+    this.decodeData = decodeData;
+    if (decodeData?.name) {
+      this.username = decodeData.name + ' ' + (decodeData.sub_ape || '');
+    }
+
     const currentId = sessionStorage.getItem('id_member');
     if (this.loadedMemberId != null && currentId !== this.loadedMemberId) {
       this.showLoading = true;
@@ -844,7 +863,31 @@ export class DashboardPage implements OnInit, ViewWillEnter {
       this.loadMembershipForUser(this.decodeData, currentId ? Number(currentId) : null);
       return;
     }
-    if (this.loadState.membership) {
+
+    this.refreshDashboardSilent(this.decodeData, currentId ? Number(currentId) : null);
+  }
+
+  private refreshDashboardSilent(decodeData: any, idMember: number | null): void {
+    try {
+      this.arys_service
+        .get_membership_for_user({
+          id_member: idMember,
+          email: decodeData?.email ? String(decodeData.email) : null,
+        })
+        .subscribe({
+          next: async (result) => {
+            this.applyMembershipResult(result, decodeData);
+            await this.finalizeMembershipLoad(decodeData);
+            this.changeDetector.markForCheck();
+          },
+          error: () => {
+            this.fetchMeritopProduct(true);
+            void this.checkPendingOrders();
+            this.changeDetector.markForCheck();
+          },
+        });
+    } catch (e) {
+      console.error(e);
       this.fetchMeritopProduct(true);
       void this.checkPendingOrders();
     }

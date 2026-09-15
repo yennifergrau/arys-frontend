@@ -137,13 +137,17 @@ export function creditLineValidationBlocks(res: unknown): { block: boolean; mess
   return { block: false, message: '' };
 }
 
-/** Línea activa: `credit_line_id` y `cedrif_credit` válidos. */
+/** Línea activa: `credit_line_id` presente y cédula/identidad válida. */
 export function membershipHasCreditLine(row: unknown): boolean {
   if (!row || typeof row !== 'object') return false;
   const r = row as Record<string, unknown>;
   const lineId = r['credit_line_id'];
   const hasLine = lineId != null && String(lineId).trim() !== '';
-  return hasLine && parseCedrifCredit(r['cedrif_credit']) != null;
+  if (!hasLine) return false;
+  if (r['cedrif_credit'] != null && String(r['cedrif_credit']).trim() !== '') {
+    return parseCedrifCredit(r['cedrif_credit']) != null;
+  }
+  return resolveMeritopClientIdentity({ membershipRow: row }) != null;
 }
 
 export type ResolveMeritopIdentityOptions = {
