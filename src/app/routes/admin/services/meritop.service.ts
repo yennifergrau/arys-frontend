@@ -28,13 +28,37 @@ export class MeritopService {
 
 
   private getErrorMessage(error: HttpErrorResponse): string {
-    if (error.error?.error?.message) {
-      return error.error.error.message;
+    if (error.status === 0) {
+      return 'No se pudo conectar con el servidor. Verifica tu conexión a internet o intenta nuevamente.';
     }
-    if (error.error?.message) {
+    if (error.error?.message && typeof error.error.message === 'string') {
       return error.error.message;
     }
-    return error.message || 'Error en la operación';
+    if (error.error?.error?.message && typeof error.error.error.message === 'string') {
+      return error.error.error.message;
+    }
+    if (error.error?.msg && typeof error.error.msg === 'string') {
+      return error.error.msg;
+    }
+    if (typeof error.error === 'string' && error.error.trim().length > 0) {
+      return error.error;
+    }
+    if (error.status === 401) {
+      return 'Sesión expirada o no autorizada. Por favor, inicia sesión nuevamente.';
+    }
+    if (error.status === 403) {
+      return 'No tienes permisos para realizar esta operación.';
+    }
+    if (error.status === 404) {
+      return 'Servicio no disponible o recurso no encontrado.';
+    }
+    if (error.status >= 500) {
+      return 'El servicio no se encuentra disponible en este momento. Por favor, intenta más tarde.';
+    }
+    if (error.message && !error.message.startsWith('Http failure response')) {
+      return error.message;
+    }
+    return 'Ocurrió un error al procesar la solicitud. Por favor, intenta de nuevo.';
   }
 
   public listProvider() {

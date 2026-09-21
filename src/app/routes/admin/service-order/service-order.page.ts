@@ -618,8 +618,10 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       },
       error: (err) => {
         this.isApplyingCredit = false;
-        // El mensaje ya viene extraído correctamente desde el CatchError del servicio (MeritopService)
-        const msg = err?.message || 'Error al procesar el pago. Intenta de nuevo.';
+        let msg = err?.message || 'Error al procesar el pago. Intenta de nuevo.';
+        if (typeof msg === 'string' && msg.includes('Http failure response')) {
+          msg = 'No se pudo conectar con el servidor. Verifica tu conexión a internet o intenta nuevamente.';
+        }
         this.applyResult = { status: false, message: msg };
         void this.presentToast(msg, 'danger');
       }

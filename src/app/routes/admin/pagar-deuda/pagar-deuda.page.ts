@@ -561,10 +561,13 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
         },
         error: async (err) => {
           console.error('Error en pago:', err);
-          const msg =
+          let msg =
             err?.message && String(err.message).trim()
               ? String(err.message)
               : 'Error al procesar el pago. Intente de nuevo.';
+          if (typeof msg === 'string' && msg.includes('Http failure response')) {
+            msg = 'No se pudo conectar con el servidor. Verifica tu conexión a internet o intenta nuevamente.';
+          }
           await this.showToast(msg, 'danger');
         },
       });

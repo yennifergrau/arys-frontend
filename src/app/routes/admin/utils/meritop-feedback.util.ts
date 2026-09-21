@@ -8,6 +8,7 @@ export function isMeritopOperationFailed(res: unknown): boolean {
   if (r['status'] === true || r['status'] === 'true' || r['success'] === true) return false;
   if (r['status'] === 200 || r['status'] === '200') return false;
 
+  if (typeof r['status'] === 'number' && r['status'] !== 200) return true;
   if (r['status'] === false || r['status'] === 'false' || r['success'] === false) return true;
 
   if (r['error'] != null && String(r['error']).trim() !== '') return true;
