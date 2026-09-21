@@ -35,7 +35,7 @@
                     <div class="list-content">
                       <h6 class="title">Saldo disponible</h6>
                       <p class="active-status">
-                        {{amountTotal ?  `${+amountTotal | formatCurrency}` : '1000' }} Bs
+                        {{ amountTotal != null && amountTotal !== '' ? (+amountTotal | formatCurrency) : '0,00' }} Bs
                       </p>
                     </div>
                   </a>
@@ -47,7 +47,7 @@
               <p class="info-text">
                 El monto limite de financiamiento es de
                 <strong class="text-dark">
-                  {{ amountTotal != null && amountTotal !== '' ? (+amountTotal | formatCurrency) : '—' }} </strong
+                  {{ amountTotal != null && amountTotal !== '' ? (+amountTotal | formatCurrency) : '0,00' }} </strong
                 >Bs, tienes hasta la fecha {{ pay_before_date ? (pay_before_date | date:'dd/MM/yyyy') : '—' }} para cancelar el pago mínimo
               </p>
             </div>
@@ -58,7 +58,7 @@
                 </div>
               </span>
               <input
-                [ngClass]="{'invalid-input': amountControl.invalid && (amountControl.dirty || amountControl.touched)}"
+                [ngClass]="{'invalid-input': (amountControl.invalid && (amountControl.dirty || amountControl.touched)) || isExceedingAvailable}"
                 mask="separator.2"
                 decimalMarker=","
                 thousandSeparator="."
@@ -69,6 +69,12 @@
                 placeholder="Ingrese el monto"
               />
             </div>
+            @if (isExceedingAvailable || amountControl.hasError('exceedsAvailable')) {
+              <div class="text-danger small mb-2 px-1 fw-bold">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                El monto a financiar excede tu saldo disponible ({{ availableAmount | formatCurrency }} Bs).
+              </div>
+            }
             <div class="mb-2 input-group input-group-icon">
               <span class="input-group-text style-1">
                 <label>Total a financiar</label>
@@ -94,11 +100,13 @@
             class="btn px-3 btn-thin rounded btn-primary text-secondary border-2 w-100"
             ><i class="font-15 fa-solid fa-close"></i>Cancelar</a
           >
-          <a
+          <button
+            type="button"
             (click)="onSubmit()"
+            [disabled]="aumount.invalid || isExceedingAvailable || availableAmount <= 0"
             class="btn px-3 btn-thin rounded btn-secondary w-100"
             ><i class="fa-solid title text-primary font-15">Bs</i
-            >Financiar</a
+            >Financiar</button
           >
         </div>
       </div>

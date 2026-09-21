@@ -408,7 +408,9 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
         this.isLoadingCreditPanel = false
         if (result.status && result.credit) {
           let resolvedAvailable: number
-          if (this.summaryState === 'ready' && this.customerProduct) {
+          if (this.displayCreditAvailable > 0) {
+            resolvedAvailable = this.displayCreditAvailable
+          } else if (this.summaryState === 'ready' && this.customerProduct) {
             resolvedAvailable = this.toNumber(this.customerProduct.available)
           } else if (this.summaryState === 'fallback' && this.membershipSummary) {
             resolvedAvailable = this.toNumber(this.membershipSummary.credit_available)
@@ -460,12 +462,16 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       return;
     }
 
-    const available = this.toNumber(this.creditInfo?.available);
-    if (available < amountToApply) {
+    const available = this.displayCreditAvailable > 0
+      ? this.displayCreditAvailable
+      : this.toNumber(this.creditInfo?.available);
+    if (available < amountToApply || available <= 0) {
+      const msg = 'El saldo disponible en tu cupo es insuficiente para cubrir el monto total de esta orden.';
       this.applyResult = {
         status: false,
-        message: 'Tu financiamiento disponible no alcanza para cubrir el total de la orden.'
+        message: msg
       };
+      void this.presentToast(msg, 'warning');
       return;
     }
 

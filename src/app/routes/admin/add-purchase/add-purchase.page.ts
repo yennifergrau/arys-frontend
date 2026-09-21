@@ -1,5 +1,5 @@
 import { PurchaseDataService } from './../services/purchase-data.service';
-import { ChangeDetectorRef, Component, inject, Renderer2 } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -18,6 +18,9 @@ import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { FormatCurrencyPipe } from '../pipes/currency.pipe';
 import { EmissionDetailsService } from '../services/emission-details.service';
+import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
+import { TokenStoreService } from 'src/app/shared/services/token-store.service';
+import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
 
 @Component({
   selector: 'app-add-purchase',
@@ -37,8 +40,10 @@ import { EmissionDetailsService } from '../services/emission-details.service';
   ],
   providers: [MeritopService, PurchaseDataService, provideNgxMask()],
 })
-export class AddPurchasePage {
+export class AddPurchasePage implements OnInit {
   private purchaseService = inject(PurchaseDataService);
+  private meritopCache = inject(MeritopSummaryCacheService);
+  private tokenStore = inject(TokenStoreService);
 
   private customer_data: data_customer[] | any;
   public aumount!: FormGroup;
@@ -47,7 +52,7 @@ export class AddPurchasePage {
   public pay_before_date!: string;
   public available!: string;
   public limitPayment!: string;
-  private cardNumber !: any 
+  private cardNumber!: any;
 
   totalFinanciar: string = '';
 
@@ -59,54 +64,154 @@ export class AddPurchasePage {
     private fb: FormBuilder,
     private _emisionService: EmissionDetailsService
   ) {
-    // this.meritopService.getAccessToken().subscribe({
-    //   next: async (result) => {
-    //     if (result.status === 200) {
-          
-    //      await this.loadCustomer();
-         
-    //   }},
-    //   error: (error) => {
-    //     console.error('Error al generar el token', error);
-    //   },
-    // });
-   
     this.aumount = this.fb.group({
       amount: ['', Validators.required],
-      value: ['']
+      value: [''],
     });
-    
-    this.aumount.get('amount')?.valueChanges.subscribe(value => {
-      const raw = typeof value === 'string'
-        ? value.replace(/\./g, '').replace(',', '.')
-        : value;
-    
+
+    this.aumount.get('amount')?.valueChanges.subscribe((value) => {
+      const raw =
+        typeof value === 'string'
+          ? value.replace(/\./g, '').replace(',', '.')
+          : value;
+
       const amount = parseFloat(raw);
       const total = isNaN(amount) ? null : amount / 2;
-    
+
       this.aumount.get('value')?.setValue(total);
-      console.log(this.aumount.get('value')?.value);
-    
-      // Solo si necesitas mostrarlo con coma en otro campo visual
-      this.totalFinanciar = total !== null ? total.toFixed(2).replace('.', ',') : '';
+
+      this.totalFinanciar =
+        total !== null ? total.toFixed(2).replace('.', ',') : '';
+
+      this.validateAmountAgainstAvailable();
     });
   }
-  
+
+  ngOnInit(): void {
+    this.hydrateFromCache();
+    this.loadCustomer();
+  }
 
   get amountControl(): AbstractControl<string> {
     return this.aumount.get('amount')!;
   }
 
+  get availableAmount(): number {
+    if (this.amountTotal == null || this.amountTotal === '') return 0;
+    const n =
+      typeof this.amountTotal === 'number'
+        ? this.amountTotal
+        : parseFloat(
+            String(this.amountTotal).replace(/\./g, '').replace(',', '.')
+          );
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+
+  get enteredAmount(): number {
+    const val = this.aumount?.get('amount')?.value;
+    if (!val) return 0;
+    const raw =
+      typeof val === 'string' ? val.replace(/\./g, '').replace(',', '.') : val;
+    const n = parseFloat(raw);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+
+  get enteredFinancedAmount(): number {
+    const val = this.aumount?.get('value')?.value;
+    if (val == null || val === '') return 0;
+    const n =
+      typeof val === 'number'
+        ? val
+        : parseFloat(String(val).replace(/\./g, '').replace(',', '.'));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+
+  get isExceedingAvailable(): boolean {
+    const amount = this.enteredAmount;
+    if (amount <= 0) return false;
+    const financed = this.enteredFinancedAmount;
+    return financed > this.availableAmount || this.availableAmount <= 0;
+  }
+
+  private validateAmountAgainstAvailable(): void {
+    const control = this.amountControl;
+    if (!control) return;
+
+    if (this.isExceedingAvailable) {
+      const currentErrors = control.errors || {};
+      control.setErrors({ ...currentErrors, exceedsAvailable: true });
+    } else {
+      if (control.hasError('exceedsAvailable')) {
+        const { exceedsAvailable, ...rest } = control.errors || {};
+        control.setErrors(Object.keys(rest).length ? rest : null);
+      }
+    }
+  }
+
+  private hydrateFromCache(): void {
+    try {
+      const cached = this.meritopCache.read();
+      if (cached && cached.limit > 0) {
+        this.amountTotal = cached.available;
+        this.limitPayment = String(cached.limit);
+        this.cardNumber = cached.cardnumber;
+        this.pay_before_date = cached.credit_pay_before || '';
+        this.purchaseService.cutDate = cached.credit_pay_before || '';
+      }
+    } catch {
+      // noop
+    }
+  }
+
   public async onSubmit() {
     this.showLoading = true;
-    if (this.aumount.valid) {
+    this.validateAmountAgainstAvailable();
+
+    if (this.availableAmount <= 0) {
+      this.mostrarToast(
+        'No posees saldo disponible suficiente para realizar este financiamiento.',
+        'toast-error'
+      );
+      this.showLoading = false;
+      return;
+    }
+
+    const amountToFinance = this.enteredFinancedAmount;
+    if (!amountToFinance || amountToFinance <= 0) {
+      this.aumount.markAllAsTouched();
+      this.mostrarToast('El monto a financiar debe ser mayor a 0.', 'toast-error');
+      this.showLoading = false;
+      return;
+    }
+
+    if (amountToFinance > this.availableAmount) {
+      this.aumount.markAllAsTouched();
+      this.mostrarToast(
+        `El monto a financiar (${this.formatBs(amountToFinance)} Bs) no puede ser mayor al saldo disponible (${this.formatBs(this.availableAmount)} Bs).`,
+        'toast-error'
+      );
+      this.showLoading = false;
+      return;
+    }
+
+    if (this.aumount.valid && !this.isExceedingAvailable) {
       try {
+        const clientIdentity = resolveMeritopClientIdentity({
+          accessToken: this.tokenStore.getAccessTokenSync(),
+        });
+
         const dataPurchased: addPurchased = {
           ip: '10.1.1.1',
           channel: 'APP',
           client: {
-          doctype: this._emisionService.data_user?.prefix || '',
-          docid: +this._emisionService.data_user.rif || ''
+            doctype:
+              clientIdentity?.doctype ||
+              this._emisionService.data_user?.prefix ||
+              'V',
+            docid:
+              +(clientIdentity?.docid ||
+                this._emisionService.data_user?.rif ||
+                0),
           },
           cardnumber: this.cardNumber,
           reference: '',
@@ -117,57 +222,34 @@ export class AddPurchasePage {
             doctype: 'J',
             docid: 404438521,
             account: '01710005096002556035',
-            phonenumber: "04142298696",
+            phonenumber: '04142298696',
             paidon: new Date().toISOString(),
           },
         };
-       
-        // await this.data_add_purchased()
-        this.purchaseService.amountPurchase =
-                dataPurchased.amount.toString();
+
+        this.purchaseService.amountPurchase = dataPurchased.amount.toString();
         this.aumount.reset();
         this.router.navigate(['/admin/purchase/recipe']);
-         
         this.showLoading = false;
-        // await this.meritopService.addPurchased(dataPurchased).subscribe({
-        //   next: async (result) => {
-        //     if (result.code === 915) {
-        //       await this.data_add_purchased()
-        //       await this.mostrarToast(`${result.message}`, 'toast-success');
-        //       this.aumount.reset();
-        //       this.purchaseService.idPurchase = result.payid;
-        //       this.purchaseService.amountPurchase =
-        //         dataPurchased.amount.toString();
-        //       setTimeout(() => {
-        //         this.router.navigate(['/admin/purchase/recipe']);
-        //       }, 4000);
-        //     } else if (result.code === 915) {
-        //       this.mostrarToast(result.message, 'toast-error');
-        //     } else {
-        //       this.mostrarToast(
-        //         'Usted ha excedido el monto maximo de pago diario',
-        //         'toast-error'
-        //       );
-        //     }
-        //   },
-        //   error: (error) => {
-        //     console.error('Error al agregar el purchased' + error);
-        //     this.mostrarToast(
-        //       'Saldo del producto es insuficiente',
-        //       'toast-error'
-        //     );
-        //     this.showLoading = false;
-        //     this.aumount.reset();
-        //   },
-        // });
       } catch (e) {
         console.error(e);
+        this.showLoading = false;
       }
     } else {
       this.aumount.markAllAsTouched();
-      this.mostrarToast('El monto es obligatorio!', 'toast-error');
+      this.mostrarToast(
+        'Por favor verifica el monto ingresado.',
+        'toast-error'
+      );
       this.showLoading = false;
     }
+  }
+
+  formatBs(amount: number): string {
+    return new Intl.NumberFormat('es-VE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
   }
 
   getCurrentDate(): string {
@@ -178,55 +260,62 @@ export class AddPurchasePage {
     return `${day}/${month}/${year}`;
   }
 
-  private data_add_purchased(){
+  private data_add_purchased() {
     const data = {
       date: this.getCurrentDate(),
-      user: this._emisionService.data_user.name + '' + this._emisionService.data_user.sub_ape,
+      user:
+        this._emisionService.data_user.name +
+        ' ' +
+        this._emisionService.data_user.sub_ape,
       amount: (this.aumount.get('amount')?.value).toString(),
-      document: this._emisionService.data_user.prefix + '' + this._emisionService.data_user.rif,
+      document:
+        this._emisionService.data_user.prefix +
+        '' +
+        this._emisionService.data_user.rif,
       commerce: this._emisionService.commerceData.commerce_description,
-      document_commerce:this._emisionService.commerceData.commerce_code
-    }
-    this.meritopService.addPurchasedUser(data).toPromise()
+      document_commerce: this._emisionService.commerceData.commerce_code,
+    };
+    this.meritopService.addPurchasedUser(data).toPromise();
   }
 
   private async loadCustomer() {
- 
     try {
+      const identity = resolveMeritopClientIdentity({
+        accessToken: this.tokenStore.getAccessTokenSync(),
+      });
+      if (!identity) return;
+
       const data = {
-        bank: "94932663-923d-48a3-b13a-6b0bea8f3608",
-        "channel": "eea602fb-749e-460a-9805-9f993fc0036a",
-        "terminal": "0",
-        "ip": "127.0.0.1",
-        "clientid": {
-          doctype: this._emisionService.data_user?.prefix || '',
-          docid: +this._emisionService.data_user?.rif || ''
-        }
-      }
+        bank: '94932663-923d-48a3-b13a-6b0bea8f3608',
+        channel: 'eea602fb-749e-460a-9805-9f993fc0036a',
+        terminal: '0',
+        ip: '127.0.0.1',
+        clientid: identity,
+      };
+
       this.meritopService.customerProduct(data).subscribe({
         next: (result: any) => {
           this.customer_data = result;
-          console.log(result);
-          
-          if (this.customer_data) {
-            if (this.customer_data) {
-              this.pay_before_date = this.customer_data.products[0].credit_pay_before;
-              this.cardNumber = this.customer_data.products[0].cardnumber
-              
-              this.purchaseService.cutDate =
-              this.customer_data.products[0].credit_pay_before;
-              this.amountTotal = this.customer_data.products[0].available;
-              this.limitPayment = this.customer_data.products[0].limit;
-            }
-            this.showLoading = false;
+          if (this.customer_data && this.customer_data.products?.length) {
+            const product = this.customer_data.products[0];
+            this.pay_before_date = product.credit_pay_before;
+            this.cardNumber = product.cardnumber;
+            this.purchaseService.cutDate = product.credit_pay_before;
+            this.amountTotal = product.available;
+            this.limitPayment = product.limit;
+            this.meritopCache.persistFromProduct(product);
+            this.validateAmountAgainstAvailable();
           }
+          this.showLoading = false;
         },
         error: (error) => {
-          console.error('Error al obtener los clientes' + error);
+          console.error('Error al obtener datos del cliente:', error);
+          this.showLoading = false;
         },
       });
     } catch (e) {
       console.error(e);
+      this.showLoading = false;
     }
   }
 
@@ -264,3 +353,4 @@ export class AddPurchasePage {
     }, 5000);
   }
 }
+

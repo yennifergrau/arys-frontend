@@ -187,7 +187,7 @@
 
               @if(!isLoadingCreditPanel && creditInfo !== null){
                 <div class="so-purchase-panel">
-                  @if(creditInfo.available >= orderAmountBs(order) && orderAmountBs(order) > 0){
+                  @if((displayCreditAvailable > 0 ? displayCreditAvailable : creditInfo.available) >= orderAmountBs(order) && orderAmountBs(order) > 0 && (displayCreditAvailable > 0 ? displayCreditAvailable : creditInfo.available) > 0){
                     <div class="btn-row">
                       <button
                         class="btn btn-primary"
@@ -215,9 +215,9 @@
                         <p>{{ applyResult.message }}</p>
                       </div>
                     }
-                  } @else if(creditInfo.available > 0) {
+                  } @else if((displayCreditAvailable > 0 ? displayCreditAvailable : creditInfo.available) > 0) {
                     <p class="so-no-credit">
-                      Tu financiamiento disponible no alcanza para cubrir el total de la orden.
+                      El saldo disponible en tu cupo es insuficiente para cubrir el monto total de esta orden.
                     </p>
                     <div class="btn-row">
                       <button class="btn btn-secondary" type="button" (click)="toggleCreditPanel(order)">
