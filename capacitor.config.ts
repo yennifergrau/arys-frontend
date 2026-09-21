@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.polizaqui.arys',
+  appId: 'com.arysauto.app',
   appName: 'Arys',
   webDir: 'www'
 };
