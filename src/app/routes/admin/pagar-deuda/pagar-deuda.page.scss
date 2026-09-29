@@ -714,6 +714,44 @@
   min-width: 0;
 }
 
+.date-quick-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-quick-date {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #f4f4f7;
+  color: #4b5563;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  line-height: 1.2;
+
+  &:hover {
+    background: #e9e9ee;
+    color: #111;
+  }
+
+  &.active {
+    background: #f36a21;
+    border-color: #f36a21;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(243, 106, 33, 0.25);
+  }
+}
+
+.pay-date-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
 .pay-form-date {
   display: block;
   width: 100%;
@@ -723,7 +761,23 @@
 
 .payment-form input[type='date'].pay-form-date {
   min-height: 48px;
-  padding-right: 10px;
+  padding-right: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: #2d2d2f;
+
+  &::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.2s ease;
+    padding: 4px;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
 }
 
 .payment-form input[type='date'].pay-form-date::-webkit-date-and-time-value {

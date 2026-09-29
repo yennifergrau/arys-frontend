@@ -57,6 +57,52 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   public paidOn = '';
   public concept = '';
 
+  public get todayDateString(): string {
+    return this.toDateInputString(new Date());
+  }
+
+  public get yesterdayDateString(): string {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return this.toDateInputString(d);
+  }
+
+  private toDateInputString(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  public setToday(): void {
+    this.paidOn = this.todayDateString;
+  }
+
+  public setYesterday(): void {
+    this.paidOn = this.yesterdayDateString;
+  }
+
+  public isToday(val: string): boolean {
+    return !!val && val === this.todayDateString;
+  }
+
+  public isYesterday(val: string): boolean {
+    return !!val && val === this.yesterdayDateString;
+  }
+
+  public openDatePicker(inputEl: HTMLInputElement): void {
+    if (!inputEl) return;
+    try {
+      if (typeof inputEl.showPicker === 'function') {
+        inputEl.showPicker();
+      } else {
+        inputEl.focus();
+      }
+    } catch {
+      inputEl.focus();
+    }
+  }
+
   /** Bancos Venezuela (código pago móvil → nombre). */
   public readonly banksVE: Array<{ code: string; name: string }> = [
     { code: '0102', name: 'Banco de Venezuela' },
@@ -253,6 +299,9 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   }
 
   ngOnInit() {
+    if (!this.paidOn) {
+      this.setToday();
+    }
     this.summaryReady = false;
     this.membershipLoaded = false;
     this.productLoaded = false;

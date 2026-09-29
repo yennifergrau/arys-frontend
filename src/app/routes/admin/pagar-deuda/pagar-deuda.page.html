@@ -253,14 +253,35 @@
                 autocomplete="tel">
             </div>
             <div class="pay-form-field pay-form-field--date">
-              <label class="form-label fw-bold text-muted small" for="payDate">Fecha del pago</label>
-              <input
-                id="payDate"
-                type="date"
-                class="form-control custom-input pay-form-date"
-                [ngModel]="paidOn"
-                (ngModelChange)="paidOn = normalizePaidOn($event)"
-              />
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label fw-bold text-muted small mb-0" for="payDate">Fecha del pago</label>
+                <div class="date-quick-buttons">
+                  <button
+                    type="button"
+                    class="btn-quick-date"
+                    [class.active]="isToday(paidOn)"
+                    (click)="setToday()">
+                    Hoy
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-quick-date"
+                    [class.active]="isYesterday(paidOn)"
+                    (click)="setYesterday()">
+                    Ayer
+                  </button>
+                </div>
+              </div>
+              <div class="pay-date-input-wrap">
+                <input
+                  id="payDate"
+                  type="date"
+                  class="form-control custom-input pay-form-date"
+                  [(ngModel)]="paidOn"
+                  [max]="todayDateString"
+                  aria-label="Fecha del pago"
+                />
+              </div>
             </div>
             <div class="pay-form-field pay-form-field--concept">
               <label class="form-label fw-bold text-muted small" for="payConcept">Concepto</label>
