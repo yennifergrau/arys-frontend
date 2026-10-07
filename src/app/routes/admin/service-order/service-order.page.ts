@@ -16,8 +16,10 @@ import {
 } from '../services/meritop-summary-cache.service';
 import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
 import {
+  formatMeritopWarningMessage,
   getMeritopOperationMessage,
   isMeritopOperationFailed,
+  isMeritopWarningMessage,
 } from '../utils/meritop-feedback.util';
 import { IonicModule, ToastController, ViewWillEnter } from '@ionic/angular';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
@@ -271,7 +273,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   private async presentToast(message: string, color: 'success' | 'danger' | 'warning' = 'success') {
     const toast = await this.toastCtrl.create({
       message,
-      duration: 2500,
+      duration: color === 'warning' ? 4500 : 2500,
       position: 'top',
       color,
     });
@@ -604,12 +606,16 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
           });
         } else {
           this.isApplyingCredit = false;
-          const msg = getMeritopOperationMessage(
+          let msg = getMeritopOperationMessage(
             result,
             'No se pudo procesar el pago con financiamiento. Verifica tu saldo e intenta de nuevo.'
           );
-          this.applyResult = { status: false, message: msg };
-          void this.presentToast(msg, 'danger');
+          const isWarning = isMeritopWarningMessage(msg);
+          if (isWarning) {
+            msg = formatMeritopWarningMessage(msg);
+          }
+          this.applyResult = { status: false, message: msg, isWarning };
+          void this.presentToast(msg, isWarning ? 'warning' : 'danger');
         }
         // Actualiza el estado de la orden si es necesario
         if (order.order && result.status) {
@@ -622,8 +628,12 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
         if (typeof msg === 'string' && msg.includes('Http failure response')) {
           msg = 'No se pudo conectar con el servidor. Verifica tu conexión a internet o intenta nuevamente.';
         }
-        this.applyResult = { status: false, message: msg };
-        void this.presentToast(msg, 'danger');
+        const isWarning = isMeritopWarningMessage(msg);
+        if (isWarning) {
+          msg = formatMeritopWarningMessage(msg);
+        }
+        this.applyResult = { status: false, message: msg, isWarning };
+        void this.presentToast(msg, isWarning ? 'warning' : 'danger');
       }
     });
   }

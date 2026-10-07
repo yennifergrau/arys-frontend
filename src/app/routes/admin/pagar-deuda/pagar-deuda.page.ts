@@ -8,8 +8,10 @@ import { TabComponent } from 'src/app/shared/components/tab/tab.component';
 import { jwtDecode } from 'jwt-decode';
 import { catchError, finalize, map, of, switchMap, tap, throwError } from 'rxjs';
 import {
+  formatMeritopWarningMessage,
   getMeritopOperationMessage,
   isMeritopOperationFailed,
+  isMeritopWarningMessage,
 } from '../utils/meritop-feedback.util';
 import { DataArysService } from '../services/data-arys.service';
 import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
@@ -617,7 +619,11 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
           if (typeof msg === 'string' && msg.includes('Http failure response')) {
             msg = 'No se pudo conectar con el servidor. Verifica tu conexión a internet o intenta nuevamente.';
           }
-          await this.showToast(msg, 'danger');
+          const isWarning = isMeritopWarningMessage(msg);
+          if (isWarning) {
+            msg = formatMeritopWarningMessage(msg);
+          }
+          await this.showToast(msg, isWarning ? 'warning' : 'danger');
         },
       });
   }

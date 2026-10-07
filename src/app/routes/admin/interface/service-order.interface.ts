@@ -53,6 +53,7 @@ export interface OrderDetailsResponse {
 export interface ApplyCreditResponse {
   status: boolean;
   message: string;
+  isWarning?: boolean;
   credit_used?: number;
   remaining_payment?: number;
   new_credit_balance?: number;

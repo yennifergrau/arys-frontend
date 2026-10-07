@@ -210,8 +210,16 @@
                     </div>
 
                     @if(applyResult){
-                      <div class="so-result" [class.so-result--ok]="applyResult.status" [class.so-result--err]="!applyResult.status">
-                        <i class="feather" [class.icon-check-circle]="applyResult.status" [class.icon-alert-circle]="!applyResult.status"></i>
+                      <div
+                        class="so-result"
+                        [class.so-result--ok]="applyResult.status"
+                        [class.so-result--warn]="!applyResult.status && applyResult.isWarning"
+                        [class.so-result--err]="!applyResult.status && !applyResult.isWarning">
+                        <i
+                          class="feather"
+                          [class.icon-check-circle]="applyResult.status"
+                          [class.icon-alert-triangle]="!applyResult.status && applyResult.isWarning"
+                          [class.icon-alert-circle]="!applyResult.status && !applyResult.isWarning"></i>
                         <p>{{ applyResult.message }}</p>
                       </div>
                     }

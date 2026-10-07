@@ -34,3 +34,31 @@ export function getMeritopOperationMessage(res: unknown, fallback: string): stri
   }
   return fallback;
 }
+
+/**
+ * Determina si un mensaje devuelto por la operación corresponde a una advertencia
+ * por ventana de espera/cooldown de pago (ej. pago reciente con los mismos datos de destino).
+ */
+export function isMeritopWarningMessage(message: unknown): boolean {
+  if (!message || typeof message !== 'string') return false;
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('5 minutos') ||
+    normalized.includes('cinco minutos') ||
+    (normalized.includes('mismos datos') && normalized.includes('destino'))
+  );
+}
+
+/**
+ * Normaliza el mensaje de advertencia asegurando que oriente al usuario
+ * a esperar los 5 minutos requeridos antes de proceder.
+ */
+export function formatMeritopWarningMessage(message: string): string {
+  if (!isMeritopWarningMessage(message)) return message;
+  const lower = message.toLowerCase();
+  if (lower.includes('espera') || lower.includes('espere')) {
+    return message;
+  }
+  return `${message.trim().replace(/\.+$/, '')}. Por favor, espera que transcurran los 5 minutos antes de proceder.`;
+}
+
