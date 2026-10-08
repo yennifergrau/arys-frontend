@@ -740,10 +740,42 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     }).format(d);
   }
 
+  private getUserCedula(membership?: any): string {
+    const identity = resolveMeritopClientIdentity({
+      membershipRow: membership || this.data_membership?.[0],
+      accessToken: this.tokenStore.getAccessTokenSync(),
+    });
+    if (identity && identity.docid) {
+      const prefix = (identity.doctype || 'V').toUpperCase();
+      return `${prefix}-${identity.docid}`;
+    }
+
+    const tokenCedrif = userCedrifFromDecodedToken(this.decodeData);
+    if (tokenCedrif) {
+      return tokenCedrif.replace(/^([a-zA-Z])(\d+)$/, '$1-$2');
+    }
+
+    try {
+      const raw = localStorage.getItem('userData');
+      const ud = raw ? JSON.parse(raw) : null;
+      const docid = String(ud?.cedula || ud?.rif || ud?.docid || '').replace(/\D/g, '');
+      const prefix = String(ud?.doctype || ud?.prefix || ud?.letra_rif || 'V').trim().toUpperCase();
+      if (docid) {
+        return `${prefix}-${docid}`;
+      }
+    } catch {
+      // noop
+    }
+
+    return '';
+  }
+
   public contactFinancingSupport(membership?: any): void {
+    const cedula = this.getUserCedula(membership);
     const cert = membership?.name || this.data_membership?.[0]?.certificate || '';
     const name = this.username || '';
-    const text = `Hola, buen día. Quisiera aclarar dudas sobre mi financiamiento activo de ARYS.${name ? `\nCliente: ${name}` : ''}${cert ? `\nMembresía: ${cert}` : ''}`;
+    const idLine = cedula ? `\nCédula: ${cedula}` : (cert ? `\nMembresía: ${cert}` : '');
+    const text = `Hola, buen día. Quisiera aclarar dudas sobre mi financiamiento activo de ARYS.${name ? `\nCliente: ${name}` : ''}${idLine}`;
     const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
     const phone = raw.replace(/\D/g, '');
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
