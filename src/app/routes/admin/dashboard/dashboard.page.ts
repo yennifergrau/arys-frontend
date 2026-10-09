@@ -772,9 +772,8 @@ export class DashboardPage implements OnInit, ViewWillEnter {
 
   public contactFinancingSupport(membership?: any): void {
     const cedula = this.getUserCedula(membership);
-    const cert = membership?.name || this.data_membership?.[0]?.certificate || '';
     const name = this.username || '';
-    const idLine = cedula ? `\nCédula: ${cedula}` : (cert ? `\nMembresía: ${cert}` : '');
+    const idLine = cedula ? `\nCédula: ${cedula}` : '';
     const text = `Hola, buen día. Quisiera aclarar dudas sobre mi financiamiento activo de ARYS.${name ? `\nCliente: ${name}` : ''}${idLine}`;
     const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
     const phone = raw.replace(/\D/g, '');

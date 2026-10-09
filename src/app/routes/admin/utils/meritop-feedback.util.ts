@@ -62,3 +62,48 @@ export function formatMeritopWarningMessage(message: string): string {
   return `${message.trim().replace(/\.+$/, '')}. Por favor, espera que transcurran los 5 minutos antes de proceder.`;
 }
 
+/**
+ * Determina si la respuesta o error de Meritop corresponde a datos de transacción ya usados
+ * (código 706 o mensaje "02 Datos de transacción usados en otro pago. Su pago no pudo ser verificado").
+ */
+export function isMeritopDuplicateTransaction(target: unknown): boolean {
+  if (!target) return false;
+
+  const obj = target as Record<string, any>;
+
+  // Extraer posibles códigos de error
+  const code =
+    obj?.['code'] ??
+    obj?.['error']?.['code'] ??
+    obj?.['raw']?.['error']?.['code'] ??
+    obj?.['raw']?.['code'];
+
+  if (code === 706 || code === '706') {
+    return true;
+  }
+
+  // Extraer posibles mensajes
+  const candidates: unknown[] = [
+    obj?.['message'],
+    typeof obj?.['error'] === 'string' ? obj['error'] : obj?.['error']?.['message'],
+    obj?.['raw']?.['message'],
+    typeof obj?.['raw']?.['error'] === 'string' ? obj['raw']['error'] : obj?.['raw']?.['error']?.['message'],
+  ];
+
+  for (const c of candidates) {
+    if (typeof c === 'string') {
+      const normalized = c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (
+        normalized.includes('706') ||
+        normalized.includes('usados en otro pago') ||
+        (normalized.includes('transaccion') && normalized.includes('otro pago')) ||
+        (normalized.includes('transaccion') && normalized.includes('no pudo ser verificado'))
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+

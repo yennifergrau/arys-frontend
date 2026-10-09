@@ -7,13 +7,25 @@
             <i class="feather icon-arrow-left"></i>
           </a>
         </div>
-        <div class="mid-content"><h5 class="title">Pagar</h5></div>
-        <div class="right-content"></div>
+        <div class="mid-content">
+          <h5 class="title">Pagar</h5>
+        </div>
+        <div class="right-content">
+          <a
+            *ngIf="showVerificationError"
+            (click)="finishVerification()"
+            class="back-btn ic-icon icon-sm"
+            title="Finalizar"
+            aria-label="Finalizar"
+          >
+            <i class="feather icon-log-out"></i>
+          </a>
+        </div>
       </div>
     </header>
 
     <main class="page-content space-top">
-      <div class="container p-2" *ngIf="!showSuccess">
+      <div class="container p-2" *ngIf="!showSuccess && !showVerificationError">
 
         <div class="top-row">
           <div class="hello">
@@ -343,6 +355,46 @@
             </button>
             <button type="button" class="btn w-100 pay-success__btn-secondary" (click)="goToMovements()">
               Ver movimientos
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pantalla de validación automática no exitosa (datos ya usados / error 706) -->
+      <div class="container p-2 pay-verification-wrap" *ngIf="showVerificationError">
+        <div class="pay-verification">
+          <div class="verification-card">
+            <div class="verification-card__graphic" aria-hidden="true"></div>
+            <div class="verification-card__content">
+              <h2 class="verification-card__title">¡Ups!</h2>
+              <p class="verification-card__lead">
+                No pudimos validar tu pago automáticamente
+              </p>
+
+              <div class="verification-card__prompt">
+                <p class="verification-card__question">¿Nos ayudas a resolverlo?</p>
+                <p class="verification-card__subtext">
+                  Escríbenos por WhatsApp para verificarlo juntos.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="verification-actions">
+            <button
+              type="button"
+              class="btn btn-secondary w-100 py-3 fw-bold btn-verification-wa"
+              (click)="openMeritopWhatsappSupport()"
+            >
+              <i class="fa-brands fa-whatsapp me-2"></i>
+              WhatsApp soporte
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-tab-match w-100 py-3 fw-bold btn-verification-finish"
+              (click)="finishVerification()"
+            >
+              Finalizar
             </button>
           </div>
         </div>

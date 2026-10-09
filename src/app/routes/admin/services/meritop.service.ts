@@ -138,7 +138,12 @@ export class MeritopService {
   public addPayment(data: any) {
     return this.http.post<any>(`${this.url_meritop}/${this.meritop_addPayment}`, data).pipe(
       catchError((error: HttpErrorResponse) => {
-        return throwError(() => new Error(this.getErrorMessage(error)));
+        const msg = this.getErrorMessage(error);
+        const err: any = new Error(msg);
+        err.raw = error.error;
+        err.status = error.status;
+        err.code = error.error?.error?.code ?? error.error?.code;
+        return throwError(() => err);
       })
     );
   }

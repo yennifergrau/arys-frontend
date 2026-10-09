@@ -8,6 +8,7 @@ export const environment = {
   contact: {
     whatsappPhone: '584144128237',
     whatsappFinancingPhone: '584242318020',
+    whatsappMeritopPhone: '584242318020',
     whatsappServiceMessage: 'Hola, buen día. Quisiera solicitar un servicio; ¿me pueden indicar cómo hacerlo o qué información necesitan?',
     whatsappFinancingMessage: 'Hola, buen día. Quisiera aclarar dudas sobre mi financiamiento activo.',
   },

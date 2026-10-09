@@ -788,7 +788,34 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   }
 
   public contactFinancingSupport(): void {
-    const text = 'Hola, buen día. Quisiera aclarar dudas sobre mi financiamiento activo de ARYS.';
+    let clientName = '';
+    let clientCedula = '';
+    try {
+      const rawUser = localStorage.getItem('userData');
+      const u = rawUser ? JSON.parse(rawUser) : null;
+      clientName = [u?.name, u?.lastname, u?.first_name, u?.last_name].filter(Boolean).join(' ').trim();
+      if (u?.cedula || u?.cedrif || u?.docid) {
+        clientCedula = String(u.cedula || u.cedrif || u.docid);
+      }
+    } catch {}
+
+    const identity = resolveMeritopClientIdentity({
+      membershipRow: this.membershipSummary,
+      accessToken: this.tokenStore.getAccessTokenSync(),
+    });
+    if (!clientCedula && identity?.docid) {
+      clientCedula = `${(identity.doctype || 'V').toUpperCase()}-${identity.docid}`;
+    }
+
+    const lines = [
+      '¡Hola, buen día! Quisiera aclarar dudas sobre mi financiamiento activo o movimientos de ARYS.',
+      '',
+      '📌 Datos del cliente:',
+      clientName ? `• Cliente: ${clientName}` : '',
+      clientCedula ? `• Cédula/RIF: ${clientCedula}` : '',
+    ].filter(Boolean);
+
+    const text = lines.join('\n');
     const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
     const phone = raw.replace(/\D/g, '');
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;

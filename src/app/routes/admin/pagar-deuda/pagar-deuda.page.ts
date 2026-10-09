@@ -10,6 +10,7 @@ import { catchError, finalize, map, of, switchMap, tap, throwError } from 'rxjs'
 import {
   formatMeritopWarningMessage,
   getMeritopOperationMessage,
+  isMeritopDuplicateTransaction,
   isMeritopOperationFailed,
   isMeritopWarningMessage,
 } from '../utils/meritop-feedback.util';
@@ -38,6 +39,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
 
   public showLoading = false;
   public showSuccess = false;
+  public showVerificationError = false;
   public debtAmount = 0;
   public limitAmount = 0;
   public creditAvailableAmount = 0;
@@ -320,6 +322,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   }
 
   ionViewWillEnter(): void {
+    this.showVerificationError = false;
     if (this.skipNextMeritopViewRefresh) {
       this.skipNextMeritopViewRefresh = false;
       return;
@@ -550,6 +553,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
     }
 
     this.showLoading = true;
+    this.showVerificationError = false;
 
     const paymentData: addPayment = {
       ip: '127.0.0.1',
@@ -571,6 +575,18 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       .pipe(
         switchMap((res) => {
           if (isMeritopOperationFailed(res)) {
+            if (isMeritopDuplicateTransaction(res)) {
+              const err: any = new Error(
+                getMeritopOperationMessage(
+                  res,
+                  '02 Datos de transacción usados en otro pago. Su pago no pudo ser verificado'
+                )
+              );
+              err.raw = res;
+              err.code = (res as any)?.error?.code ?? (res as any)?.code ?? 706;
+              err.isDuplicate = true;
+              return throwError(() => err);
+            }
             return throwError(
               () =>
                 new Error(
@@ -612,6 +628,11 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
         },
         error: async (err) => {
           console.error('Error en pago:', err);
+          if (isMeritopDuplicateTransaction(err) || isMeritopDuplicateTransaction(err?.raw)) {
+            this.showVerificationError = true;
+            return;
+          }
+
           let msg =
             err?.message && String(err.message).trim()
               ? String(err.message)
@@ -629,11 +650,100 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   }
 
   public goBack() {
-    if (this.showSuccess) {
+    if (this.showVerificationError) {
+      this.dismissVerificationError();
+    } else if (this.showSuccess) {
       this.navCtrl.navigateRoot('/admin/dashboard/sarys');
     } else {
       this.navCtrl.back();
     }
+  }
+
+  public finishVerification(): void {
+    this.showVerificationError = false;
+    this.navCtrl.navigateRoot('/admin/dashboard/sarys');
+  }
+
+  public dismissVerificationError(): void {
+    this.showVerificationError = false;
+  }
+
+  private getClientFullName(): string {
+    let clientName = '';
+    try {
+      const rawUser = localStorage.getItem('userData');
+      const u = rawUser ? JSON.parse(rawUser) : null;
+      clientName = [u?.name, u?.lastname, u?.first_name, u?.last_name]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+    } catch {
+      // noop
+    }
+    if (!clientName && this.accessTokenData) {
+      clientName = [this.accessTokenData?.name, this.accessTokenData?.sub_ape]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+    }
+    return clientName;
+  }
+
+  private getClientCedula(): string {
+    if (this.docType && this.docId) {
+      return `${String(this.docType).toUpperCase()}-${this.docId}`;
+    }
+    const identity = this.getIdentity();
+    if (identity && identity.docid) {
+      const prefix = (identity.doctype || 'V').toUpperCase();
+      return `${prefix}-${identity.docid}`;
+    }
+    try {
+      const rawUser = localStorage.getItem('userData');
+      const u = rawUser ? JSON.parse(rawUser) : null;
+      if (u?.cedula || u?.cedrif || u?.docid) {
+        return String(u.cedula || u.cedrif || u.docid);
+      }
+    } catch {
+      // noop
+    }
+    return '';
+  }
+
+  public openMeritopWhatsappSupport(): void {
+    const raw =
+      environment.contact?.whatsappMeritopPhone ||
+      environment.contact?.whatsappFinancingPhone ||
+      '584242318020';
+    const phone = String(raw).replace(/\D/g, '');
+
+    const clientName = this.getClientFullName();
+    const clientCedula = this.getClientCedula();
+    const bankName = this.selectedBankName || this.bankCode || 'No especificado';
+    const amountStr = this.payAmountDisplay
+      ? `${this.payAmountDisplay} Bs`
+      : `${Number(this.payAmount || 0).toFixed(2)} Bs`;
+
+    const lines = [
+      '¡Hola! Necesito apoyo con la verificación de un pago en Meritop para mi cupo ARYS.',
+      '',
+      'El sistema indicó: "02 Datos de transacción usados en otro pago. Su pago no pudo ser verificado".',
+      '',
+      '📌 Datos del cliente y del pago:',
+      clientName ? `• Cliente: ${clientName}` : '',
+      clientCedula ? `• Cédula/RIF: ${clientCedula}` : '',
+      this.payPhone ? `• Teléfono emisor: ${this.payPhone}` : '',
+      `• Banco emisor: ${bankName}`,
+      `• Monto: ${amountStr}`,
+      this.paidOn ? `• Fecha: ${this.paidOn}` : '',
+      this.concept ? `• Concepto: ${this.concept}` : '',
+      '',
+      '¿Podrían ayudarme a verificarlo manualmente, por favor?'
+    ].filter(Boolean);
+
+    const text = lines.join('\n');
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   public goToMovements() {
@@ -663,7 +773,18 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   }
 
   public contactFinancingSupport(): void {
-    const text = 'Hola, buen día. Quisiera aclarar dudas sobre el pago o saldo de mi financiamiento activo de ARYS.';
+    const clientName = this.getClientFullName();
+    const clientCedula = this.getClientCedula();
+
+    const lines = [
+      '¡Hola, buen día! Quisiera aclarar dudas sobre el pago o saldo de mi financiamiento activo de ARYS.',
+      '',
+      '📌 Datos del cliente:',
+      clientName ? `• Cliente: ${clientName}` : '',
+      clientCedula ? `• Cédula/RIF: ${clientCedula}` : '',
+    ].filter(Boolean);
+
+    const text = lines.join('\n');
     const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
     const phone = raw.replace(/\D/g, '');
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;

@@ -1016,3 +1016,161 @@ ion-spinner {
     align-items: flex-start;
   }
 }
+
+.header .title.brand-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: #ffb000;
+  text-transform: lowercase;
+}
+
+/* --------------------------------------------------------------------------
+ * Pantalla de verificación manual (Error 706 / datos ya usados)
+ * Estilos adaptados 100% al sistema de diseño de ARYS
+ * -------------------------------------------------------------------------- */
+.pay-verification-wrap {
+  min-height: calc(100vh - 140px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px 24px;
+}
+
+.pay-verification {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border-radius: 28px;
+  padding: 16px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.verification-card {
+  position: relative;
+  background: linear-gradient(155deg, #ffaa00 0%, #ff9500 45%, #e67e00 100%);
+  border-radius: 22px;
+  border: 1px solid rgba(255, 170, 0, 0.45);
+  box-shadow: 0 14px 30px rgba(255, 150, 0, 0.25);
+  padding: 40px 20px 32px;
+  text-align: center;
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.verification-card__graphic {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.35), transparent 30%),
+    repeating-radial-gradient(circle at -10% 110%, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 14px);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.verification-card__content {
+  position: relative;
+  z-index: 1;
+}
+
+.verification-card__title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin: 0 0 14px;
+  color: #ffffff;
+  line-height: 1.1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.verification-card__lead {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 1.22rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 auto 36px;
+  max-width: 310px;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.verification-card__prompt {
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.verification-card__question {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.verification-card__subtext {
+  font-size: 0.96rem;
+  font-weight: 500;
+  line-height: 1.45;
+  margin: 0 auto;
+  max-width: 280px;
+  color: rgba(255, 255, 255, 0.94);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.verification-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+
+  @media (max-width: 360px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+.btn-verification-wa {
+  background-color: #131921 !important;
+  border-color: #131921 !important;
+  color: #ffffff !important;
+  border-radius: 50px !important;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 13px 10px !important;
+  box-shadow: 0 4px 14px rgba(19, 25, 33, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover, &:active {
+    background-color: #0b1016 !important;
+    border-color: #0b1016 !important;
+  }
+}
+
+.btn-verification-finish {
+  background-color: #ffb000 !important;
+  border-color: #ffb000 !important;
+  color: #131921 !important;
+  border-radius: 50px !important;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 13px 10px !important;
+  box-shadow: 0 4px 14px rgba(255, 176, 0, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover, &:active {
+    background-color: #e09b00 !important;
+    border-color: #e09b00 !important;
+  }
+}
