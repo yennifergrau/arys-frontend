@@ -295,6 +295,17 @@
                 />
               </div>
             </div>
+            <div class="pay-form-field pay-form-field--reference">
+              <label class="form-label fw-bold text-muted small" for="payReference">Número de referencia</label>
+              <input
+                id="payReference"
+                type="text"
+                class="form-control custom-input"
+                [(ngModel)]="reference"
+                inputmode="numeric"
+                placeholder="Ej. 857412"
+                autocomplete="off">
+            </div>
             <div class="pay-form-field pay-form-field--concept">
               <label class="form-label fw-bold text-muted small" for="payConcept">Concepto</label>
               <input

@@ -133,7 +133,9 @@ export interface addPayment {
     payphone: string,
     paidon: string,
     bankcode: string,
-    concept: string
+    concept: string,
+    paymentType: string,
+    reference: string
 }
 
 export interface userCreateCustomer {

@@ -650,8 +650,11 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
     const bank = String(providerBank ?? '').trim();
     const phone = String(providerPhone ?? '').trim();
     const rif = String(providerRif ?? '').trim();
+    const reference = String(
+      result?.payment_dest?.payment_reference ?? result?.payment_reference ?? ''
+    ).trim();
     this.dataArysService
-      .save_credit_payment({ payment_id: paymentId, bank, phone, rif })
+      .save_credit_payment({ payment_id: paymentId, bank, phone, rif, reference: reference || undefined })
       .pipe(catchError(() => of(null)))
       .subscribe();
   }

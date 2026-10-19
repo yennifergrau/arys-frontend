@@ -798,8 +798,12 @@
     grid-column: 1;
   }
 
-  .pay-form-field--concept {
+  .pay-form-field--reference {
     grid-column: 2;
+  }
+
+  .pay-form-field--concept {
+    grid-column: 1 / -1;
   }
 }
 

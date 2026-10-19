@@ -33,7 +33,14 @@ export class ReportPage implements OnInit {
         next: (res: any) => {
           const row = res?.data ?? res;
           const orig = row?.payment_orig ?? row;
-          this.reference = String(orig?.payment_reference ?? row?.payment_reference ?? paymentId ?? '').trim();
+          this.reference = String(
+            orig?.reference ??
+              row?.reference ??
+              orig?.payment_reference ??
+              row?.payment_reference ??
+              paymentId ??
+              ''
+          ).trim();
           this.amount = Number(orig?.payment_amount ?? row?.payment_amount ?? 0) || 0;
           this.data = orig?.payment_paidon ?? row?.payment_paidon ?? row?.paidon ?? null;
           this.phone = String(orig?.phonenumber ?? row?.phone ?? row?.payphone ?? '').trim();

@@ -80,17 +80,19 @@ export class DataArysService {
     )
   }
 
-  public save_credit_payment(payload: { payment_id: string; bank: string; phone: string; rif?: string }) {
+  public save_credit_payment(payload: { payment_id: string; bank: string; phone: string; rif?: string; reference?: string }) {
     const payment_id = String(payload?.payment_id ?? '').trim();
     const bank = String(payload?.bank ?? '').trim();
     const phone = String(payload?.phone ?? '').trim();
     const rif = String(payload?.rif ?? '').trim();
-    const body: { payment_id: string; bank: string; phone: string; rif?: string } = {
+    const reference = String(payload?.reference ?? '').trim();
+    const body: { payment_id: string; bank: string; phone: string; rif?: string; reference?: string } = {
       payment_id,
       bank,
       phone,
     };
     if (rif) body.rif = rif;
+    if (reference) body.reference = reference;
     return this.http
       .post<any>(`${this.baseUrl}/${this.save_credit_payment_url}`, body)
       .pipe(

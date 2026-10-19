@@ -70,6 +70,8 @@ export class AddPaymentPage implements AfterViewInit {
     phone_provider: new FormControl('0412', [Validators.required]),
     phone: new FormControl(null, [Validators.required]),
     date: new FormControl(this.fechaActual),
+    paymentType: new FormControl('1', [Validators.required]),
+    reference: new FormControl('', [Validators.required]),
   });
 
   public pay_before !: string
@@ -82,6 +84,10 @@ export class AddPaymentPage implements AfterViewInit {
 
   get phoneControl(): AbstractControl<any>{
     return this.paymentForm.get('phone')!
+  }
+
+  get referenceControl(): AbstractControl<any>{
+    return this.paymentForm.get('reference')!
   }
 
   constructor(
@@ -308,6 +314,8 @@ getFechaActualISO(): string {
     paidon: this.getFechaActualISO(),
     bankcode: this.paymentForm.get('bank')?.value,
     concept: "pago",
+    paymentType: String(this.paymentForm.get('paymentType')?.value || '1'),
+    reference: String(this.paymentForm.get('reference')?.value || '').trim(),
   };
 
   console.log('Datos listos para enviar:', data);

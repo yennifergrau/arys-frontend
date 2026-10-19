@@ -56,6 +56,8 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   /** Input de monto: se escribe como “céntimos” y se muestra con coma. */
   public payAmountDisplay = '';
   private payAmountCents = 0;
+  public readonly paymentType = '1';
+  public reference = '';
   public bankCode = '';
   public payPhone = '';
   public paidOn = '';
@@ -547,8 +549,8 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       return;
     }
 
-    if (!this.bankCode || !this.payPhone || !this.paidOn || !this.concept) {
-      this.showToast('Por favor, complete todos los campos obligatorios.', 'warning');
+    if (!this.bankCode || !this.payPhone || !this.paidOn || !this.reference.trim() || !this.paymentType) {
+      this.showToast('Por favor, complete todos los campos obligatorios (incluyendo la referencia).', 'warning');
       return;
     }
 
@@ -567,7 +569,9 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       payphone: this.payPhone,
       paidon: this.normalizePaidOn(this.paidOn),
       bankcode: this.bankCode,
-      concept: this.concept
+      concept: this.concept.trim() || 'Abono cupo ARYS',
+      paymentType: String(this.paymentType || '1'),
+      reference: this.reference.trim()
     };
 
     this.meritopService
@@ -600,10 +604,13 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
           const paymentId = res?.payid != null ? String(res.payid).trim() : '';
           const bank = String(res?.payment_orig?.bankcode ?? paymentData.bankcode ?? '').trim();
           const phone = String(res?.payment_orig?.phonenumber ?? paymentData.payphone ?? '').trim();
+          const reference = String(
+            paymentData.reference || res?.payment_orig?.payment_reference || ''
+          ).trim();
 
           // Persistencia adicional en ARYS: no bloquea la UI si falla.
           const save$ = paymentId
-            ? this.dataArysService.save_credit_payment({ payment_id: paymentId, bank, phone }).pipe(
+            ? this.dataArysService.save_credit_payment({ payment_id: paymentId, bank, phone, reference }).pipe(
                 catchError(() => of(null))
               )
             : of(null);
@@ -734,6 +741,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       clientCedula ? `• Cédula/RIF: ${clientCedula}` : '',
       this.payPhone ? `• Teléfono emisor: ${this.payPhone}` : '',
       `• Banco emisor: ${bankName}`,
+      this.reference ? `• Referencia: ${this.reference}` : '',
       `• Monto: ${amountStr}`,
       this.paidOn ? `• Fecha: ${this.paidOn}` : '',
       this.concept ? `• Concepto: ${this.concept}` : '',

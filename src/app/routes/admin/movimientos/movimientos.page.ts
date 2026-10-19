@@ -149,6 +149,7 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
 
   public get pagoReferencia(): string {
     return String(
+      this.receiptPaymentData?.reference ??
       this.receiptPaymentData?.payment_orig?.payment_reference ??
       this.receiptPaymentData?.payment_dest?.payment_reference ??
       this.receiptPaymentData?.payment_reference ??
@@ -702,7 +703,8 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
               typeof row === 'object' &&
               (String(row.bank ?? '').trim() ||
                 String(row.phone ?? '').trim() ||
-                String(row.rif ?? '').trim());
+                String(row.rif ?? '').trim() ||
+                String(row.reference ?? '').trim());
             if (hasRow) {
               this.receiptPaymentData = row;
               this.receiptPaymentFromDb = true;
