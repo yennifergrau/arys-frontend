@@ -177,6 +177,15 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
     }
   }
 
+  public onReferenceInput(ev: any): void {
+    const raw = (ev?.target?.value ?? '').toString();
+    const digits = raw.replace(/\D/g, '').slice(0, 20);
+    this.reference = digits;
+    if (ev?.target && ev.target.value !== digits) {
+      ev.target.value = digits;
+    }
+  }
+
   private setPayAmountFromBs(amount: number): void {
     const safe = Math.max(0, this.toNumber(amount));
     this.payAmountCents = Math.round(safe * 100);
@@ -544,13 +553,26 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       return;
     }
 
+    if (this.displayDebtAmount > 0 && this.payAmount > this.displayDebtAmount + 1) {
+      this.showToast('Recuerda no pagar más de tu deuda actual.', 'warning');
+      return;
+    }
+
     if (!this.docType || !this.docId || !this.cardNumber) {
       this.showToast('Faltan datos del cliente o de la tarjeta.', 'warning');
       return;
     }
 
-    if (!this.bankCode || !this.payPhone || !this.paidOn || !this.reference.trim() || !this.paymentType) {
+    const cleanReference = (this.reference ?? '').toString().replace(/\D/g, '');
+    this.reference = cleanReference;
+
+    if (!this.bankCode || !this.payPhone || !this.paidOn || !cleanReference || !this.paymentType) {
       this.showToast('Por favor, complete todos los campos obligatorios (incluyendo la referencia).', 'warning');
+      return;
+    }
+
+    if (cleanReference.length < 4 || cleanReference.length > 20) {
+      this.showToast('El número de referencia debe tener entre 4 y 20 dígitos.', 'warning');
       return;
     }
 
@@ -571,7 +593,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       bankcode: this.bankCode,
       concept: this.concept.trim() || 'Abono cupo ARYS',
       paymentType: String(this.paymentType || '1'),
-      reference: this.reference.trim()
+      reference: cleanReference
     };
 
     this.meritopService

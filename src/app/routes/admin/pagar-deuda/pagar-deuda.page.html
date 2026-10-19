@@ -302,7 +302,10 @@
                 type="text"
                 class="form-control custom-input"
                 [(ngModel)]="reference"
+                (input)="onReferenceInput($event)"
                 inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="20"
                 placeholder="Ej. 857412"
                 autocomplete="off">
             </div>
