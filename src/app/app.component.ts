@@ -3,6 +3,7 @@ import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { MobileVersionService } from './shared/services/mobile-version.service';
+import { MonthlyReminderService } from './shared/services/monthly-reminder.service';
 
 @Component({
   selector: 'app-root',
@@ -12,9 +13,14 @@ import { MobileVersionService } from './shared/services/mobile-version.service';
 })
 export class AppComponent implements OnInit {
   private mobileVersion = inject(MobileVersionService);
+  private monthlyReminder = inject(MonthlyReminderService);
 
   ngOnInit(): void {
     void this.mobileVersion.presentBlockIfNeeded();
+
+    if (!this.mobileVersion.isBlocked) {
+      void this.monthlyReminder.init();
+    }
 
     if (!Capacitor.isNativePlatform()) {
       return;

@@ -289,3 +289,37 @@ video {
     transform: scale(0.92);
   }
 }
+
+/* Pop-Up de recordatorios mensuales (días 14, 15 y 21) y avisos */
+ion-alert.arys-monthly-reminder-alert {
+  --backdrop-opacity: 0.45;
+
+  .alert-wrapper {
+    border-radius: 18px;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22);
+    border-top: 4px solid #ffb000;
+  }
+
+  .alert-title {
+    font-weight: 800;
+    font-size: 18px;
+  }
+
+  .alert-sub-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #b87d00;
+    font-weight: 700;
+  }
+
+  .alert-message {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .alert-button {
+    font-weight: 700;
+    color: #b87d00;
+  }
+}
