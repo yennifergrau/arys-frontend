@@ -161,7 +161,7 @@
                             }
                           </div>
                           <div class="membership-card__due">
-                            <div class="metric__label">Pague antes de</div>
+                            <div class="metric__label">{{ payBeforeLabel(m) }}</div>
                             <div class="membership-card__dueDate">
                               @if (meritopReady) {
                                 {{ formatCreditPayBefore(m.credit_pay_before) }}

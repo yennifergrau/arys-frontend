@@ -740,6 +740,32 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     }).format(d);
   }
 
+  public isPayBeforeExpired(m?: any): boolean {
+    if (!this.meritopReady || !m || (m.credit_used ?? 0) <= 0) return false;
+    const raw = (m.credit_pay_before ?? '').toString().trim();
+    if (!raw) return false;
+    let targetDate: Date | null = null;
+    if (/^\d{4}[-/]\d{2}[-/]\d{2}/.test(raw)) {
+      const parts = raw.slice(0, 10).split(/[-/]/);
+      targetDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    } else if (/^\d{2}[-/]\d{2}[-/]\d{4}/.test(raw)) {
+      const parts = raw.slice(0, 10).split(/[-/]/);
+      targetDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+    } else {
+      const d = new Date(raw);
+      if (!Number.isNaN(d.getTime())) targetDate = d;
+    }
+    if (!targetDate || Number.isNaN(targetDate.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    targetDate.setHours(0, 0, 0, 0);
+    return targetDate.getTime() < today.getTime();
+  }
+
+  public payBeforeLabel(m?: any): string {
+    return this.isPayBeforeExpired(m) ? 'Venció el' : 'Pague antes de';
+  }
+
   private getUserCedula(membership?: any): string {
     const identity = resolveMeritopClientIdentity({
       membershipRow: membership || this.data_membership?.[0],

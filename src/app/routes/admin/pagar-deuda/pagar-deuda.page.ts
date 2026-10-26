@@ -577,6 +577,32 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
     return `**** ${card.slice(-4)}`;
   }
 
+  get isPayBeforeExpired(): boolean {
+    if (!this.summaryReady || !this.hasDebt || this.minPayAmount <= 0) return false;
+    const raw = (this.creditPayBefore ?? '').toString().trim();
+    if (!raw) return false;
+    let targetDate: Date | null = null;
+    if (/^\d{4}[-/]\d{2}[-/]\d{2}/.test(raw)) {
+      const parts = raw.slice(0, 10).split(/[-/]/);
+      targetDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    } else if (/^\d{2}[-/]\d{2}[-/]\d{4}/.test(raw)) {
+      const parts = raw.slice(0, 10).split(/[-/]/);
+      targetDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+    } else {
+      const d = new Date(raw);
+      if (!Number.isNaN(d.getTime())) targetDate = d;
+    }
+    if (!targetDate || Number.isNaN(targetDate.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    targetDate.setHours(0, 0, 0, 0);
+    return targetDate.getTime() < today.getTime();
+  }
+
+  get payBeforeLabel(): string {
+    return this.isPayBeforeExpired ? 'Venció el' : 'Pague antes de';
+  }
+
   get formattedPayBefore(): string {
     const raw = (this.creditPayBefore ?? '').toString().trim();
     if (!raw) return '--';

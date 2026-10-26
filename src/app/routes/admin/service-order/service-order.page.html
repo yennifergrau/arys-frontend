@@ -86,9 +86,9 @@
           </div>
 
           <div class="summary-col">
-            <div class="metric-box pay-box">
+            <div class="metric-box pay-box" [class.pay-box--expired]="isPayBeforeExpired">
               <div>
-                <div class="label">Pague antes de</div>
+                <div class="label">{{ payBeforeLabel }}</div>
                 <div class="value">{{ formattedPayBefore }}</div>
               </div>
               <div class="so-pay-hint">
