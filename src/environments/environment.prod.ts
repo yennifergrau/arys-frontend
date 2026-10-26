@@ -13,6 +13,12 @@ export const environment = {
     whatsappFinancingMessage: 'Hola, buen día. Quisiera aclarar dudas sobre mi financiamiento activo.',
   },
 
+  stores: {
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=finanziamiento.arys',
+    playStoreMarketUri: 'market://details?id=finanziamiento.arys',
+    appStoreUrl: '',
+  },
+
   downloadMobileAppLink: 'https://docs.polizaqui.com/arys.apk',
   url_app_ventas: 'https://arys.polizaqui.com',
   authentication: 'https://sarys-auth.polizaqui.com',

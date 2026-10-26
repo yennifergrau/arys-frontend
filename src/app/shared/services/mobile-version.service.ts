@@ -48,7 +48,11 @@ export class MobileVersionService {
       return;
     }
     await this.updateRequired.present(
-      this.config.apkUrl,
+      {
+        apkUrl: this.config.apkUrl,
+        playStoreUrl: (this.config as any)?.playStoreUrl,
+        appStoreUrl: (this.config as any)?.appStoreUrl,
+      },
       this.config.message || 'Debes actualizar la aplicación para continuar.'
     );
   }

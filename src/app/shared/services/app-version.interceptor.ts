@@ -21,7 +21,14 @@ export const appVersionInterceptor: HttpInterceptorFn = (req, next) => {
       if (httpErr?.status === 426) {
         const body: any = httpErr?.error;
         if (body?.error === 'OUTDATED_APP') {
-          void updateRequired.present(body?.apkUrl, body?.message);
+          void updateRequired.present(
+            {
+              apkUrl: body?.apkUrl,
+              playStoreUrl: body?.playStoreUrl,
+              appStoreUrl: body?.appStoreUrl,
+            },
+            body?.message
+          );
         }
       }
       return throwError(() => err);

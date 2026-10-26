@@ -14,6 +14,12 @@ export const environment = {
   },
 
   downloadMobileAppLink: 'https://docs.polizaqui.com/qa-arys.apk',
+
+  stores: {
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=finanziamiento.arys',
+    playStoreMarketUri: 'market://details?id=finanziamiento.arys',
+    appStoreUrl: '',
+  },
   url_app_ventas: 'https://poliza.arys.polizaqui.com',
   authentication: 'https://demo-auth-arys.polizaqui.com',
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',

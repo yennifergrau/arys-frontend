@@ -16,7 +16,9 @@ export class AppComponent implements OnInit {
   private monthlyReminder = inject(MonthlyReminderService);
 
   ngOnInit(): void {
-    void this.mobileVersion.presentBlockIfNeeded();
+    setTimeout(() => {
+      void this.mobileVersion.presentBlockIfNeeded();
+    }, 200);
 
     if (!this.mobileVersion.isBlocked) {
       void this.monthlyReminder.init();
