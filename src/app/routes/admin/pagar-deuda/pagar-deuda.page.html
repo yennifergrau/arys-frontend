@@ -301,13 +301,17 @@
                   </button>
                 </div>
               </div>
-              <div class="pay-date-input-wrap" (click)="openDateModal()">
-                <div class="pay-date-display form-control custom-input">
+              <div class="pay-date-input-wrap">
+                <button
+                  type="button"
+                  class="pay-date-display form-control custom-input"
+                  (click)="openDateModal()"
+                  aria-label="Seleccionar fecha del pago">
                   <span class="pay-date-display__text">
                     {{ displayFormattedDate }}
                   </span>
                   <i class="feather icon-calendar pay-date-display__icon"></i>
-                </div>
+                </button>
               </div>
             </div>
             <div class="pay-form-field pay-form-field--reference">
@@ -444,16 +448,19 @@
           </div>
         </div>
       </div>
-      <!-- Modal selector de fecha para 100% compatibilidad iOS y Android -->
+      <!-- Modal selector de fecha para 100% compatibilidad iOS, Android y Web -->
       <ion-modal
         [isOpen]="isDatePickerOpen"
-        (didDismiss)="isDatePickerOpen = false"
-        class="date-modal">
+        (willDismiss)="onDateModalDismiss()"
+        (didDismiss)="onDateModalDismiss()"
+        class="date-modal"
+        [initialBreakpoint]="0.55"
+        [breakpoints]="[0, 0.55]">
         <ng-template>
           <div class="date-modal-wrapper">
             <div class="date-modal-header">
               <span class="date-modal-title">Fecha del pago</span>
-              <button type="button" class="date-modal-close" (click)="isDatePickerOpen = false">
+              <button type="button" class="date-modal-close" (click)="closeDateModal()" aria-label="Cerrar selector de fecha">
                 <i class="feather icon-x"></i>
               </button>
             </div>

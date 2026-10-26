@@ -107,7 +107,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   }
 
   public isDatePickerOpen = false;
-  public tempDate = '';
+  private isModalDateReady = false;
 
   public get displayFormattedDate(): string {
     if (!this.paidOn) {
@@ -122,25 +122,37 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   }
 
   public openDateModal(): void {
-    this.tempDate = this.paidOn || this.todayDateString;
+    this.isModalDateReady = false;
     this.isDatePickerOpen = true;
+    setTimeout(() => {
+      this.isModalDateReady = true;
+    }, 300);
+  }
+
+  public closeDateModal(): void {
+    this.isDatePickerOpen = false;
+    this.isModalDateReady = false;
+  }
+
+  public onDateModalDismiss(): void {
+    this.isDatePickerOpen = false;
+    this.isModalDateReady = false;
   }
 
   public onDateSelected(event: any): void {
+    if (!this.isModalDateReady) {
+      return;
+    }
     const val = event?.detail?.value;
     if (val) {
       const raw = Array.isArray(val) ? val[0] : val;
       this.paidOn = String(raw).split('T')[0];
-      this.isDatePickerOpen = false;
+      this.closeDateModal();
     }
   }
 
   public confirmDateSelection(): void {
-    if (this.tempDate) {
-      const raw = Array.isArray(this.tempDate) ? this.tempDate[0] : this.tempDate;
-      this.paidOn = String(raw).split('T')[0];
-    }
-    this.isDatePickerOpen = false;
+    this.closeDateModal();
   }
   public openDatePicker(inputEl: HTMLInputElement): void {
     if (!inputEl) return;
