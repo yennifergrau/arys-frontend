@@ -104,7 +104,7 @@
               <h6 class="card-title">2) Cuéntanos lo que pasó</h6>
               @if (selectedCount > 0) {
                 <span class="sr-service-badge">
-                  @switch (selectedOptions[0]?.id) {
+                  @switch (selectedOptions[0].id) {
                     @case ('grua') { <i class="fa-solid fa-truck-pickup me-1"></i> }
                     @case ('bateria') { <i class="fa-solid fa-car-battery me-1"></i> }
                     @case ('caucho') { <i class="fa-solid fa-circle-dot me-1"></i> }
@@ -112,7 +112,7 @@
                     @case ('cerrajero') { <i class="fa-solid fa-key me-1"></i> }
                     @default { <i class="fa-solid fa-screwdriver-wrench me-1"></i> }
                   }
-                  {{ selectedOptions[0]?.label }}
+                  {{ selectedOptions[0].label }}
                 </span>
               }
             </div>

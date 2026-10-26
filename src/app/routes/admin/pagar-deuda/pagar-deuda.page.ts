@@ -106,6 +106,42 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
     return !!val && val === this.yesterdayDateString;
   }
 
+  public isDatePickerOpen = false;
+  public tempDate = '';
+
+  public get displayFormattedDate(): string {
+    if (!this.paidOn) {
+      return 'DD/MM/AAAA';
+    }
+    const parts = this.paidOn.split('-');
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      return day + '/' + month + '/' + year;
+    }
+    return this.paidOn;
+  }
+
+  public openDateModal(): void {
+    this.tempDate = this.paidOn || this.todayDateString;
+    this.isDatePickerOpen = true;
+  }
+
+  public onDateSelected(event: any): void {
+    const val = event?.detail?.value;
+    if (val) {
+      const raw = Array.isArray(val) ? val[0] : val;
+      this.paidOn = String(raw).split('T')[0];
+      this.isDatePickerOpen = false;
+    }
+  }
+
+  public confirmDateSelection(): void {
+    if (this.tempDate) {
+      const raw = Array.isArray(this.tempDate) ? this.tempDate[0] : this.tempDate;
+      this.paidOn = String(raw).split('T')[0];
+    }
+    this.isDatePickerOpen = false;
+  }
   public openDatePicker(inputEl: HTMLInputElement): void {
     if (!inputEl) return;
     try {

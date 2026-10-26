@@ -1221,12 +1221,15 @@ ion-spinner {
 }
 
 .date-modal {
+  --height: auto;
   --background: rgba(0, 0, 0, 0.45);
+  align-items: flex-end;
 
   &::part(content) {
     border-radius: 24px 24px 0 0;
     max-width: 480px;
-    margin: auto;
+    width: 100%;
+    margin: 0 auto;
     overflow: hidden;
     background: #ffffff;
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.15);
@@ -1237,7 +1240,7 @@ ion-spinner {
   background: #ffffff;
   display: flex;
   flex-direction: column;
-  padding-bottom: 10px;
+  padding-bottom: 12px;
 }
 
 .date-modal-header {
@@ -1273,6 +1276,15 @@ ion-spinner {
 
   ion-datetime {
     --background: #ffffff;
+    --ion-color-primary: #f36a21;
+    --ion-color-primary-rgb: 243, 106, 33;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-contrast-rgb: 255, 255, 255;
+    --ion-color-base: #f36a21 !important;
+    --ion-color-base-rgb: 243, 106, 33 !important;
+    --ion-color-contrast: #ffffff !important;
+    --ion-color-contrast-rgb: 255, 255, 255 !important;
+    --wheel-highlight-background: rgba(243, 106, 33, 0.2);
     border-radius: 16px;
     width: 100%;
     max-width: 350px;

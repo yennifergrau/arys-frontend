@@ -299,13 +299,6 @@
                     (click)="setYesterday()">
                     Ayer
                   </button>
-                  <button
-                    type="button"
-                    class="btn-quick-date"
-                    [class.active]="!isToday(paidOn) && !isYesterday(paidOn)"
-                    (click)="openDateModal()">
-                    <i class="feather icon-calendar me-1"></i>Otra
-                  </button>
                 </div>
               </div>
               <div class="pay-date-input-wrap" (click)="openDateModal()">
@@ -455,9 +448,7 @@
       <ion-modal
         [isOpen]="isDatePickerOpen"
         (didDismiss)="isDatePickerOpen = false"
-        class="date-modal"
-        [initialBreakpoint]="0.75"
-        [breakpoints]="[0, 0.75, 1]">
+        class="date-modal">
         <ng-template>
           <div class="date-modal-wrapper">
             <div class="date-modal-header">
@@ -469,19 +460,12 @@
             <div class="date-modal-calendar">
               <ion-datetime
                 presentation="date"
-                [(ngModel)]="tempDate"
+                [value]="paidOn"
+                (ionChange)="onDateSelected($event)"
                 [max]="todayDateString"
                 locale="es-ES"
                 first-day-of-week="1">
               </ion-datetime>
-            </div>
-            <div class="date-modal-actions">
-              <button type="button" class="btn btn-light w-50 py-3 fw-bold" (click)="isDatePickerOpen = false">
-                Cancelar
-              </button>
-              <button type="button" class="btn btn-warning w-50 py-3 fw-bold btn-tab-match" (click)="confirmDateSelection()">
-                Listo
-              </button>
             </div>
           </div>
         </ng-template>
