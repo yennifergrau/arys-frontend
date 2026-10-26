@@ -1221,7 +1221,7 @@ ion-spinner {
   }
 }
 
-/* Selector de fecha optimizado para iOS y Android */
+/* Selector de fecha (botón del formulario) */
 .pay-date-display {
   display: flex !important;
   align-items: center !important;
@@ -1232,7 +1232,7 @@ ion-spinner {
   background-color: #ffffff;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  border: 1px solid #e2e2e2;
+  border: 1px solid #ced4da;
   text-decoration: none;
   text-align: left;
   padding: 12px 14px;
@@ -1253,78 +1253,188 @@ ion-spinner {
   color: #f36a21;
 }
 
-.date-modal {
-  --background: rgba(0, 0, 0, 0.45);
+/* Modal Bottom-Sheet idéntico al de Movimientos (100% infalible) */
+.pay-date-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
 
-  &::part(content) {
-    border-radius: 24px 24px 0 0;
-    max-width: 480px;
-    width: 100%;
-    margin: 0 auto;
-    overflow: hidden;
-    background: #ffffff;
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.15);
+  &--open {
+    opacity: 1;
+    pointer-events: auto;
+
+    .pay-date-sheet {
+      transform: translateY(0);
+    }
   }
 }
 
-.date-modal-wrapper {
+.pay-date-sheet {
+  width: 100%;
+  max-width: 480px;
   background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+  margin: 0 auto;
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
   display: flex;
   flex-direction: column;
-  padding-bottom: 12px;
 }
 
-.date-modal-header {
+.pay-date-handle {
+  width: 40px;
+  height: 4px;
+  background: #d1d5db;
+  border-radius: 2px;
+  margin: 10px auto 4px;
+}
+
+.pay-date-sheet-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px 12px;
+  border-bottom: 1px solid #f0f0f4;
+
+  .pay-date-sheet-title {
+    font-size: 0.98rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #2d2d2f;
+    margin: 0;
+  }
+
+  .btn-close {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+    padding: 8px;
+    font-size: 0.85rem;
+  }
+}
+
+.pay-date-sheet-body {
+  padding: 12px 20px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cal-widget {
+  width: 100%;
+  max-width: 360px;
+  user-select: none;
+}
+
+.cal-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f4;
+  margin-bottom: 16px;
+  padding: 0 4px;
 }
 
-.date-modal-title {
-  font-weight: 800;
-  font-size: 1.05rem;
-  color: #1f2937;
-}
-
-.date-modal-close {
-  background: none;
+.cal-nav-btn {
+  background: #f4f5f8;
   border: none;
-  font-size: 1.25rem;
-  color: #6b7280;
-  padding: 4px;
-  cursor: pointer;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-}
+  color: #2d2d2f;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 
-.date-modal-calendar {
-  padding: 10px 16px;
-  display: flex;
-  justify-content: center;
+  &:hover:not([disabled]) {
+    background: #e9ecef;
+  }
 
-  ion-datetime {
-    --background: #ffffff;
-    --ion-color-primary: #f36a21;
-    --ion-color-primary-rgb: 243, 106, 33;
-    --ion-color-primary-contrast: #ffffff;
-    --ion-color-primary-contrast-rgb: 255, 255, 255;
-    --ion-color-base: #f36a21 !important;
-    --ion-color-base-rgb: 243, 106, 33 !important;
-    --ion-color-contrast: #ffffff !important;
-    --ion-color-contrast-rgb: 255, 255, 255 !important;
-    --wheel-highlight-background: rgba(243, 106, 33, 0.2);
-    border-radius: 16px;
-    width: 100%;
-    max-width: 350px;
+  &[disabled] {
+    opacity: 0.25;
+    cursor: default;
   }
 }
 
-.date-modal-actions {
+.cal-month-title {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #1f2937;
+  letter-spacing: -0.01em;
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.cal-weekday {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  padding: 4px 0;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.cal-day-cell {
+  background: none;
+  border: none;
+  padding: 0;
+  aspect-ratio: 1;
   display: flex;
-  gap: 12px;
-  padding: 14px 20px 20px;
-  border-top: 1px solid #f0f0f4;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover:not([disabled]) {
+    background: #f3f4f6;
+  }
+
+  &--empty {
+    color: #e5e7eb;
+    cursor: default;
+    opacity: 0.3;
+  }
+
+  &--future {
+    color: #d1d5db;
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+
+  &--selected {
+    background: #f36a21 !important;
+    color: #ffffff !important;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(243, 106, 33, 0.4);
+  }
 }

@@ -323,3 +323,13 @@ ion-alert.arys-monthly-reminder-alert {
     color: #b87d00;
   }
 }
+
+/* Forzar renderizado y visibilidad del calendario en ion-datetime */
+ion-datetime {
+  .calendar-body,
+  .datetime-year,
+  .calendar-month-grid {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}

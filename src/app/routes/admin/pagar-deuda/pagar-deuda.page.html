@@ -448,37 +448,61 @@
           </div>
         </div>
       </div>
-      <!-- Modal selector de fecha para 100% compatibilidad iOS, Android y Web -->
-      <ion-modal
-        [isOpen]="isDatePickerOpen"
-        (willDismiss)="onDateModalDismiss()"
-        (didDismiss)="onDateModalDismiss()"
-        class="date-modal"
-        [initialBreakpoint]="0.55"
-        [breakpoints]="[0, 0.55]">
-        <ng-template>
-          <div class="date-modal-wrapper">
-            <div class="date-modal-header">
-              <span class="date-modal-title">Fecha del pago</span>
-              <button type="button" class="date-modal-close" (click)="closeDateModal()" aria-label="Cerrar selector de fecha">
-                <i class="feather icon-x"></i>
-              </button>
-            </div>
-            <div class="date-modal-calendar">
-              <ion-datetime
-                presentation="date"
-                [value]="paidOn"
-                (ionChange)="onDateSelected($event)"
-                [max]="todayDateString"
-                locale="es-ES"
-                first-day-of-week="1">
-              </ion-datetime>
-            </div>
-          </div>
-        </ng-template>
-      </ion-modal>
     </main>
 
     <app-tab />
+  </div>
+
+  <!-- Modal selector de fecha (misma arquitectura que Movimientos) -->
+  <div class="pay-date-backdrop" [class.pay-date-backdrop--open]="isDatePickerOpen" (click)="closeDateModal()">
+    <div
+      class="pay-date-sheet"
+      role="dialog"
+      aria-labelledby="pay-date-title"
+      (click)="$event.stopPropagation()">
+      <div class="pay-date-handle" aria-hidden="true"></div>
+
+      <div class="pay-date-sheet-header">
+        <h5 class="pay-date-sheet-title mb-0" id="pay-date-title">Fecha del pago</h5>
+        <button type="button" class="btn-close" (click)="closeDateModal()" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="pay-date-sheet-body">
+        <div class="cal-widget">
+          <div class="cal-nav">
+            <button type="button" class="cal-nav-btn" (click)="prevMonth()" aria-label="Mes anterior">
+              <i class="feather icon-chevron-left"></i>
+            </button>
+            <span class="cal-month-title">{{ calendarTitle }}</span>
+            <button
+              type="button"
+              class="cal-nav-btn"
+              [disabled]="!canGoNextMonth()"
+              (click)="nextMonth()"
+              aria-label="Mes siguiente">
+              <i class="feather icon-chevron-right"></i>
+            </button>
+          </div>
+
+          <div class="cal-weekdays">
+            <span *ngFor="let w of weekDayNames" class="cal-weekday">{{ w }}</span>
+          </div>
+
+          <div class="cal-grid">
+            <button
+              *ngFor="let item of calendarDays"
+              type="button"
+              class="cal-day-cell"
+              [class.cal-day-cell--empty]="!item.isCurrentMonth"
+              [class.cal-day-cell--selected]="isDaySelected(item.dateString)"
+              [class.cal-day-cell--future]="item.isFuture"
+              [disabled]="!item.isCurrentMonth || item.isFuture"
+              (click)="selectCalendarDay(item)">
+              <span class="cal-day-number">{{ item.day }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

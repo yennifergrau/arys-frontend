@@ -107,7 +107,90 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   }
 
   public isDatePickerOpen = false;
-  private isModalDateReady = false;
+
+  // Calendario Angular 100% nativo y robusto
+  public calendarYear = new Date().getFullYear();
+  public calendarMonth = new Date().getMonth();
+  public readonly monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  public readonly weekDayNames = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'];
+
+  public get calendarTitle(): string {
+    return `${this.monthNames[this.calendarMonth]} ${this.calendarYear}`;
+  }
+
+  public get calendarDays(): Array<{ day: number; dateString: string; isCurrentMonth: boolean; isFuture: boolean }> {
+    const days: Array<{ day: number; dateString: string; isCurrentMonth: boolean; isFuture: boolean }> = [];
+    const firstDayIndex = (new Date(this.calendarYear, this.calendarMonth, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(this.calendarYear, this.calendarMonth + 1, 0).getDate();
+    const daysInPrevMonth = new Date(this.calendarYear, this.calendarMonth, 0).getDate();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      days.push({
+        day: daysInPrevMonth - i,
+        dateString: '',
+        isCurrentMonth: false,
+        isFuture: false
+      });
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dObj = new Date(this.calendarYear, this.calendarMonth, d);
+      dObj.setHours(0, 0, 0, 0);
+      const mStr = String(this.calendarMonth + 1).padStart(2, '0');
+      const dStr = String(d).padStart(2, '0');
+      days.push({
+        day: d,
+        dateString: `${this.calendarYear}-${mStr}-${dStr}`,
+        isCurrentMonth: true,
+        isFuture: dObj > today
+      });
+    }
+
+    return days;
+  }
+
+  public prevMonth(): void {
+    if (this.calendarMonth === 0) {
+      this.calendarMonth = 11;
+      this.calendarYear--;
+    } else {
+      this.calendarMonth--;
+    }
+  }
+
+  public nextMonth(): void {
+    if (!this.canGoNextMonth()) return;
+    if (this.calendarMonth === 11) {
+      this.calendarMonth = 0;
+      this.calendarYear++;
+    } else {
+      this.calendarMonth++;
+    }
+  }
+
+  public canGoNextMonth(): boolean {
+    const today = new Date();
+    return this.calendarYear < today.getFullYear() ||
+      (this.calendarYear === today.getFullYear() && this.calendarMonth < today.getMonth());
+  }
+
+  public selectCalendarDay(item: { day: number; dateString: string; isCurrentMonth: boolean; isFuture: boolean }): void {
+    if (!item.isCurrentMonth || item.isFuture || !item.dateString) {
+      return;
+    }
+    this.paidOn = item.dateString;
+    this.closeDateModal();
+  }
+
+  public isDaySelected(dateString: string): boolean {
+    return !!dateString && this.paidOn === dateString;
+  }
 
   public get displayFormattedDate(): string {
     if (!this.paidOn) {
@@ -122,38 +205,24 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   }
 
   public openDateModal(): void {
-    this.isModalDateReady = false;
+    if (this.paidOn) {
+      const parts = this.paidOn.split('-');
+      if (parts.length === 3) {
+        this.calendarYear = parseInt(parts[0], 10);
+        this.calendarMonth = parseInt(parts[1], 10) - 1;
+      }
+    } else {
+      const now = new Date();
+      this.calendarYear = now.getFullYear();
+      this.calendarMonth = now.getMonth();
+    }
     this.isDatePickerOpen = true;
-    setTimeout(() => {
-      this.isModalDateReady = true;
-    }, 300);
   }
 
   public closeDateModal(): void {
     this.isDatePickerOpen = false;
-    this.isModalDateReady = false;
   }
 
-  public onDateModalDismiss(): void {
-    this.isDatePickerOpen = false;
-    this.isModalDateReady = false;
-  }
-
-  public onDateSelected(event: any): void {
-    if (!this.isModalDateReady) {
-      return;
-    }
-    const val = event?.detail?.value;
-    if (val) {
-      const raw = Array.isArray(val) ? val[0] : val;
-      this.paidOn = String(raw).split('T')[0];
-      this.closeDateModal();
-    }
-  }
-
-  public confirmDateSelection(): void {
-    this.closeDateModal();
-  }
   public openDatePicker(inputEl: HTMLInputElement): void {
     if (!inputEl) return;
     try {
