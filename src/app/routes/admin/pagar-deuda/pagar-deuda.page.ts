@@ -40,6 +40,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   public showLoading = false;
   public showSuccess = false;
   public showVerificationError = false;
+  public verificationErrorMessage = '02 Pago no encontrado con los datos proporcionados.';
   public debtAmount = 0;
   public limitAmount = 0;
   public creditAvailableAmount = 0;
@@ -56,7 +57,16 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   /** Input de monto: se escribe como “céntimos” y se muestra con coma. */
   public payAmountDisplay = '';
   private payAmountCents = 0;
-  public readonly paymentType = '1';
+  public paymentType: '1' | '2' = '1';
+
+  public readonly paymentTypes: Array<{ code: '1' | '2'; name: string }> = [
+    { code: '1', name: 'Pago Móvil' },
+    { code: '2', name: 'Transferencia' },
+  ];
+
+  public get selectedPaymentTypeName(): string {
+    return this.paymentTypes.find(t => t.code === this.paymentType)?.name ?? 'Pago Móvil';
+  }
   public reference = '';
   public bankCode = '';
   public payPhone = '';
@@ -657,8 +667,19 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
         },
         error: async (err) => {
           console.error('Error en pago:', err);
-          if (isMeritopDuplicateTransaction(err) || isMeritopDuplicateTransaction(err?.raw)) {
+          if (
+            isMeritopDuplicateTransaction(err) ||
+            isMeritopDuplicateTransaction(err?.error) ||
+            isMeritopDuplicateTransaction(err?.raw)
+          ) {
+            this.verificationErrorMessage = getMeritopOperationMessage(
+              err?.error ?? err?.raw ?? err,
+              '02 Pago no encontrado con los datos proporcionados.'
+            );
             this.showVerificationError = true;
+            if (this.paymentType === '1') {
+              void this.showToast('Código 02: Si realizaste el pago por Pago Móvil, repórtalo como Transferencia.', 'warning');
+            }
             return;
           }
 
@@ -695,6 +716,12 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
 
   public dismissVerificationError(): void {
     this.showVerificationError = false;
+  }
+
+  public retryAsTransfer(): void {
+    this.paymentType = '2';
+    this.showVerificationError = false;
+    void this.showToast('Método cambiado a Transferencia. Presiona "Confirmar pago" para reintentar.', 'warning');
   }
 
   private getClientFullName(): string {
@@ -761,6 +788,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       '📌 Datos del cliente y del pago:',
       clientName ? `• Cliente: ${clientName}` : '',
       clientCedula ? `• Cédula/RIF: ${clientCedula}` : '',
+      `• Método intentado: ${this.selectedPaymentTypeName}`,
       this.payPhone ? `• Teléfono emisor: ${this.payPhone}` : '',
       `• Banco emisor: ${bankName}`,
       this.reference ? `• Referencia: ${this.reference}` : '',

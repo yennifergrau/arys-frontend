@@ -234,6 +234,23 @@
           <div class="pay-form-divider" aria-hidden="true"></div>
 
           <div class="pay-form-fields">
+            <div class="pay-form-field pay-form-field--method">
+              <label class="form-label fw-bold text-muted small" for="payType">Método de pago</label>
+              <div class="bank-native-select">
+                <div class="bank-native-select__value" aria-hidden="true">
+                  {{ selectedPaymentTypeName }}
+                </div>
+                <select
+                  id="payType"
+                  class="form-control custom-input"
+                  [(ngModel)]="paymentType"
+                  aria-label="Método de pago">
+                  <option *ngFor="let pt of paymentTypes" [ngValue]="pt.code">
+                    {{ pt.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
             <div class="pay-form-field">
               <label class="form-label fw-bold text-muted small" for="payBank">Banco origen</label>
               <div class="bank-native-select">
@@ -266,7 +283,7 @@
             </div>
             <div class="pay-form-field pay-form-field--date">
               <div class="d-flex justify-content-between align-items-center mb-1">
-                <label class="form-label fw-bold text-muted small mb-0" for="payDate">Fecha del pago</label>
+                <label class="form-label fw-bold text-muted small mb-0">Fecha del pago</label>
                 <div class="date-quick-buttons">
                   <button
                     type="button"
@@ -282,17 +299,22 @@
                     (click)="setYesterday()">
                     Ayer
                   </button>
+                  <button
+                    type="button"
+                    class="btn-quick-date"
+                    [class.active]="!isToday(paidOn) && !isYesterday(paidOn)"
+                    (click)="openDateModal()">
+                    <i class="feather icon-calendar me-1"></i>Otra
+                  </button>
                 </div>
               </div>
-              <div class="pay-date-input-wrap">
-                <input
-                  id="payDate"
-                  type="date"
-                  class="form-control custom-input pay-form-date"
-                  [(ngModel)]="paidOn"
-                  [max]="todayDateString"
-                  aria-label="Fecha del pago"
-                />
+              <div class="pay-date-input-wrap" (click)="openDateModal()">
+                <div class="pay-date-display form-control custom-input">
+                  <span class="pay-date-display__text">
+                    {{ displayFormattedDate }}
+                  </span>
+                  <i class="feather icon-calendar pay-date-display__icon"></i>
+                </div>
               </div>
             </div>
             <div class="pay-form-field pay-form-field--reference">
@@ -382,19 +404,35 @@
             <div class="verification-card__content">
               <h2 class="verification-card__title">¡Ups!</h2>
               <p class="verification-card__lead">
-                No pudimos validar tu pago automáticamente
+                {{ verificationErrorMessage || '02 Pago no encontrado con los datos proporcionados.' }}
               </p>
 
-              <div class="verification-card__prompt">
+              <div class="verification-card__prompt" *ngIf="paymentType === '1'">
+                <p class="verification-card__question">Repórtalo como Transferencia</p>
+                <p class="verification-card__subtext">
+                  Si realizaste tu pago por Pago Móvil y recibiste este error, repórtalo seleccionando el método <strong>Transferencia</strong> con los mismos datos.
+                </p>
+              </div>
+
+              <div class="verification-card__prompt" *ngIf="paymentType === '2'">
                 <p class="verification-card__question">¿Nos ayudas a resolverlo?</p>
                 <p class="verification-card__subtext">
-                  Escríbenos por WhatsApp para verificarlo juntos.
+                  Escríbenos por WhatsApp para verificarlo juntos con el equipo de soporte.
                 </p>
               </div>
             </div>
           </div>
 
           <div class="verification-actions">
+            <button
+              *ngIf="paymentType === '1'"
+              type="button"
+              class="btn btn-warning w-100 py-3 fw-bold btn-verification-transfer"
+              (click)="retryAsTransfer()"
+            >
+              <i class="feather icon-repeat me-2"></i>
+              Reportar como Transferencia
+            </button>
             <button
               type="button"
               class="btn btn-secondary w-100 py-3 fw-bold btn-verification-wa"
@@ -413,6 +451,41 @@
           </div>
         </div>
       </div>
+      <!-- Modal selector de fecha para 100% compatibilidad iOS y Android -->
+      <ion-modal
+        [isOpen]="isDatePickerOpen"
+        (didDismiss)="isDatePickerOpen = false"
+        class="date-modal"
+        [initialBreakpoint]="0.75"
+        [breakpoints]="[0, 0.75, 1]">
+        <ng-template>
+          <div class="date-modal-wrapper">
+            <div class="date-modal-header">
+              <span class="date-modal-title">Fecha del pago</span>
+              <button type="button" class="date-modal-close" (click)="isDatePickerOpen = false">
+                <i class="feather icon-x"></i>
+              </button>
+            </div>
+            <div class="date-modal-calendar">
+              <ion-datetime
+                presentation="date"
+                [(ngModel)]="tempDate"
+                [max]="todayDateString"
+                locale="es-ES"
+                first-day-of-week="1">
+              </ion-datetime>
+            </div>
+            <div class="date-modal-actions">
+              <button type="button" class="btn btn-light w-50 py-3 fw-bold" (click)="isDatePickerOpen = false">
+                Cancelar
+              </button>
+              <button type="button" class="btn btn-warning w-50 py-3 fw-bold btn-tab-match" (click)="confirmDateSelection()">
+                Listo
+              </button>
+            </div>
+          </div>
+        </ng-template>
+      </ion-modal>
     </main>
 
     <app-tab />

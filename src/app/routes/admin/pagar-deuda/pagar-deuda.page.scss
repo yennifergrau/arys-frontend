@@ -794,16 +794,8 @@
 
 /* Pantallas un poco más anchas (p. ej. web dentro del shell ~600px) */
 @media (min-width: 421px) {
-  .pay-form-field--date {
-    grid-column: 1;
-  }
-
-  .pay-form-field--reference {
-    grid-column: 2;
-  }
-
-  .pay-form-field--concept {
-    grid-column: 1 / -1;
+  .pay-form-fields {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -1160,6 +1152,27 @@ ion-spinner {
   }
 }
 
+.btn-verification-transfer {
+  grid-column: 1 / -1;
+  background-color: #131921 !important;
+  border-color: #131921 !important;
+  color: #ffb000 !important;
+  border-radius: 50px !important;
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 14px 12px !important;
+  box-shadow: 0 4px 16px rgba(19, 25, 33, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover, &:active {
+    background-color: #000000 !important;
+    border-color: #000000 !important;
+    color: #ffc43a !important;
+  }
+}
+
 .btn-verification-finish {
   background-color: #ffb000 !important;
   border-color: #ffb000 !important;
@@ -1177,4 +1190,98 @@ ion-spinner {
     background-color: #e09b00 !important;
     border-color: #e09b00 !important;
   }
+}
+
+/* Selector de fecha optimizado para iOS y Android */
+.pay-date-display {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100%;
+  min-height: 48px;
+  cursor: pointer;
+  background-color: #ffffff;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active {
+    background-color: #f9f9fb;
+  }
+}
+
+.pay-date-display__text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2d2d2f;
+}
+
+.pay-date-display__icon {
+  font-size: 1.15rem;
+  color: #f36a21;
+}
+
+.date-modal {
+  --background: rgba(0, 0, 0, 0.45);
+
+  &::part(content) {
+    border-radius: 24px 24px 0 0;
+    max-width: 480px;
+    margin: auto;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.date-modal-wrapper {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px;
+}
+
+.date-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f4;
+}
+
+.date-modal-title {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #1f2937;
+}
+
+.date-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #6b7280;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.date-modal-calendar {
+  padding: 10px 16px;
+  display: flex;
+  justify-content: center;
+
+  ion-datetime {
+    --background: #ffffff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 350px;
+  }
+}
+
+.date-modal-actions {
+  display: flex;
+  gap: 12px;
+  padding: 14px 20px 20px;
+  border-top: 1px solid #f0f0f4;
 }

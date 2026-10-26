@@ -32,6 +32,12 @@ export function getMeritopOperationMessage(res: unknown, fallback: string): stri
     const nested = (err as Record<string, unknown>)['message'];
     if (nested != null && String(nested).trim() !== '') return String(nested).trim();
   }
+  const data = r['data'];
+  if (typeof data === 'string' && data.trim()) return data.trim();
+  if (data && typeof data === 'object') {
+    const dataMsg = (data as Record<string, unknown>)['message'];
+    if (dataMsg != null && String(dataMsg).trim() !== '') return String(dataMsg).trim();
+  }
   return fallback;
 }
 
@@ -63,8 +69,8 @@ export function formatMeritopWarningMessage(message: string): string {
 }
 
 /**
- * Determina si la respuesta o error de Meritop corresponde a datos de transacción ya usados
- * (código 706 o mensaje "02 Datos de transacción usados en otro pago. Su pago no pudo ser verificado").
+ * Determina si la respuesta o error de Meritop corresponde a datos de transacción no encontrados o ya usados
+ * (código 706, error 02, o mensaje "02 Pago no encontrado con los datos proporcionados.").
  */
 export function isMeritopDuplicateTransaction(target: unknown): boolean {
   if (!target) return false;
@@ -72,29 +78,44 @@ export function isMeritopDuplicateTransaction(target: unknown): boolean {
   const obj = target as Record<string, any>;
 
   // Extraer posibles códigos de error
-  const code =
-    obj?.['code'] ??
-    obj?.['error']?.['code'] ??
-    obj?.['raw']?.['error']?.['code'] ??
-    obj?.['raw']?.['code'];
+  const codes: unknown[] = [
+    obj?.['code'],
+    obj?.['error']?.['code'],
+    obj?.['error']?.['error']?.['code'],
+    obj?.['error']?.['data']?.['code'],
+    obj?.['raw']?.['error']?.['code'],
+    obj?.['raw']?.['code'],
+    obj?.['raw']?.['data']?.['code'],
+    obj?.['data']?.['code'],
+    obj?.['data']?.['error']?.['code'],
+  ];
 
-  if (code === 706 || code === '706') {
-    return true;
+  for (const c of codes) {
+    if (c === 706 || c === '706' || String(c) === '706') {
+      return true;
+    }
   }
 
   // Extraer posibles mensajes
   const candidates: unknown[] = [
     obj?.['message'],
     typeof obj?.['error'] === 'string' ? obj['error'] : obj?.['error']?.['message'],
+    obj?.['error']?.['error']?.['message'],
+    obj?.['error']?.['data']?.['message'],
     obj?.['raw']?.['message'],
     typeof obj?.['raw']?.['error'] === 'string' ? obj['raw']['error'] : obj?.['raw']?.['error']?.['message'],
+    obj?.['raw']?.['data']?.['message'],
+    typeof obj?.['data'] === 'string' ? obj['data'] : obj?.['data']?.['message'],
   ];
 
   for (const c of candidates) {
     if (typeof c === 'string') {
-      const normalized = c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const normalized = c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
       if (
         normalized.includes('706') ||
+        normalized.includes('pago no encontrado') ||
+        normalized.startsWith('02') ||
+        normalized.includes('codigo 02') ||
         normalized.includes('usados en otro pago') ||
         (normalized.includes('transaccion') && normalized.includes('otro pago')) ||
         (normalized.includes('transaccion') && normalized.includes('no pudo ser verificado'))
@@ -106,4 +127,3 @@ export function isMeritopDuplicateTransaction(target: unknown): boolean {
 
   return false;
 }
-
