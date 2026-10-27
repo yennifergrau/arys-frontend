@@ -82,6 +82,17 @@
   opacity: 0.7;
 }
 
+.dashboard-hero__identity--clickable {
+  cursor: pointer;
+}
+
+.dashboard-hero__topActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .dashboard-hero__toggle {
   width: 40px;
   height: 40px;
@@ -90,6 +101,16 @@
   background: var(--bg-white);
   display: grid;
   place-items: center;
+  transition: background 140ms ease, border-color 140ms ease, transform 120ms ease;
+}
+
+.dashboard-hero__toggle--active {
+  border-color: rgba(255, 149, 0, 0.55);
+  background: rgba(255, 176, 0, 0.16);
+
+  i {
+    color: #5c3800 !important;
+  }
 }
 
 .dashboard-hero__toggle i {
@@ -1124,4 +1145,228 @@
   background: rgba(255, 176, 0, 0.12);
   border-color: rgba(255, 176, 0, 0.75);
   color: var(--secondary);
+}
+
+/* Zona integrada de gestión de cuenta / Eliminación de cuenta (App Store 5.1.1(v)) */
+.dashboard-account {
+  margin-top: 12px;
+}
+
+.dashboard-account__trigger {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--bg-white);
+  border-radius: 14px;
+  padding: 11px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+  transition: transform 120ms ease, border-color 160ms ease, box-shadow 160ms ease;
+
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+.dashboard-account__trigger--open {
+  border-color: rgba(255, 149, 0, 0.45);
+  box-shadow: 0 10px 22px rgba(255, 149, 0, 0.12);
+}
+
+.dashboard-account__triggerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dashboard-account__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(255, 176, 0, 0.14);
+  border: 1px solid rgba(255, 176, 0, 0.24);
+  color: #5c3800;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  i {
+    font-size: 14px;
+  }
+}
+
+.dashboard-account__texts {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dashboard-account__title {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--title);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.dashboard-account__subtitle {
+  font-size: 11.5px;
+  color: var(--body-color);
+  opacity: 0.72;
+  margin-top: 2px;
+}
+
+.dashboard-account__chevron {
+  font-size: 13px;
+  color: rgba(17, 24, 39, 0.55);
+  flex-shrink: 0;
+}
+
+.dashboard-account__panel {
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.dashboard-account__profileSummary {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(17, 24, 39, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-account__profileRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.dashboard-account__profileLabel {
+  font-weight: 800;
+  color: rgba(17, 24, 39, 0.6);
+}
+
+.dashboard-account__profileValue {
+  font-weight: 900;
+  color: var(--title);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-account__notice {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 176, 0, 0.10);
+  border: 1px solid rgba(255, 149, 0, 0.25);
+}
+
+.dashboard-account__notice--blocked {
+  background: #fff3c8;
+  border-color: rgba(179, 116, 0, 0.32);
+}
+
+.dashboard-account__blockedTitle {
+  font-size: 12.5px;
+  font-weight: 900;
+  color: #8d6200;
+  margin-bottom: 4px;
+}
+
+.dashboard-account__btnPay {
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-size: 12.5px;
+  font-weight: 900;
+}
+
+.dashboard-account__noticeText {
+  font-size: 12.5px;
+  color: var(--title);
+  line-height: 1.4;
+  margin: 0 0 8px;
+}
+
+.dashboard-account__noticeList {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: rgba(17, 24, 39, 0.78);
+  line-height: 1.4;
+
+  li + li {
+    margin-top: 4px;
+  }
+}
+
+.wa-chip--selected {
+  border-color: rgba(255, 149, 0, 0.65);
+  background: linear-gradient(165deg, rgba(255, 210, 150, 0.45) 0%, rgba(255, 176, 0, 0.16) 45%, #fff 100%);
+  color: #5c3800;
+  box-shadow: 0 6px 14px rgba(255, 149, 0, 0.16);
+}
+
+.dashboard-account__actions {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 10px;
+}
+
+@media (max-width: 380px) {
+  .dashboard-account__actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-account__btnCancel {
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-size: 12.5px;
+  font-weight: 900;
+  background: rgba(17, 24, 39, 0.05);
+  color: var(--title);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-account__btnConfirm {
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-size: 12.5px;
+  font-weight: 900;
+  background: var(--secondary);
+  color: #ffffff;
+  border: 1px solid rgba(19, 25, 33, 0.2);
+}
+
+.dashboard-account__done {
+  padding: 4px 2px;
+}
+
+.dashboard-account__doneHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.dashboard-account__doneTitle {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--title);
+}
+
+.dashboard-account__doneSub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--body-color);
+  opacity: 0.8;
+  line-height: 1.35;
 }

@@ -1,0 +1,241 @@
+<div class="overflow-auto">
+  <div class="page-wrapper">
+    <header class="header header-fixed style-1">
+      <div class="header-content">
+        <div class="left-content">
+          <a
+            [routerLink]="['/admin/dashboard/sarys']"
+            class="back-btn ic-icon icon-sm"
+            tabindex="-1"
+          >
+            <i class="feather icon-arrow-left"></i>
+          </a>
+        </div>
+        <div class="mid-content"><h5 class="title">Mi Cuenta</h5></div>
+      </div>
+    </header>
+
+    @if (showLoading) {
+      <app-spinner />
+    }
+
+    <main class="page-content space-top p-b70">
+      <div class="container p-tb10 px-2">
+        <div class="profile-area">
+          <div class="ic-box style-3 m-b10 account-shell">
+            <section class="account-hero">
+              <div class="account-profile">
+                <div class="account-profile__avatar">
+                  <img
+                    src="../../../../assets/imagenes/icon/favicon.png"
+                    alt="profile-image"
+                  />
+                </div>
+                <div class="account-profile__meta">
+                  <div class="account-profile__kicker">Titular de la cuenta</div>
+                  <div class="account-profile__name">{{ fullName }}</div>
+                  @if (email) {
+                    <div class="account-profile__email">{{ email }}</div>
+                  }
+                </div>
+              </div>
+
+              <!-- Datos del perfil -->
+              <div class="account-card">
+                <div class="account-card__header">
+                  <div class="account-card__icon">
+                    <i class="fa-solid fa-id-card"></i>
+                  </div>
+                  <div class="account-card__headings">
+                    <div class="account-card__title">Datos de la cuenta</div>
+                    <div class="account-card__subtitle">Información de tu perfil</div>
+                  </div>
+                </div>
+
+                <div class="account-info-list">
+                  <div class="account-info-row">
+                    <span class="account-info-row__label">Documento</span>
+                    <span class="account-info-row__value">{{ documentId || '—' }}</span>
+                  </div>
+                  @if (phone) {
+                    <div class="account-info-row">
+                      <span class="account-info-row__label">Teléfono</span>
+                      <span class="account-info-row__value">{{ phone }}</span>
+                    </div>
+                  }
+                  @if (certificate) {
+                    <div class="account-info-row">
+                      <span class="account-info-row__label">Membresía</span>
+                      <span class="account-info-row__value">{{ certificate }}</span>
+                    </div>
+                  }
+                  @if (vehiclePlate) {
+                    <div class="account-info-row">
+                      <span class="account-info-row__label">Placa</span>
+                      <span class="account-info-row__value">{{ vehiclePlate }}</span>
+                    </div>
+                  }
+                  <div class="account-info-row">
+                    <span class="account-info-row__label">Financiamiento</span>
+                    @if (hasDebt) {
+                      <span class="account-badge account-badge--debt">
+                        {{ debtAmount | formatCurrency }} Bs
+                      </span>
+                    } @else {
+                      <span class="account-badge account-badge--ok">
+                        <i class="fa-solid fa-check-circle me-1"></i> Al día
+                      </span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Privacidad cuenta -->
+              <div class="account-card">
+                <button
+                  type="button"
+                  class="account-delete-trigger"
+                  (click)="toggleDeletePanel()"
+                  [attr.aria-expanded]="showDeletePanel"
+                >
+                  <div class="account-card__header mb-0">
+                    <div class="account-card__icon">
+                      <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <div class="account-card__headings text-start">
+                      <div class="account-card__title">Privacidad cuenta</div>
+                      <div class="account-card__subtitle">Eliminar mi cuenta</div>
+                    </div>
+                  </div>
+                  <i
+                    class="fa-solid account-delete-trigger__chevron"
+                    [ngClass]="showDeletePanel ? 'fa-chevron-up' : 'fa-chevron-down'"
+                  ></i>
+                </button>
+
+                @if (showDeletePanel) {
+                  <div class="account-delete-body">
+                    @if (!deleteSubmitted) {
+                      @if (hasDebt) {
+                        <div class="account-notice account-notice--blocked">
+                          <div class="account-notice__title">
+                            <i class="fa-solid fa-lock me-1"></i>
+                            Eliminación bloqueada por saldo pendiente
+                          </div>
+                          <p class="account-notice__text mb-0">
+                            Actualmente mantienes una deuda de financiamiento activa por
+                            <strong>{{ debtAmount | formatCurrency }} Bs</strong>.
+                            Para dar de baja tu cuenta en <strong>Arys</strong>, primero debes cancelar tu saldo pendiente.
+                          </p>
+                        </div>
+
+                        <div class="account-actions">
+                          <button
+                            type="button"
+                            class="btn account-btn-secondary"
+                            (click)="toggleDeletePanel()"
+                          >
+                            Cerrar
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-success account-btn-primary"
+                            (click)="goToPayDebt()"
+                          >
+                            Ir a pagar deuda
+                          </button>
+                        </div>
+                      } @else {
+                        <div class="account-notice">
+                          <p class="account-notice__text">
+                            Estás a punto de solicitar la eliminación permanente de tu cuenta y datos personales asociados en <strong>Arys</strong>.
+                          </p>
+                          <ul class="account-notice__list">
+                            <li>Se desactivará tu acceso a la aplicación y a tu historial de perfil.</li>
+                            <li>Tu cuenta se encuentra al día y sin saldos pendientes de financiamiento.</li>
+                          </ul>
+                        </div>
+
+                        <div class="account-reasons">
+                          <div class="account-reasons__label">Motivo de la solicitud (opcional)</div>
+                          <div class="account-reasons__chips">
+                            @for (reason of deleteReasons; track reason) {
+                              <button
+                                type="button"
+                                class="account-chip"
+                                [class.account-chip--selected]="deleteReason === reason"
+                                (click)="selectReason(reason)"
+                              >
+                                {{ reason }}
+                              </button>
+                            }
+                          </div>
+                        </div>
+
+                        <div class="account-actions">
+                          <button
+                            type="button"
+                            class="btn account-btn-secondary"
+                            [disabled]="deleteProcessing"
+                            (click)="toggleDeletePanel()"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="button"
+                            class="btn account-btn-danger"
+                            [disabled]="deleteProcessing || hasDebt"
+                            (click)="confirmDeleteAccount()"
+                          >
+                            @if (deleteProcessing) {
+                              <span>Procesando...</span>
+                            } @else {
+                              <i class="fa-solid fa-user-xmark me-2"></i>
+                              <span>Confirmar eliminación</span>
+                            }
+                          </button>
+                        </div>
+                      }
+                    } @else {
+                      <div class="account-done">
+                        <div class="account-done__header">
+                          <span class="account-done__badge">
+                            <i class="fa-solid fa-check"></i>
+                          </span>
+                          <div>
+                            <div class="account-done__title">Solicitud generada (#{{ deleteReference }})</div>
+                            <div class="account-done__sub">
+                              Se abrió el mensaje con tus datos hacia Soporte por WhatsApp para procesar la baja definitiva de tu cuenta.
+                            </div>
+                          </div>
+                        </div>
+                        <div class="account-actions mt-3">
+                          <button
+                            type="button"
+                            class="btn account-btn-secondary"
+                            (click)="openSupportWhatsappForDeletion()"
+                          >
+                            <i class="fa-brands fa-whatsapp me-1"></i>
+                            Abrir WhatsApp
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-success account-btn-primary"
+                            (click)="finalizeLogout()"
+                          >
+                            Finalizar y salir
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+    <app-tab />
+  </div>
+</div>

@@ -44,6 +44,7 @@ import { environment } from 'src/environments/environment';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 import { MembershipSessionService } from '../services/membership-session.service';
 import { UserAccessService } from '../services/user-access.service';
+import { SessionService } from 'src/app/shared/services/session.service';
 
 type ServiceOption = {
   id: string;
@@ -87,7 +88,21 @@ export class DashboardPage implements OnInit, ViewWillEnter {
   private tokenStore = inject(TokenStoreService)
   private membershipSession = inject(MembershipSessionService)
   private userAccess = inject(UserAccessService)
+  private session = inject(SessionService)
   public isHidden: boolean = true;
+
+  // Eliminación de cuenta (cumplimiento App Store Guideline 5.1.1(v))
+  public showDeleteAccountModal: boolean = false;
+  public deleteAccountProcessing: boolean = false;
+  public deleteAccountSubmitted: boolean = false;
+  public deleteAccountReason: string = '';
+  public deleteAccountReference: string = '';
+  public readonly deleteAccountReasons: string[] = [
+    'Ya no utilizo el servicio',
+    'Vendí mi vehículo',
+    'Tengo otra cuenta',
+    'Otro motivo',
+  ];
   public json_customer: customer[] | any;
   private emission = inject(EmissionService);
   public commerce_data: any;
@@ -1064,6 +1079,21 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     return this.membershipList.some(m => m.has_credit && Number(m.credit_used) > 0);
   }
 
+  get totalDebtAmount(): number {
+    return this.membershipList.reduce(
+      (sum, m) => sum + (m.has_credit ? Math.max(0, Number(m.credit_used) || 0) : 0),
+      0
+    );
+  }
+
+  get userEmail(): string {
+    return String(this.decodeData?.email || '').trim();
+  }
+
+  get userDocument(): string {
+    return this.getUserCedula();
+  }
+
   public pagarDeudaRapido(): void {
     const debtMembership = this.membershipList.find(
       m => m.has_credit && Number(m.credit_used) > 0
@@ -1292,6 +1322,61 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     queryParams: { id: membership.id_master },
   });
 }
+
+  public toggleDeleteAccountSection(): void {
+    if (this.showDeleteAccountModal) {
+      this.closeDeleteAccountModal();
+      return;
+    }
+    this.openDeleteAccountModal();
+  }
+
+  public selectDeleteReason(reason: string): void {
+    this.deleteAccountReason = this.deleteAccountReason === reason ? '' : reason;
+  }
+
+  public openDeleteAccountModal(): void {
+    this.deleteAccountProcessing = false;
+    this.deleteAccountSubmitted = false;
+    this.deleteAccountReason = '';
+    this.deleteAccountReference = '';
+    this.showDeleteAccountModal = true;
+    setTimeout(() => this.scrollTo('account-delete-panel'), 60);
+  }
+
+  public closeDeleteAccountModal(): void {
+    if (this.deleteAccountProcessing) return;
+    if (this.deleteAccountSubmitted) {
+      this.finalizeDeleteAccountLogout();
+      return;
+    }
+    this.showDeleteAccountModal = false;
+  }
+
+  public confirmDeleteAccount(): void {
+    if (this.deleteAccountProcessing) return;
+    if (this.hasAnyDebt) {
+      this.mostrarToast(
+        'No puedes eliminar tu cuenta mientras mantengas una deuda de financiamiento activa.',
+        'toast-error'
+      );
+      return;
+    }
+    this.deleteAccountProcessing = true;
+    const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+    this.deleteAccountReference = `BAJA-${randomSuffix}`;
+
+    setTimeout(() => {
+      this.deleteAccountProcessing = false;
+      this.deleteAccountSubmitted = true;
+      this.changeDetector.markForCheck();
+    }, 900);
+  }
+
+  public finalizeDeleteAccountLogout(): void {
+    this.showDeleteAccountModal = false;
+    this.session.logout();
+  }
 
     private mostrarToast(mensaje: string, estilo: string) {
     const toastContainer = document.getElementById('toastContainer-dashoard');
