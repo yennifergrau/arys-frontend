@@ -6,6 +6,7 @@ import { NavController } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
 import { environment } from 'src/environments/environment';
+import { openWhatsappUrl } from 'src/app/shared/utils/whatsapp.util';
 import { DataArysService } from '../services/data-arys.service';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 
@@ -263,7 +264,7 @@ export class ServiceRequestPage implements OnInit {
     const msg = this.buildMessage();
     const url = this.buildWhatsappUrl(msg);
     if (!url) return;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    openWhatsappUrl(url);
   }
 
   public togglePreview(): void {

@@ -13,6 +13,7 @@ import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.se
 import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 import { environment } from 'src/environments/environment';
+import { openWhatsappUrl } from 'src/app/shared/utils/whatsapp.util';
 
 @Component({
   selector: 'app-movimientos',
@@ -847,6 +848,6 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
     const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
     const phone = raw.replace(/\D/g, '');
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    openWhatsappUrl(url);
   }
 }

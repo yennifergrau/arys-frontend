@@ -41,6 +41,7 @@ import {
 } from '../utils/meritop-identity.util';
 import { firstValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { openWhatsappUrl } from 'src/app/shared/utils/whatsapp.util';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 import { MembershipSessionService } from '../services/membership-session.service';
 import { UserAccessService } from '../services/user-access.service';
@@ -595,7 +596,7 @@ export class DashboardPage implements OnInit, ViewWillEnter {
       this.mostrarToast('No se pudo abrir WhatsApp: número inválido.', 'toast-error');
       return;
     }
-    window.open(url, '_blank', 'noopener,noreferrer');
+    openWhatsappUrl(url);
   }
 
   public get waCanSend(): boolean {
@@ -734,7 +735,7 @@ export class DashboardPage implements OnInit, ViewWillEnter {
       this.mostrarToast('No se pudo abrir WhatsApp: número inválido.', 'toast-error');
       return;
     }
-    window.open(url, '_blank', 'noopener,noreferrer');
+    openWhatsappUrl(url);
   }
 
   public scrollTo(id: string): void {
@@ -819,7 +820,7 @@ export class DashboardPage implements OnInit, ViewWillEnter {
     const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
     const phone = raw.replace(/\D/g, '');
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    openWhatsappUrl(url);
   }
 
   private finishIfReady(): void {

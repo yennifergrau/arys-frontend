@@ -20,6 +20,7 @@ import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 import { environment } from 'src/environments/environment';
+import { openWhatsappUrl } from 'src/app/shared/utils/whatsapp.util';
 
 @Component({
   selector: 'app-pagar-deuda',
@@ -944,7 +945,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
 
     const text = lines.join('\n');
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    openWhatsappUrl(url);
   }
 
   public goToMovements() {
@@ -989,6 +990,6 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
     const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
     const phone = raw.replace(/\D/g, '');
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    openWhatsappUrl(url);
   }
 }

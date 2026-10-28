@@ -13,6 +13,7 @@ import { EmissionDetailsService } from '../services/emission-details.service';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 import { SessionService } from 'src/app/shared/services/session.service';
 import { environment } from 'src/environments/environment';
+import { openWhatsapp } from 'src/app/shared/utils/whatsapp.util';
 import {
   certificateFromUserData,
   membershipHasCreditLine,
@@ -291,7 +292,7 @@ export class AccountPage implements OnInit {
 
     const text = lines.join('\n');
     const url = `https://wa.me/${supportPhone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    openWhatsapp({ phone: supportPhone, text });
   }
 
   public finalizeLogout(): void {

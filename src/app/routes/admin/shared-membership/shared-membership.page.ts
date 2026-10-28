@@ -9,6 +9,7 @@ import { MeritopService } from '../services/meritop.service';
 import { HttpClientModule } from '@angular/common/http';
 import { userCreateCustomer } from '../interface/meritop.interface';
 import { environment } from 'src/environments/environment';
+import { openWhatsapp } from 'src/app/shared/utils/whatsapp.util';
 
 @Component({
   selector: 'app-shared-membership',
@@ -186,7 +187,7 @@ export class SharedMembershipPage implements OnInit {
       // const message = `Hola, te comparto el documento de la póliza: ${this.urlDocumentObtenido} y su membresia ${this.urlMembresia}`;
       const encodedMessage = encodeURIComponent(message);
       // window.open(`whatsapp://send?text=${encodedMessage}`, '_blank');
-      window.open(`https://api.whatsapp.com/send?text=${encodedMessage}`, '_blank');
+      openWhatsapp({ text: message });
   }
 
   public shareByEmail(): void {
@@ -266,7 +267,7 @@ export class SharedMembershipPage implements OnInit {
     const raw = environment.contact?.whatsappFinancingPhone || '584242318020';
     const phone = raw.replace(/\D/g, '');
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    openWhatsapp({ phone, text });
   }
 
 }
