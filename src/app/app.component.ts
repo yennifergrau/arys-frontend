@@ -16,6 +16,8 @@ export class AppComponent implements OnInit {
   private monthlyReminder = inject(MonthlyReminderService);
 
   ngOnInit(): void {
+    this.bindInputGroupFocus();
+
     setTimeout(() => {
       void this.mobileVersion.presentBlockIfNeeded();
     }, 200);
@@ -81,5 +83,22 @@ export class AppComponent implements OnInit {
     window.visualViewport?.addEventListener('resize', apply);
     window.visualViewport?.addEventListener('scroll', apply);
     window.addEventListener('orientationchange', () => setTimeout(apply, 150));
+  }
+
+  /** Permite que al tocar el ícono de un input-group en móviles se enfoque el campo de texto */
+  private bindInputGroupFocus(): void {
+    if (typeof document === 'undefined') return;
+    document.addEventListener('click', (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      const groupText = target?.closest('.input-group-text');
+      if (groupText && groupText.parentElement) {
+        const input = groupText.parentElement.querySelector(
+          'input:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), select:not([disabled]):not([readonly])'
+        ) as HTMLElement | null;
+        if (input && document.activeElement !== input) {
+          input.focus();
+        }
+      }
+    });
   }
 }

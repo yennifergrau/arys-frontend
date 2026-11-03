@@ -20,6 +20,14 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+  <style>
+    /* Garantiza interactividad en inputs para iOS Safari / WebKit */
+    input, textarea, select {
+      -webkit-user-select: text !important;
+      user-select: text !important;
+    }
+  </style>
 </head>
 
 <body>

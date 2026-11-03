@@ -71,7 +71,16 @@
   border: 2px solid rgb(57, 225, 57);
 }
 .no-select {
+  -webkit-user-select: none;
   user-select: none;
+}
+
+input,
+select,
+textarea,
+.form-control {
+  -webkit-user-select: text !important;
+  user-select: text !important;
 }
 
 .financiamiento-label {
