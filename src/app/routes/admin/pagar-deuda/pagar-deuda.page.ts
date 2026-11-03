@@ -287,6 +287,9 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
     this.payAmountCents = Number.isFinite(cents) ? cents : 0;
     this.payAmount = this.payAmountCents > 0 ? this.payAmountCents / 100 : null;
     this.payAmountDisplay = digits ? this.formatAmountFromCents(this.payAmountCents) : '';
+    if (ev?.target) {
+      ev.target.value = this.payAmountDisplay;
+    }
     try {
       // Mantener cursor al final en móvil
       if (ev?.target?.setSelectionRange) {

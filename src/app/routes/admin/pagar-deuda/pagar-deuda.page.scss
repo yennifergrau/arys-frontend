@@ -438,10 +438,17 @@
 
 .payment-form input.custom-input,
 .payment-form textarea.custom-input,
+.payment-form select.custom-input,
 .payment-form .form-control.custom-input {
   min-height: 48px;
   font-size: 16px; /* evita zoom iOS */
   border-color: rgba(0, 0, 0, 0.12);
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+  position: relative;
+  z-index: 2;
 }
 
 .payment-form .custom-input::placeholder {
@@ -454,37 +461,32 @@
   box-shadow: 0 0 0 3px rgba(255, 176, 0, 0.14);
 }
 
-/* Select nativo: lista con código, valor seleccionado sin código */
+/* Select nativo: compatible con iOS Safari sin ocultar texto de opciones */
 .bank-native-select {
   position: relative;
 }
 
 .bank-native-select__value {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  padding: 12px 14px;
-  pointer-events: none;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: #2d2d2f;
+  display: none; /* Evitamos capas superpuestas que capturen toques en Safari */
 }
 
 .bank-native-select select {
   position: relative;
-  background: transparent;
-  color: transparent; /* oculta el texto seleccionado (dejamos visible el overlay) */
-  text-shadow: 0 0 0 transparent;
+  background-color: #fff !important;
+  color: #2d2d2f !important;
   appearance: auto;
+  -webkit-appearance: menulist;
+  width: 100%;
+  cursor: pointer;
 }
 
 .bank-native-select select option {
-  color: #111; /* opciones visibles en el dropdown */
+  color: #111 !important;
+  background-color: #fff !important;
 }
 
 .bank-native-select select:focus {
-  color: transparent;
+  color: #2d2d2f !important;
 }
 
 /* Banco origen: “como antes” (pantallita tipo alert), pero selecciona al tocar */
@@ -1258,16 +1260,19 @@ ion-spinner {
   position: fixed;
   inset: 0;
   z-index: 1200;
-  display: flex;
+  display: none;
+  visibility: hidden;
   align-items: flex-end;
   justify-content: center;
   background: rgba(0, 0, 0, 0.45);
   padding: 0;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
 
   &--open {
+    display: flex;
+    visibility: visible;
     opacity: 1;
     pointer-events: auto;
 

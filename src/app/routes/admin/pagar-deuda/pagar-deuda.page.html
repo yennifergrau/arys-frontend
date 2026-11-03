@@ -454,7 +454,11 @@
   </div>
 
   <!-- Modal selector de fecha (misma arquitectura que Movimientos) -->
-  <div class="pay-date-backdrop" [class.pay-date-backdrop--open]="isDatePickerOpen" (click)="closeDateModal()">
+  <div
+    class="pay-date-backdrop"
+    *ngIf="isDatePickerOpen"
+    [class.pay-date-backdrop--open]="isDatePickerOpen"
+    (click)="closeDateModal()">
     <div
       class="pay-date-sheet"
       role="dialog"
