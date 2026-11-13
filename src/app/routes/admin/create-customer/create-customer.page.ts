@@ -435,7 +435,7 @@ export class CreateCustomerPage implements OnInit {
 
     if (result.credit_line_reason === 'missing_rif') {
 
-      this.mostrarToast('Indica documento (tipo y número) para Meritop.', 'toast-error');
+      this.mostrarToast('Indica documento (tipo y número) para el financiamiento.', 'toast-error');
 
     } else if (result.credit_line_reason === 'missing_meritop_fields') {
 

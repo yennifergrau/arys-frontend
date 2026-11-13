@@ -208,7 +208,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
         if (product) this.applyMeritopProduct(product)
       },
       error: () => {
-        void this.presentToast('No se pudo refrescar el saldo Meritop.', 'warning')
+        void this.presentToast('No se pudo refrescar el saldo en línea.', 'warning')
       },
     })
   }
@@ -281,7 +281,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   }
 
   get hasDebt(): boolean {
-    return (this.summaryState === 'ready' || this.summaryState === 'fallback') && this.displayCreditUsed > 0
+    return this.summaryState === 'ready' && this.displayCreditUsed > 0
   }
 
   get isPayBeforeExpired(): boolean {
@@ -342,34 +342,25 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
   /** Límite: Meritop `limit` o, en fallback, membresía ARYS (sin calcular). */
   get displayCreditLimit(): number {
     if (this.summaryState === 'ready' && this.customerProduct) {
-      return this.toNumber(this.customerProduct.limit)
+      return this.toNumber(this.customerProduct.limit);
     }
-    if (this.summaryState === 'fallback' && this.membershipSummary) {
-      return this.toNumber(this.membershipSummary.credit_limit)
-    }
-    return 0
+    return 0;
   }
 
-  /** Disponible: Meritop `available` o membresía `credit_available`. */
+  /** Disponible real devuelto por el servicio en línea (evita montos falsos en contingencia). */
   get displayCreditAvailable(): number {
     if (this.summaryState === 'ready' && this.customerProduct) {
-      return this.toNumber(this.customerProduct.available)
+      return this.toNumber(this.customerProduct.available);
     }
-    if (this.summaryState === 'fallback' && this.membershipSummary) {
-      return this.toNumber(this.membershipSummary.credit_available)
-    }
-    return 0
+    return 0;
   }
 
-  /** Deuda: Meritop `amount_used` o membresía `credit_used` (nunca límite − disponible). */
+  /** Deuda real devuelta por el servicio en línea. */
   get displayCreditUsed(): number {
     if (this.summaryState === 'ready' && this.customerProduct) {
-      return this.toNumber(this.customerProduct.amount_used)
+      return this.toNumber(this.customerProduct.amount_used);
     }
-    if (this.summaryState === 'fallback' && this.membershipSummary) {
-      return this.toNumber(this.membershipSummary.credit_used)
-    }
-    return 0
+    return 0;
   }
 
   get membershipCreditLineHint(): string {
@@ -405,10 +396,24 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
     return classes[status] || 'badge-secondary';
   }
 
+  public retryLoadSummary(): void {
+    this.summaryState = 'loading';
+    this.summaryMessage = '';
+    this.loadBcvRate();
+    this.loadCustomerProduct(false);
+    this.loadMembershipSummary(true);
+  }
+
   toggleCreditPanel(order: ServiceOrder) {
     if (!this.bcvRateReady) {
       void this.presentToast('Cargando la tasa BCV del día. Intenta de nuevo en un momento.', 'warning')
       return
+    }
+
+    if (this.summaryState !== 'ready' || !this.customerProduct) {
+      void this.presentToast('No se pudo verificar tu saldo en línea. Por favor toca Reintentar.', 'warning');
+      this.retryLoadSummary();
+      return;
     }
 
     if (this.activeOrderId === order.order_id) {
@@ -490,9 +495,14 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       return;
     }
 
-    const available = this.displayCreditAvailable > 0
+    const available = this.displayCreditAvailable != null
       ? this.displayCreditAvailable
       : this.toNumber(this.creditInfo?.available);
+    if (this.summaryState !== 'ready' || available == null || available <= 0) {
+      void this.presentToast('No se pudo verificar el saldo disponible en línea. Por favor reintenta.', 'warning');
+      this.retryLoadSummary();
+      return;
+    }
     if (available < amountToApply || available <= 0) {
       const msg = 'El saldo disponible en tu cupo es insuficiente para cubrir el monto total de esta orden.';
       this.applyResult = {
@@ -518,7 +528,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       this.applyResult = {
         status: false,
         message:
-          'No hay número de cupo/tarjeta Meritop. Activa el cupo en tu membresía o verifica el producto en Meritop.',
+          'No hay número de cupo activo. Verifica el estado de tu financiamiento en membresía.',
       };
       return;
     }
@@ -622,7 +632,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
             error: (err) => {
               // El consumo ya pasó en Meritop; si falla ARYS, avisamos para que soporte lo revise.
               void this.presentToast(
-                err?.message || 'El pago en Meritop se aplicó, pero no se pudo cerrar la orden en ARYS.',
+                err?.message || 'El pago se aplicó correctamente, pero no se pudo cerrar la orden en ARYS.',
                 'warning'
               );
               this.refreshMeritopProductSilent();
@@ -777,7 +787,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
         this.customerProductFetchReason = 'Falta cedrif_credit en membresía para consultar customer/products'
         this.customerProduct = null
         this.summaryState = 'fallback'
-        this.summaryMessage = 'No se pudo consultar Meritop (falta cedrif_credit). Mostrando saldo de membresía.'
+        this.summaryMessage = 'No se pudo consultar el financiamiento (falta cédula/RIF en membresía).'
         return
       }
 
@@ -801,7 +811,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
                 this.customerProductFetchReason = 'customer/products respondio sin products[0]'
                 this.customerProduct = null
                 this.summaryState = 'fallback'
-                this.summaryMessage = 'Meritop no devolvió producto. Mostrando saldo de membresía.'
+                this.summaryMessage = 'No se encontró información de financiamiento activo.'
                 return
               }
 
@@ -811,7 +821,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
               this.customerProduct = null
               this.customerProductFetchReason = error?.message || 'Error al consultar customer/products'
               this.summaryState = 'fallback'
-              this.summaryMessage = 'No se pudo consultar Meritop. Mostrando saldo de membresía.'
+              this.summaryMessage = 'No se pudo consultar el saldo en línea en este momento.'
             }
           })
         },
@@ -819,7 +829,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
           this.customerProduct = null
           this.customerProductFetchReason = error?.message || 'No se pudo obtener tokenAccess para customer/products'
           this.summaryState = 'fallback'
-          this.summaryMessage = 'No se pudo obtener token de Meritop. Mostrando saldo de membresía.'
+          this.summaryMessage = 'No se pudo conectar con el servicio de financiamiento en línea.'
         }
       })
     } catch (e) {
@@ -827,7 +837,7 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       this.customerProductFetchReason = 'Error inesperado consultando customer/products'
       console.error(e)
       this.summaryState = 'fallback'
-      this.summaryMessage = 'Error inesperado consultando Meritop. Mostrando saldo de membresía.'
+      this.summaryMessage = 'No se pudo consultar el financiamiento en este momento.'
     }
   }
 
@@ -864,7 +874,11 @@ export class ServiceOrderPage implements OnInit, ViewWillEnter {
       return
     }
     this.loadBcvRate()
-    this.refreshMeritopProductSilent()
+    if (this.summaryState === 'fallback' || !this.customerProduct) {
+      this.loadCustomerProduct(false);
+    } else {
+      this.refreshMeritopProductSilent();
+    }
     this.loadMembershipSummary(true)
   }
 }

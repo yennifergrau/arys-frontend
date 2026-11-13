@@ -57,16 +57,20 @@
             <div class="metric-box">
               <div class="label">Disponible</div>
               <div class="value big">
-                @if(summaryState === 'ready' || summaryState === 'fallback'){
+                @if(summaryState === 'ready'){
                   {{ formatBs(displayCreditAvailable) }} Bs
+                } @else if(summaryState === 'fallback'){
+                  <span class="text-muted">—</span>
                 } @else {
                   <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
                 }
               </div>
               <div class="label" style="margin-top:10px">Deuda</div>
               <div class="value big">
-                @if(summaryState === 'ready' || summaryState === 'fallback'){
+                @if(summaryState === 'ready'){
                   {{ formatBs(displayCreditUsed) }} Bs
+                } @else if(summaryState === 'fallback'){
+                  <span class="text-muted">—</span>
                 } @else {
                   <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
                 }
@@ -76,8 +80,10 @@
             <div class="metric-box">
               <div class="label">Pago minimo</div>
               <div class="value big">
-                @if(summaryState === 'ready' || summaryState === 'fallback'){
-                  {{ formatBs(customerProduct?.amount_share_to_pay || 0) }} Bs
+                @if(summaryState === 'ready' && customerProduct){
+                  {{ formatBs(customerProduct.amount_share_to_pay || 0) }} Bs
+                } @else if(summaryState === 'fallback'){
+                  <span class="text-muted">—</span>
                 } @else {
                   <ion-spinner name="crescent" style="width:18px;height:18px;vertical-align:middle;"></ion-spinner>
                 }
@@ -89,13 +95,23 @@
             <div class="metric-box pay-box" [class.pay-box--expired]="isPayBeforeExpired">
               <div>
                 <div class="label">{{ payBeforeLabel }}</div>
-                <div class="value">{{ formattedPayBefore }}</div>
+                <div class="value">
+                  @if(summaryState === 'ready'){
+                    {{ formattedPayBefore }}
+                  } @else if(summaryState === 'fallback'){
+                    <span class="text-muted">—</span>
+                  } @else {
+                    <ion-spinner name="crescent" style="width:16px;height:16px;vertical-align:middle;"></ion-spinner>
+                  }
+                </div>
               </div>
               <div class="so-pay-hint">
                 Limite:
                 <strong>
-                  @if(summaryState === 'ready' || summaryState === 'fallback'){
+                  @if(summaryState === 'ready'){
                     {{ formatBs(displayCreditLimit) }} Bs
+                  } @else if(summaryState === 'fallback'){
+                    <span class="text-muted">—</span>
                   } @else {
                     <ion-spinner name="crescent" style="width:16px;height:16px;vertical-align:middle;"></ion-spinner>
                   }
@@ -106,10 +122,13 @@
         </div>
 
         @if(summaryState === 'fallback' && summaryMessage){
-          <div class="info-box mt-3">
-            <div class="info-content">
-              <p><strong>Atención:</strong> {{ summaryMessage }}</p>
+          <div class="info-box mt-3 d-flex align-items-center justify-content-between">
+            <div class="info-content" style="flex:1">
+              <p><strong>Aviso:</strong> {{ summaryMessage }}</p>
             </div>
+            <button type="button" class="btn btn-sm btn-outline-primary ms-2" style="white-space:nowrap" (click)="retryLoadSummary()">
+              <i class="feather icon-rotate-cw me-1"></i> Reintentar
+            </button>
           </div>
         }
 

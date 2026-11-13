@@ -588,7 +588,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       }),
       map(() => undefined),
       catchError(() => {
-        void this.showToast('No se pudo actualizar el saldo desde Meritop.', 'warning');
+        void this.showToast('No se pudo actualizar el saldo.', 'warning');
         return of(undefined);
       })
     );
@@ -928,7 +928,7 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       : `${Number(this.payAmount || 0).toFixed(2)} Bs`;
 
     const lines = [
-      '¡Hola! Necesito apoyo con la verificación de un pago en Meritop para mi cupo ARYS.',
+      '¡Hola! Necesito apoyo con la verificación de un pago para mi cupo ARYS.',
       '',
       'El sistema indicó: "02 Datos de transacción usados en otro pago. Su pago no pudo ser verificado".',
       '',

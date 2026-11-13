@@ -7,7 +7,7 @@ import { Transaction } from '../interface/meritop.interface';
 import { TabComponent } from 'src/app/shared/components/tab/tab.component';
 import { RouterLink } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
-import { finalize } from 'rxjs';
+import { finalize, of, catchError, switchMap, map } from 'rxjs';
 import { DataArysService } from '../services/data-arys.service';
 import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
 import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
@@ -41,9 +41,9 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
   private receiptPaymentFromDb = false;
 
   /** Fallback recibo consumo cuando no hay registro en BD. */
-  readonly consumoDefaultBankName = 'Banco Nacional de Crédito';
-  readonly consumoDefaultPhone = '04144120518';
-  readonly consumoDefaultRif = 'J309920600';
+  readonly consumoDefaultBankName = 'No disponible';
+  readonly consumoDefaultPhone = '—';
+  readonly consumoDefaultRif = '—';
   public selectedSegment: string = 'ultimos';
   public dateFrom: string = '';
   public dateTo: string = '';
@@ -716,15 +716,45 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
     this.receiptPaymentFromDb = false;
     if (this.isPagoReceipt(tx) || this.isConsumoReceipt(tx)) {
       const paymentId = String(tx.transactionId ?? '').trim();
-      if (paymentId) {
+      const reference = String(tx.reference ?? '').trim();
+      const idToQuery = paymentId || reference;
+      if (idToQuery) {
         this.receiptPaymentLoading = true;
-        this.dataArysService.get_credit_payment_by_id(paymentId).pipe(
+        this.dataArysService.get_credit_payment_by_id(idToQuery).pipe(
+          switchMap((res: any) => {
+            const row = res?.status === true ? res?.data : res?.data ?? res;
+            const hasRow =
+              row &&
+              typeof row === 'object' &&
+              (String(row.bank ?? '').trim() ||
+                String(row.phone ?? '').trim() ||
+                String(row.rif ?? '').trim() ||
+                String(row.reference ?? '').trim());
+            if (hasRow) {
+              return of(row);
+            }
+            if (reference && reference !== idToQuery) {
+              return this.dataArysService.get_credit_payment_by_id(reference).pipe(
+                map((r2: any) => (r2?.status === true ? r2?.data : r2?.data ?? r2)),
+                catchError(() => of(null))
+              );
+            }
+            return of(null);
+          }),
+          catchError(() => {
+            if (reference && reference !== idToQuery) {
+              return this.dataArysService.get_credit_payment_by_id(reference).pipe(
+                map((r2: any) => (r2?.status === true ? r2?.data : r2?.data ?? r2)),
+                catchError(() => of(null))
+              );
+            }
+            return of(null);
+          }),
           finalize(() => {
             this.receiptPaymentLoading = false;
           })
         ).subscribe({
-          next: (res: any) => {
-            const row = res?.status === true ? res?.data : res?.data ?? res;
+          next: (row: any) => {
             const hasRow =
               row &&
               typeof row === 'object' &&
@@ -739,10 +769,6 @@ export class MovimientosPage implements OnInit, ViewWillEnter {
               this.receiptPaymentData = null;
               this.receiptPaymentFromDb = false;
             }
-          },
-          error: () => {
-            this.receiptPaymentData = null;
-            this.receiptPaymentFromDb = false;
           }
         });
       }
