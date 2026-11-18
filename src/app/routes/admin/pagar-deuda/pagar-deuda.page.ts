@@ -16,7 +16,12 @@ import {
 } from '../utils/meritop-feedback.util';
 import { DataArysService } from '../services/data-arys.service';
 import { MeritopSummaryCacheService } from '../services/meritop-summary-cache.service';
-import { resolveMeritopClientIdentity } from '../utils/meritop-identity.util';
+import {
+  certificateFromUserData,
+  formatCedrifRif,
+  pickActiveMembershipRow,
+  resolveMeritopClientIdentity,
+} from '../utils/meritop-identity.util';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 import { environment } from 'src/environments/environment';
@@ -332,6 +337,18 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
     this.setPayAmountFromBs(this.minPayAmount);
   }
 
+  public normalizePayPhone(value: string): string {
+    let digits = (value ?? '').toString().replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.startsWith('58') && (digits.length === 12 || digits.length === 13)) {
+      const rest = digits.slice(2);
+      digits = rest.startsWith('0') ? rest : `0${rest}`;
+    } else if (digits.length === 10 && !digits.startsWith('0')) {
+      digits = `0${digits}`;
+    }
+    return digits;
+  }
+
   public normalizePaidOn(value: string): string {
     const raw = (value ?? '').toString().trim();
     if (!raw) return '';
@@ -504,41 +521,53 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
   private loadMembershipSummary() {
     const idRaw = sessionStorage.getItem('id_member');
     const idMember = idRaw ? Number(idRaw) : NaN;
-    const email = this.accessTokenData?.email != null ? String(this.accessTokenData.email).trim() : '';
+    const validIdMember = !Number.isNaN(idMember) && idMember > 0 ? idMember : null;
+    const email = this.accessTokenData?.email != null ? String(this.accessTokenData.email).trim() : null;
 
-    const req = !Number.isNaN(idMember) && idMember > 0
-      ? this.dataArysService.get_membership(idMember)
-      : email ? this.dataArysService.get_membership_by_email(email) : null;
-
-    if (!req) {
-      this.membershipLoaded = true;
-      this.updateSummaryReady();
-      return;
-    }
-
-    req.subscribe({
-      next: (res: any) => {
-        const row = res?.status && Array.isArray(res.data) && res.data.length ? res.data[0] : null;
-        if (!row) {
+    this.dataArysService
+      .get_membership_for_user({ id_member: validIdMember, email })
+      .subscribe({
+        next: (res: any) => {
+          const rows = res?.status && Array.isArray(res.data) ? res.data : [];
+          const row = pickActiveMembershipRow(rows, {
+            idMember: validIdMember,
+            certificate: certificateFromUserData() || null,
+          });
+          if (!row) {
+            this.membershipSummary = null;
+            this.membershipLoaded = true;
+            this.updateSummaryReady();
+            return;
+          }
+          const prevDocType = this.docType;
+          const prevDocId = this.docId;
+          this.membershipSummary = {
+            credit_line_id: row['credit_line_id'] != null ? String(row['credit_line_id']) : null,
+            cedrif_credit: row['cedrif_credit'] != null ? String(row['cedrif_credit']) : null,
+            credit_limit: row['credit_limit'],
+            credit_available: row['credit_available'],
+            credit_used: row['credit_used'],
+          };
+          this.syncIdentityFromToken();
+          if (
+            (!this.cardNumber && this.membershipSummary.credit_line_id) ||
+            prevDocType !== this.docType ||
+            String(prevDocId) !== String(this.docId)
+          ) {
+            if (!this.cardNumber && this.membershipSummary.credit_line_id) {
+              this.cardNumber = this.membershipSummary.credit_line_id;
+            }
+            this.loadCustomerProduct(true);
+          }
+          this.membershipLoaded = true;
+          this.updateSummaryReady();
+        },
+        error: () => {
           this.membershipSummary = null;
-          return;
+          this.membershipLoaded = true;
+          this.updateSummaryReady();
         }
-        this.membershipSummary = {
-          credit_line_id: row.credit_line_id != null ? String(row.credit_line_id) : null,
-          cedrif_credit: row.cedrif_credit != null ? String(row.cedrif_credit) : null,
-          credit_limit: row.credit_limit,
-          credit_available: row.credit_available,
-          credit_used: row.credit_used,
-        };
-        this.membershipLoaded = true;
-        this.updateSummaryReady();
-      },
-      error: () => {
-        this.membershipSummary = null;
-        this.membershipLoaded = true;
-        this.updateSummaryReady();
-      }
-    });
+      });
   }
 
   private getIdentity() {
@@ -715,6 +744,11 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       return;
     }
 
+    this.syncIdentityFromToken();
+    if (!this.cardNumber && this.membershipSummary?.credit_line_id) {
+      this.cardNumber = String(this.membershipSummary.credit_line_id).trim();
+    }
+
     if (!this.docType || !this.docId || !this.cardNumber) {
       this.showToast('Faltan datos del cliente o de la tarjeta.', 'warning');
       return;
@@ -723,8 +757,16 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
     const cleanReference = (this.reference ?? '').toString().replace(/\D/g, '');
     this.reference = cleanReference;
 
-    if (!this.bankCode || !this.payPhone || !this.paidOn || !cleanReference || !this.paymentType) {
+    const cleanPhone = this.normalizePayPhone(this.payPhone);
+    this.payPhone = cleanPhone;
+
+    if (!this.bankCode || !cleanPhone || !this.paidOn || !cleanReference || !this.paymentType) {
       this.showToast('Por favor, complete todos los campos obligatorios (incluyendo la referencia).', 'warning');
+      return;
+    }
+
+    if (!/^0\d{10}$/.test(cleanPhone)) {
+      this.showToast('Ingresa un número de teléfono válido de 11 dígitos (ej. 04141234567).', 'warning');
       return;
     }
 
@@ -740,14 +782,14 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
       ip: '127.0.0.1',
       channel: 'APP',
       client: {
-        doctype: this.docType,
-        docid: this.docId
+        doctype: String(this.docType).trim().toUpperCase(),
+        docid: Number(this.docId)
       },
-      cardnumber: this.cardNumber,
+      cardnumber: String(this.cardNumber).trim(),
       amount: this.payAmount,
-      payphone: this.payPhone,
+      payphone: cleanPhone,
       paidon: this.normalizePaidOn(this.paidOn),
-      bankcode: this.bankCode,
+      bankcode: String(this.bankCode).trim(),
       concept: this.concept.trim() || 'Abono cupo ARYS',
       paymentType: String(this.paymentType || '1'),
       reference: cleanReference
@@ -783,13 +825,16 @@ export class PagarDeudaPage implements OnInit, ViewWillEnter {
           const paymentId = res?.payid != null ? String(res.payid).trim() : '';
           const bank = String(res?.payment_orig?.bankcode ?? paymentData.bankcode ?? '').trim();
           const phone = String(res?.payment_orig?.phonenumber ?? paymentData.payphone ?? '').trim();
+          const rif = String(
+            res?.payment_orig?.clientid ?? formatCedrifRif(this.docType, this.docId)
+          ).trim();
           const reference = String(
             paymentData.reference || res?.payment_orig?.payment_reference || ''
           ).trim();
 
           // Persistencia adicional en ARYS: no bloquea la UI si falla.
           const save$ = paymentId
-            ? this.dataArysService.save_credit_payment({ payment_id: paymentId, bank, phone, reference }).pipe(
+            ? this.dataArysService.save_credit_payment({ payment_id: paymentId, bank, phone, rif, reference }).pipe(
                 catchError(() => of(null))
               )
             : of(null);
