@@ -22,6 +22,7 @@ import { AuthService } from 'src/app/shared/services/auth.service';
 import { TokenStoreService } from 'src/app/shared/services/token-store.service';
 import { formatCedrifRif, parseCedrifCredit, userCedrifFromDecodedToken, membershipMatchesUserCedrif, cedulaDigitsForSarysStatus, pickActiveMembershipRow, certificateFromUserData } from '../utils/meritop-identity.util';
 import { MembershipSessionService } from '../services/membership-session.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-auth',
@@ -48,6 +49,9 @@ export class AuthPage implements OnInit {
   public showVerifyForm = false;
   /** Varias membresías: el usuario elige cuál usar en esta sesión. */
   public showMembershipPicker = false;
+  /** Sin membresía asociada: invitación a unirse al Club Arys con QR. */
+  public showJoinClub = false;
+  public readonly joinClubUrl = environment.joinClubUrl;
   public membershipChoices: any[] = [];
   public autoVerifyInProgress = false;
   /** Cuenta legacy sin cédula en BD: el usuario debe completarla en el formulario. */
@@ -464,8 +468,7 @@ export class AuthPage implements OnInit {
       }
 
       if (!pre?.rows?.length) {
-        this.showSpinner = false;
-        this.mostrarToast('No hay membresía asociada a tu cédula.', 'toast-error');
+        this.revealJoinClub();
         return;
       }
 
@@ -479,8 +482,7 @@ export class AuthPage implements OnInit {
       }
 
       if (!pre.picked) {
-        this.showSpinner = false;
-        this.mostrarToast('No hay membresía asociada a tu cédula.', 'toast-error');
+        this.revealJoinClub();
         return;
       }
 
@@ -506,8 +508,29 @@ export class AuthPage implements OnInit {
   }
 
   private revealVerifyForm(): void {
+    this.showJoinClub = false;
     this.showVerifyForm = true;
     this.finishAutoVerifyUi();
+  }
+
+  private revealJoinClub(): void {
+    this.showJoinClub = true;
+    this.showVerifyForm = false;
+    this.showMembershipPicker = false;
+    this.finishAutoVerifyUi();
+  }
+
+  public openJoinClubLink(): void {
+    window.open(this.joinClubUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  public retryVerification(): void {
+    this.showJoinClub = false;
+    void this.runAutomatedVerification();
+  }
+
+  public logout(): void {
+    this.authService.logout();
   }
 
   private async runAutomatedVerification(): Promise<void> {
@@ -530,6 +553,7 @@ export class AuthPage implements OnInit {
     this.autoVerifyInProgress = true;
     this.showSpinner = true;
     this.showVerifyForm = false;
+    this.showJoinClub = false;
     this.FormVerify.patchValue({
       prefix: String(user.prefix || 'V').trim() || 'V',
       rif: String(user.rif || '').replace(/\D/g, ''),
@@ -544,8 +568,7 @@ export class AuthPage implements OnInit {
     }
 
     if (!pre?.rows?.length) {
-      this.mostrarToast('No hay membresía asociada a tu cédula.', 'toast-error');
-      this.revealVerifyForm();
+      this.revealJoinClub();
       return;
     }
 
@@ -559,8 +582,7 @@ export class AuthPage implements OnInit {
     }
 
     if (!pre.picked) {
-      this.mostrarToast('No hay membresía asociada a tu cédula.', 'toast-error');
-      this.revealVerifyForm();
+      this.revealJoinClub();
       return;
     }
 

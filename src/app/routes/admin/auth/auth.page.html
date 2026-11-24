@@ -1,7 +1,7 @@
 <div class="body-bg2">
   <div class="page-wrapper full-height">
     <main class="page-content">
-      <div class="container pt-0" [class.overflow-hidden]="!showMembershipPicker">
+      <div class="container pt-0" [class.overflow-hidden]="!showMembershipPicker && !showJoinClub">
         <div class="ic-authentication-area ic-flex-box">
 
           @if (showSpinner) {
@@ -51,6 +51,74 @@
                     </button>
                   }
                 </div>
+              </div>
+            </div>
+          }
+
+          @if (showJoinClub) {
+            <div class="av-screen">
+              <div class="av-hero">
+                <div class="av-hero__circles">
+                  <span class="av-hero__c1"></span>
+                  <span class="av-hero__c2"></span>
+                </div>
+                <div class="av-hero__symbol">
+                  <img src="assets/imagenes/icon/favicon.png" alt="Arys" />
+                </div>
+                <div class="av-hero__label">CLUB ARYS</div>
+                <div class="av-hero__sub">¡Únete a nuestra comunidad!</div>
+              </div>
+
+              <div class="av-content av-join-content">
+                <h2 class="av-heading">¡Únete al Club Arys!</h2>
+                <p class="av-desc">
+                  No encontramos una membresía activa asociada a tu cédula. Adquiere tu membresía
+                  escaneando el código QR o ingresando al enlace oficial.
+                </p>
+
+                <div class="av-qr-card">
+                  <div class="av-qr-card__frame">
+                    <img
+                      src="assets/imagenes/qr-club-arys.png"
+                      alt="Código QR para adquirir membresía Club Arys"
+                      class="av-qr-card__img"
+                    />
+                  </div>
+                  <p class="av-qr-card__caption">
+                    Escanea este QR para realizar tu compra
+                  </p>
+                  <button
+                    type="button"
+                    class="av-qr-card__url"
+                    (click)="openJoinClubLink()"
+                  >
+                    {{ joinClubUrl }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="bottom-btn mt-auto av-join-actions">
+                <button
+                  type="button"
+                  (click)="openJoinClubLink()"
+                  class="btn btn-primary btn-thin btn-lg w-100 rounded-xl"
+                >
+                  Adquirir mi membresía
+                </button>
+                <button
+                  type="button"
+                  class="av-back-picker"
+                  (click)="retryVerification()"
+                >
+                  Ya compré, verificar de nuevo
+                </button>
+                <button
+                  type="button"
+                  class="av-logout-link"
+                  (click)="logout()"
+                >
+                  Cerrar sesión
+                </button>
               </div>
             </div>
           }

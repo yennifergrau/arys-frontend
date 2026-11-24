@@ -21,6 +21,7 @@ export const environment = {
     appStoreUrl: '',
   },
   url_app_ventas: 'https://poliza.arys.polizaqui.com',
+  joinClubUrl: 'https://arys.polizaqui.com?id=257',
   authentication: 'https://demo-auth-arys.polizaqui.com',
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',
   ocrFileService: 'https://adjuntar-documento-qa.polizaqui.com',

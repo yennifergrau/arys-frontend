@@ -21,6 +21,7 @@ export const environment = {
 
   downloadMobileAppLink: 'https://docs.polizaqui.com/arys.apk',
   url_app_ventas: 'https://arys.polizaqui.com',
+  joinClubUrl: 'https://arys.polizaqui.com?id=257',
   authentication: 'https://sarys-auth.polizaqui.com',
   ocrImageService: 'https://ocr-documento-qa.polizaqui.com',
   ocrFileService: 'https://adjuntar-documento-qa.polizaqui.com',
