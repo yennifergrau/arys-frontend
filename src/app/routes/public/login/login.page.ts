@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, Renderer2 } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -10,10 +10,13 @@ import {
   Validators,
 } from '@angular/forms';
 import { AuthService } from 'src/app/shared/services/auth.service';
-import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
+import { BiometricAuthService } from 'src/app/shared/services/biometric-auth.service';
+import { MobileVersionService } from 'src/app/shared/services/mobile-version.service';
+import { HttpErrorResponse } from '@angular/common/http';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
-import { NavController } from '@ionic/angular';
+import { NavController, ViewDidEnter, ViewDidLeave } from '@ionic/angular';
 import { RouterLink } from '@angular/router';
+import { PluginListenerHandle } from '@capacitor/core';
 
 @Component({
   selector: 'app-login',
@@ -24,17 +27,32 @@ import { RouterLink } from '@angular/router';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpClientModule,
     SpinnerComponent,
     RouterLink,
   ],
-  providers: [AuthService],
 })
-export class LoginPage implements OnInit {
+export class LoginPage implements OnInit, ViewDidEnter, ViewDidLeave, OnDestroy {
   public Formauth!: FormGroup;
   private _authService = inject(AuthService);
+  private biometricService = inject(BiometricAuthService);
+  private mobileVersion = inject(MobileVersionService);
   public showSpinner: boolean = false;
   public showPassword: boolean = false;
+
+  // Estado biométrico
+  public biometricAvailable: boolean = false;
+  public canLoginWithBiometric: boolean = false;
+  public biometricLabel: string = 'Huella dactilar';
+  public biometricIsFace: boolean = false;
+  public biometricEnrolledEmail: string | null = null;
+  public biometricPromptBusy: boolean = false;
+  public showBiometricEnrollModal: boolean = false;
+  public enrollingBiometric: boolean = false;
+
+  private pendingEnrollCredentials: { email: string; password: string } | null = null;
+  private autoPromptTriggered = false;
+  private autoPromptTimer: ReturnType<typeof setTimeout> | null = null;
+  private resumeListener: PluginListenerHandle | null = null;
 
   /**
    * Throttle de intentos (defensa en profundidad en cliente).
@@ -59,6 +77,40 @@ export class LoginPage implements OnInit {
     localStorage.removeItem('OCR_CARNET');
     localStorage.removeItem('OCR_LICENCIA');
     localStorage.removeItem('OCR_CEDULA');
+    void this.setupResumeListener();
+  }
+
+  ionViewDidEnter(): void {
+    void this.refreshBiometricState(true);
+  }
+
+  ionViewDidLeave(): void {
+    if (this.autoPromptTimer) {
+      clearTimeout(this.autoPromptTimer);
+      this.autoPromptTimer = null;
+    }
+    this.autoPromptTriggered = false;
+    this.pendingEnrollCredentials = null;
+    this.showBiometricEnrollModal = false;
+    this.passwordControl.setValue('');
+  }
+
+  ngOnDestroy(): void {
+    if (this.autoPromptTimer) {
+      clearTimeout(this.autoPromptTimer);
+      this.autoPromptTimer = null;
+    }
+    if (this.resumeListener) {
+      void this.resumeListener.remove();
+      this.resumeListener = null;
+    }
+    this.pendingEnrollCredentials = null;
+  }
+
+  private async setupResumeListener(): Promise<void> {
+    this.resumeListener = await this.biometricService.addResumeListener(() => {
+      void this.refreshBiometricState(false);
+    });
   }
 
   private generateForm(): void {
@@ -74,6 +126,50 @@ export class LoginPage implements OnInit {
 
   public get passwordControl(): AbstractControl<string> {
     return this.Formauth.get('password')!;
+  }
+
+  public get maskedEnrolledEmail(): string {
+    const email = (this.biometricEnrolledEmail || '').trim();
+    if (!email || !email.includes('@')) return email;
+    const [local, domain] = email.split('@');
+    if (local.length <= 2) {
+      return `${local[0] || ''}***@${domain}`;
+    }
+    return `${local.slice(0, 2)}***@${domain}`;
+  }
+
+  private async refreshBiometricState(allowAutoPrompt: boolean): Promise<void> {
+    const availability = await this.biometricService.checkAvailability();
+    const enrolledEmail = availability.isAvailable
+      ? await this.biometricService.getEnrolledEmail()
+      : null;
+
+    this.biometricAvailable = availability.isAvailable;
+    this.biometricLabel = availability.label;
+    this.biometricIsFace = availability.isFace;
+    this.biometricEnrolledEmail = enrolledEmail;
+    this.canLoginWithBiometric = availability.isAvailable && !!enrolledEmail;
+
+    if (this.canLoginWithBiometric && enrolledEmail) {
+      if (!this.emailControl.value?.trim()) {
+        this.emailControl.setValue(enrolledEmail);
+      }
+
+      if (allowAutoPrompt && !this.mobileVersion.isBlocked) {
+        const skipAuto = this.biometricService.consumeSkipAutoPrompt();
+        if (!skipAuto && !this.autoPromptTriggered) {
+          this.autoPromptTriggered = true;
+          if (this.autoPromptTimer) {
+            clearTimeout(this.autoPromptTimer);
+          }
+          this.autoPromptTimer = setTimeout(() => {
+            if (!this.mobileVersion.isBlocked) {
+              void this.loginWithBiometric(true);
+            }
+          }, 300);
+        }
+      }
+    }
   }
 
   private mostrarToast(mensaje: string, estilo: string) {
@@ -106,17 +202,18 @@ export class LoginPage implements OnInit {
     this.renderer.appendChild(toast, toastContent);
     this.renderer.appendChild(toastContainer, toast);
     setTimeout(() => {
-      this.renderer.removeChild(toastContainer, toast);
+      if (toast.parentNode === toastContainer) {
+        this.renderer.removeChild(toastContainer, toast);
+      }
     }, 5000);
   }
 
-    public cambiarShowPassword(){
-    this.showPassword = !this.showPassword
-
+  public cambiarShowPassword() {
+    this.showPassword = !this.showPassword;
   }
 
   public get isButtonDisabled(): boolean {
-    return this.showSpinner || this.isLockedOut();
+    return this.showSpinner || this.isLockedOut() || this.showBiometricEnrollModal;
   }
 
   private isLockedOut(): boolean {
@@ -144,6 +241,126 @@ export class LoginPage implements OnInit {
     );
   }
 
+  private navigateAfterLogin(): void {
+    this.navCtrl.navigateRoot(['admin/auth-veirify-sarys']);
+  }
+
+  public async loginWithBiometric(isAutoTrigger = false): Promise<void> {
+    if (this.isLockedOut()) {
+      if (!isAutoTrigger) {
+        this.showRemainingLockout();
+      }
+      return;
+    }
+    if (this.biometricPromptBusy || this.showSpinner || this.showBiometricEnrollModal) {
+      return;
+    }
+
+    this.biometricPromptBusy = true;
+    const authResult = await this.biometricService.authenticateAndGetCredentials(
+      this.biometricLabel
+    );
+    this.biometricPromptBusy = false;
+
+    if (authResult.status === 'cancelled') {
+      return;
+    }
+
+    if (authResult.status === 'lockout' || authResult.status === 'error') {
+      this.mostrarToast(authResult.message, 'toast-error');
+      return;
+    }
+
+    this.showSpinner = true;
+    this._authService.login(authResult.credentials).subscribe({
+      next: () => {
+        this.showSpinner = false;
+        this.resetAttempts();
+        this.navigateAfterLogin();
+      },
+      error: async (err: HttpErrorResponse) => {
+        this.showSpinner = false;
+
+        if (err.status === 426) {
+          return;
+        }
+
+        if (err.status === 429) {
+          this.mostrarToast(
+            'Demasiados intentos. Espera unos minutos antes de reintentar.',
+            'toast-error'
+          );
+          return;
+        }
+
+        if (err.status === 0 || err?.error?.status === 500 || err.status >= 500) {
+          this.mostrarToast(
+            `Error de comunicación ${err.status || ''}`.trim(),
+            'toast-error'
+          );
+          return;
+        }
+
+        await this.biometricService.clearCredentials();
+        this.canLoginWithBiometric = false;
+        this.biometricEnrolledEmail = null;
+        this.mostrarToast(
+          'Tus credenciales cambiaron. Ingresa con tu contraseña para reactivar tu huella.',
+          'toast-error'
+        );
+      },
+    });
+  }
+
+  public async unlinkBiometric(): Promise<void> {
+    await this.biometricService.clearCredentials();
+    this.canLoginWithBiometric = false;
+    this.biometricEnrolledEmail = null;
+    this.Formauth.reset({ email: '', password: '' });
+    this.mostrarToast('Cuenta biométrica desvinculada de este dispositivo.', 'toast-success');
+  }
+
+  public async confirmBiometricEnrollment(): Promise<void> {
+    if (!this.pendingEnrollCredentials || this.enrollingBiometric) {
+      return;
+    }
+
+    this.enrollingBiometric = true;
+    const { email, password } = this.pendingEnrollCredentials;
+    const result = await this.biometricService.enrollWithConfirmation(
+      email,
+      password,
+      this.biometricLabel
+    );
+    this.enrollingBiometric = false;
+
+    if (result.enrolled) {
+      this.pendingEnrollCredentials = null;
+      this.showBiometricEnrollModal = false;
+      this.mostrarToast(`¡Acceso con ${this.biometricLabel.toLowerCase()} activado!`, 'toast-success');
+      this.navigateAfterLogin();
+      return;
+    }
+
+    if (result.cancelled) {
+      // El usuario canceló el lector del sistema: mantiene el modal abierto por si desea reintentar o tocar "Ahora no".
+      return;
+    }
+
+    if (result.message) {
+      this.mostrarToast(result.message, 'toast-error');
+    }
+    this.pendingEnrollCredentials = null;
+    this.showBiometricEnrollModal = false;
+    this.navigateAfterLogin();
+  }
+
+  public skipBiometricEnrollment(): void {
+    this.pendingEnrollCredentials = null;
+    this.showBiometricEnrollModal = false;
+    this.navigateAfterLogin();
+  }
+
   public async Submit() {
     if (this.isLockedOut()) {
       this.showRemainingLockout();
@@ -152,17 +369,44 @@ export class LoginPage implements OnInit {
     this.showSpinner = true;
     try {
       if (this.Formauth.valid) {
-        const data = this.Formauth.value;
+        const rawValue = this.Formauth.value;
+        const email = String(rawValue.email || '').trim();
+        const password = String(rawValue.password || '');
+        const data = { email, password };
+
         this._authService.login(data).subscribe({
-          next: (response: any) => {
+          next: async () => {
             this.showSpinner = false;
             this.resetAttempts();
-            this.navCtrl.navigateRoot(['admin/auth-veirify-sarys']);
+
+            const availability = await this.biometricService.checkAvailability();
+            if (!availability.isAvailable) {
+              this.navigateAfterLogin();
+              return;
+            }
+
+            this.biometricAvailable = true;
+            this.biometricLabel = availability.label;
+            this.biometricIsFace = availability.isFace;
+
+            const enrolledEmail = await this.biometricService.getEnrolledEmail();
+            if (enrolledEmail && enrolledEmail.toLowerCase() === email.toLowerCase()) {
+              await this.biometricService.syncCredentialsIfEnrolled(email, password);
+              this.navigateAfterLogin();
+              return;
+            }
+
+            this.pendingEnrollCredentials = { email, password };
+            this.showBiometricEnrollModal = true;
           },
           error: (err: HttpErrorResponse) => {
             this.showSpinner = false;
 
-            if (err?.error?.status === 500 || err.status >= 500) {
+            if (err.status === 426) {
+              return;
+            }
+
+            if (err.status === 0 || err?.error?.status === 500 || err.status >= 500) {
               this.mostrarToast(`Error de comunicación ${err.status || ''}`.trim(), 'toast-error');
               return;
             }
@@ -177,6 +421,7 @@ export class LoginPage implements OnInit {
         this.mostrarToast('¡Completa los campos!', 'toast-error');
       }
     } catch (e) {
+      this.showSpinner = false;
       console.error(e);
     }
   }

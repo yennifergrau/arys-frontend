@@ -1,9 +1,10 @@
-import { Component, OnInit, Renderer2 } from '@angular/core';
+import { Component, inject, OnInit, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SpinnerComponent } from 'src/app/shared/components/spinner.component';
 import { AuthService } from 'src/app/shared/services/auth.service';
+import { BiometricAuthService } from 'src/app/shared/services/biometric-auth.service';
 import { HttpClientModule } from '@angular/common/http';
 import { matchFieldsValidator, strongPasswordValidator, strongPasswordErrorMessage } from 'src/utils/match.validator';
 
@@ -24,6 +25,7 @@ import { matchFieldsValidator, strongPasswordValidator, strongPasswordErrorMessa
     providers:[AuthService]
 })
 export class RestorePasswordPage implements OnInit {
+  private biometricService = inject(BiometricAuthService);
 
   public showLoading : boolean = false;
   emailUser !: string | any
@@ -123,7 +125,11 @@ export class RestorePasswordPage implements OnInit {
   const data = this.formGroup.value;
 
   this._authService.restore_password(data).subscribe({
-    next: (result) => {
+    next: async () => {
+      await this.biometricService.syncCredentialsIfEnrolled(
+        String(data?.email || this.emailUser || ''),
+        String(data?.password || '')
+      );
       this.mostrarToast('Contraseña actualizada', 'toast-success');
       setTimeout(() => this.navCtrl.navigate(['/login']), 4000);
     },

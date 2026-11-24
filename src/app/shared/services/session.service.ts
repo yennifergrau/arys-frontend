@@ -2,12 +2,14 @@ import { Injectable, inject, signal } from '@angular/core';
 import { AuthService } from './auth.service';
 import { UserAccessService } from 'src/app/routes/admin/services/user-access.service';
 import { TokenStoreService } from './token-store.service';
+import { BiometricAuthService } from './biometric-auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
   private auth = inject(AuthService);
   private access = inject(UserAccessService);
   private tokenStore = inject(TokenStoreService);
+  private biometricAuth = inject(BiometricAuthService);
 
   readonly isLoggingOut = signal(false);
 
@@ -20,6 +22,7 @@ export class SessionService {
       this.auth.clearSession();
       void this.tokenStore.clearSession();
       this.clearAllStorage();
+      this.biometricAuth.markManualLogout();
     } catch {
       // noop
     }

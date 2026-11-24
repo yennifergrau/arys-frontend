@@ -51,5 +51,7 @@
 	<array>
 		<string>whatsapp</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Permite a Arys verificar tu identidad para iniciar sesión de forma rápida y segura.</string>
 </dict>
 </plist>
